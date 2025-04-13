@@ -468,24 +468,7 @@ class GameMap {
       }
     }
 
-    // Highlight buildable tiles with a subtle glow
-    this.ctx.save();
-    this.ctx.globalAlpha = 0.2;
-    this.buildableTiles.forEach(tile => {
-      if (this.grid[tile.y][tile.x] === this.TILE_TYPES.GRASS) {
-        this.ctx.fillStyle = '#FFEB3B';
-        this.ctx.beginPath();
-        this.ctx.arc(
-          tile.x * this.tileSize + this.tileSize / 2,
-          tile.y * this.tileSize + this.tileSize / 2,
-          this.tileSize / 4,
-          0,
-          Math.PI * 2
-        );
-        this.ctx.fill();
-      }
-    });
-    this.ctx.restore();
+    // Buildable tiles are no longer highlighted with yellow dots
   }
 
   // Resize the map when the canvas size changes

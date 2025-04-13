@@ -34,7 +34,7 @@ class Game {
     this.enemiesKilled = 0;
     this.enemiesLeaked = 0;
     this.totalEnemiesInWave = 0;
-    this.spawnInterval = 1.0; // seconds
+    this.spawnInterval = 3.0; // seconds - increased to make enemies spawn slower
     this.timeSinceLastSpawn = 0;
 
     // Tower placement
@@ -241,8 +241,8 @@ class Game {
     this.enemiesKilled = 0;
     this.enemiesLeaked = 0;
 
-    // Calculate number of enemies based on wave
-    this.totalEnemiesInWave = 10 + Math.floor(this.wave * 1.5);
+    // Calculate number of enemies based on wave (reduced for slower spawning)
+    this.totalEnemiesInWave = 5 + Math.floor(this.wave * 1.0);
 
     // Update UI
     document.getElementById('startWave').textContent = 'Wave in Progress...';
@@ -268,14 +268,14 @@ class Game {
     let enemyType = 'normal';
     const rand = Math.random();
 
-    if (this.wave >= 10 && this.enemiesSpawned === this.totalEnemiesInWave - 1) {
-      // Spawn a boss at the end of waves 10+
+    if (this.wave >= 8 && this.enemiesSpawned === this.totalEnemiesInWave - 1) {
+      // Spawn a boss at the end of waves 8+ (reduced from 10)
       enemyType = 'boss';
-    } else if (this.wave >= 5 && rand < 0.1) {
+    } else if (this.wave >= 4 && rand < 0.15) {
       enemyType = 'tank';
-    } else if (this.wave >= 3 && rand < 0.2) {
+    } else if (this.wave >= 2 && rand < 0.25) {
       enemyType = 'fast';
-    } else if (this.wave >= 7 && rand < 0.15) {
+    } else if (this.wave >= 6 && rand < 0.2) {
       enemyType = 'flying';
     }
 

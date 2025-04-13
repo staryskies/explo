@@ -284,8 +284,8 @@ class InfiniteWaveManager {
       wave: this.currentWave,
       enemies: [],
       boss: null,
-      totalEnemies: Math.floor(10 + (this.currentWave * 1.5)),
-      spawnInterval: Math.max(0.5, 2.0 - (this.currentWave * 0.05)), // Spawn faster as waves progress
+      totalEnemies: Math.floor(5 + (this.currentWave * 1.0)), // Reduced number of enemies per wave
+      spawnInterval: Math.max(2.0, 5.0 - (this.currentWave * 0.1)), // Slower spawn rate with gradual increase
       difficultyMultiplier: this.difficultyMultiplier
     };
 
