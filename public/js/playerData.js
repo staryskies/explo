@@ -8,16 +8,16 @@ console.log('Player data loaded');
 const playerData = {
   // Currency
   silver: 0,
-  
+
   // Game stats
   highScore: 0,
   gamesPlayed: 0,
   wavesCompleted: 0,
   enemiesKilled: 0,
-  
+
   // Unlocked towers (basic tower is unlocked by default)
   unlockedTowers: ['basic'],
-  
+
   // Tower variants unlocked
   towerVariants: {
     basic: ['basic'],
@@ -33,7 +33,7 @@ const playerData = {
     poison: [],
     vortex: []
   },
-  
+
   // Tower prices in silver
   towerPrices: {
     basic: 0, // Already unlocked
@@ -49,7 +49,7 @@ const playerData = {
     poison: 5000,
     vortex: 5500
   },
-  
+
   // Tower variant prices in silver
   variantPrices: {
     basic: {
@@ -114,7 +114,7 @@ const playerData = {
       dimensional: 10000
     }
   },
-  
+
   // Selected tower variants
   selectedVariants: {
     basic: 'basic',
@@ -244,6 +244,21 @@ function getUnlockedTowerCount() {
 // Get the total number of towers
 function getTotalTowerCount() {
   return Object.keys(playerData.towerPrices).length;
+}
+
+// Add silver to player's account
+function addSilver(amount) {
+  playerData.silver += amount;
+  playerData.totalSilverEarned = (playerData.totalSilverEarned || 0) + amount;
+  savePlayerData();
+
+  // Update silver display if it exists
+  const silverDisplay = document.getElementById('silver-display');
+  if (silverDisplay) {
+    silverDisplay.textContent = playerData.silver;
+  }
+
+  return amount;
 }
 
 // Initialize player data

@@ -60,17 +60,5 @@ const mapTemplates = [
     backgroundColor: "#1B5E20", // Dark green hedge
     pathColor: "#9E9E9E",       // Gray stone path
     decorationColors: ["#2E7D32", "#388E3C", "#43A047"] // Various green shades
-  },
-  {
-    id: "infinite",
-    name: "Infinite Mode",
-    description: "Endless waves of increasingly difficult enemies",
-    difficulty: "Progressive",
-    pathType: "spiral",
-    terrainFeatures: "advanced",
-    backgroundColor: "#303F9F", // Deep blue
-    pathColor: "#5C6BC0",       // Lighter blue path
-    decorationColors: ["#3949AB", "#7986CB", "#9FA8DA"], // Various blue/purple shades
-    isInfiniteMode: true
   }
 ];

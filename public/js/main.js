@@ -25,12 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Create the game instance with the selected map
   const game = new Game(canvas, selectedMapTemplate);
 
-  // Check if this is infinite mode
-  if (selectedMapTemplate.isInfiniteMode) {
-    console.log('Starting infinite mode');
-    game.isInfiniteMode = true;
-  }
-
   // Force canvas resize to ensure proper dimensions
   game.resizeCanvas();
 
@@ -166,16 +160,14 @@ function updateAvailableTowers(game) {
   // Get all tower buttons
   const towerButtons = document.querySelectorAll('.tower-btn');
 
-  // Disable buttons for towers that are not unlocked
+  // Hide buttons for towers that are not unlocked
   towerButtons.forEach(button => {
     const towerType = button.dataset.type;
     if (!playerData.unlockedTowers.includes(towerType)) {
-      button.disabled = true;
-      button.title = 'Unlock this tower in the shop';
-      button.style.opacity = '0.5';
+      button.style.display = 'none'; // Hide the button completely
     } else {
       // If tower is unlocked, check if there's a selected variant
-      const selectedVariant = playerData.selectedVariants[towerType];
+      const selectedVariant = playerData.selectedVariants?.[towerType];
       if (selectedVariant && selectedVariant !== towerType) {
         // Update button text to show variant
         const variantName = selectedVariant.charAt(0).toUpperCase() + selectedVariant.slice(1);

@@ -14,7 +14,6 @@ class Game {
     this.gameOver = false;
     this.paused = false;
     this.speedMultiplier = 1;
-    this.isInfiniteMode = false;
 
     // Game objects
     this.map = new GameMap(canvas, this.ctx, mapTemplate);
@@ -38,7 +37,7 @@ class Game {
     this.enemiesKilled = 0;
     this.enemiesLeaked = 0;
     this.totalEnemiesInWave = 0;
-    this.spawnInterval = 15.0; // seconds - increased to make enemies spawn slower
+    this.spawnInterval = 105.0; // seconds - increased to make enemies spawn slower
     this.timeSinceLastSpawn = 0;
 
     // Tower placement
@@ -106,6 +105,11 @@ class Game {
     // Restart button
     document.getElementById('restart').addEventListener('click', () => {
       this.restart();
+    });
+
+    // Back to menu button
+    document.getElementById('backToMenu').addEventListener('click', () => {
+      window.location.href = 'index.html';
     });
 
     // Window resize
@@ -246,12 +250,7 @@ class Game {
     this.enemiesLeaked = 0;
 
     // Calculate number of enemies based on wave (reduced for slower spawning)
-    if (this.isInfiniteMode) {
-      // Infinite mode has more enemies and they get stronger faster
-      this.totalEnemiesInWave = 8 + Math.floor(this.wave * 1.5);
-    } else {
-      this.totalEnemiesInWave = 5 + Math.floor(this.wave * 1.0);
-    }
+    this.totalEnemiesInWave = 5 + Math.floor(this.wave * 1.0);
 
     // Update UI
     document.getElementById('startWave').textContent = 'Wave in Progress...';
@@ -277,32 +276,16 @@ class Game {
     let enemyType = 'normal';
     const rand = Math.random();
 
-    if (this.isInfiniteMode) {
-      // Infinite mode has more varied and challenging enemies
-      if (this.wave >= 5 && this.enemiesSpawned === this.totalEnemiesInWave - 1) {
-        // Spawn a boss at the end of waves 5+ in infinite mode
-        enemyType = 'boss';
-      } else if (this.wave >= 3 && rand < 0.2) {
-        enemyType = 'tank';
-      } else if (this.wave >= 2 && rand < 0.3) {
-        enemyType = 'fast';
-      } else if (this.wave >= 4 && rand < 0.15) {
-        enemyType = 'flying';
-      } else if (this.wave >= 6 && rand < 0.1) {
-        enemyType = 'invisible';
-      }
-    } else {
-      // Normal mode enemy spawning
-      if (this.wave >= 8 && this.enemiesSpawned === this.totalEnemiesInWave - 1) {
-        // Spawn a boss at the end of waves 8+ (reduced from 10)
-        enemyType = 'boss';
-      } else if (this.wave >= 4 && rand < 0.15) {
-        enemyType = 'tank';
-      } else if (this.wave >= 2 && rand < 0.25) {
-        enemyType = 'fast';
-      } else if (this.wave >= 6 && rand < 0.2) {
-        enemyType = 'flying';
-      }
+    // Normal mode enemy spawning
+    if (this.wave >= 8 && this.enemiesSpawned === this.totalEnemiesInWave - 1) {
+      // Spawn a boss at the end of waves 8+ (reduced from 10)
+      enemyType = 'boss';
+    } else if (this.wave >= 4 && rand < 0.15) {
+      enemyType = 'tank';
+    } else if (this.wave >= 2 && rand < 0.25) {
+      enemyType = 'fast';
+    } else if (this.wave >= 6 && rand < 0.2) {
+      enemyType = 'flying';
     }
 
     // Create the enemy
@@ -432,6 +415,16 @@ class Game {
       // Bonus gold for completing wave
       const waveBonus = 50 + this.wave * 10;
       this.gold += waveBonus;
+
+      // Award silver for completing waves
+      const silverReward = Math.floor(this.wave * 5);
+      if (typeof addSilver === 'function') {
+        addSilver(silverReward);
+        console.log(`Earned ${silverReward} silver for completing wave ${this.wave-1}`);
+
+        // Show silver reward notification
+        this.showSilverReward(silverReward);
+      }
 
       // Update UI
       document.getElementById('startWave').textContent = 'Next Wave in 3s...';
@@ -587,12 +580,8 @@ class Game {
     document.getElementById('wave').textContent = this.wave;
     document.getElementById('score').textContent = formatNumber(this.score);
 
-    // Update wave display with infinite mode indicator if applicable
-    if (this.isInfiniteMode) {
-      document.getElementById('wave-counter').innerHTML = 'Infinite Mode: Wave <span id="wave">' + this.wave + '</span>';
-    } else {
-      document.getElementById('wave-counter').innerHTML = 'Wave: <span id="wave">' + this.wave + '</span>';
-    }
+    // Update wave counter
+    document.getElementById('wave-counter').innerHTML = 'Wave: <span id="wave">' + this.wave + '</span>';
   }
 
   // Resize canvas to fit the screen
@@ -607,6 +596,11 @@ class Game {
     console.log(`Canvas resized to ${this.canvas.width}x${this.canvas.height}`);
   }
 
+  // Frame rate control variables
+  lastFrameTime = 0;
+  targetFPS = 30; // Lower FPS for slower gameplay
+  frameInterval = 1000 / this.targetFPS;
+
   // Game loop
   gameLoop(currentTime) {
     // Request the next frame first to ensure smooth animation
@@ -614,11 +608,54 @@ class Game {
       window.requestAnimationFrame((time) => this.gameLoop(time));
     }
 
-    // Update game state
-    this.update(currentTime);
+    // Limit frame rate
+    const elapsed = currentTime - this.lastFrameTime;
 
-    // Draw game state
-    this.draw();
+    if (elapsed > this.frameInterval) {
+      // Update last frame time with adjustment to maintain consistent frame rate
+      this.lastFrameTime = currentTime - (elapsed % this.frameInterval);
+
+      // Update game state
+      this.update(currentTime);
+
+      // Draw game state
+      this.draw();
+    }
+  }
+
+  // Show silver reward notification
+  showSilverReward(amount) {
+    // Create notification element if it doesn't exist
+    let notification = document.getElementById('silver-notification');
+    if (!notification) {
+      notification = document.createElement('div');
+      notification.id = 'silver-notification';
+      notification.style.position = 'absolute';
+      notification.style.top = '100px';
+      notification.style.left = '50%';
+      notification.style.transform = 'translateX(-50%)';
+      notification.style.backgroundColor = '#FFC107';
+      notification.style.color = '#333';
+      notification.style.padding = '10px 20px';
+      notification.style.borderRadius = '5px';
+      notification.style.fontWeight = 'bold';
+      notification.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+      notification.style.zIndex = '1000';
+      notification.style.opacity = '0';
+      notification.style.transition = 'opacity 0.5s';
+      document.body.appendChild(notification);
+    }
+
+    // Set notification content
+    notification.textContent = `+ ${amount} Silver!`;
+
+    // Show notification
+    notification.style.opacity = '1';
+
+    // Hide notification after 3 seconds
+    setTimeout(() => {
+      notification.style.opacity = '0';
+    }, 3000);
   }
 
   // Restart the game
