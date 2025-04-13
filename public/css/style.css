@@ -1,0 +1,246 @@
+body {
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(135deg, #1e3c72, #2a5298);
+  font-family: 'Roboto', sans-serif;
+  color: #fff;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+#game-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  max-width: 1920px;
+  max-height: 1080px;
+  overflow: hidden;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+  background: #000;
+}
+
+#gameCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+#stats {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 15px 20px;
+  border-radius: 10px;
+  backdrop-filter: blur(5px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+  font-size: 16px;
+  font-weight: 500;
+  display: flex;
+  gap: 15px;
+  color: #e0e0e0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#stats span {
+  color: #00e676;
+  font-weight: 700;
+}
+
+#controls {
+  position: absolute;
+  top: 80px;
+  left: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 20px;
+  border-radius: 10px;
+  backdrop-filter: blur(5px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#controls h3 {
+  margin: 0 0 10px 0;
+  color: #fff;
+  font-size: 18px;
+  text-align: center;
+}
+
+.tower-btn, #controls button {
+  padding: 10px;
+  background: linear-gradient(45deg, #ff6d00, #ff8f00);
+  border: none;
+  border-radius: 5px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.tower-btn:hover, #controls button:hover {
+  background: linear-gradient(45deg, #ff8f00, #ffab00);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.tower-btn:active, #controls button:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+}
+
+.tower-btn.selected {
+  background: linear-gradient(45deg, #00b0ff, #0091ea);
+  box-shadow: 0 0 10px rgba(0, 176, 255, 0.7);
+}
+
+.control-group {
+  display: flex;
+  gap: 8px;
+  margin-top: 5px;
+}
+
+#controls label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #e0e0e0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+#controls input[type="checkbox"] {
+  accent-color: #ff6d00;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.modal {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 20;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-content {
+  background: rgba(30, 60, 114, 0.9);
+  padding: 30px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  max-width: 400px;
+}
+
+.modal-content h2 {
+  margin-top: 0;
+  color: #fff;
+  font-size: 28px;
+}
+
+.modal-content p {
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+#restart {
+  padding: 12px 24px;
+  background: linear-gradient(45deg, #00b0ff, #0091ea);
+  border: none;
+  border-radius: 5px;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+#restart:hover {
+  background: linear-gradient(45deg, #0091ea, #0277bd);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  #stats {
+    top: 10px;
+    left: 10px;
+    padding: 10px 15px;
+    font-size: 14px;
+    gap: 10px;
+  }
+
+  #controls {
+    top: 60px;
+    left: 10px;
+    width: 180px;
+    padding: 15px;
+  }
+
+  #controls h3 {
+    font-size: 16px;
+  }
+
+  .tower-btn, #controls button {
+    padding: 8px;
+    font-size: 12px;
+  }
+
+  #controls label {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  #stats {
+    top: 5px;
+    left: 5px;
+    padding: 8px 10px;
+    font-size: 12px;
+    gap: 8px;
+  }
+
+  #controls {
+    top: 50px;
+    left: 5px;
+    width: 160px;
+    padding: 10px;
+  }
+
+  #controls h3 {
+    font-size: 14px;
+  }
+
+  .tower-btn, #controls button {
+    padding: 6px;
+    font-size: 10px;
+  }
+
+  #controls label {
+    font-size: 10px;
+  }
+}
