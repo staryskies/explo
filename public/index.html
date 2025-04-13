@@ -18,37 +18,41 @@
       <div>Score: <span id="score">0</span></div>
     </div>
 
-    <div id="controls">
-      <h3>Towers</h3>
-      <div id="tower-selection" class="tower-grid">
-        <button id="basicTower" class="tower-btn" data-type="basic">Basic Tower ($50)</button>
-        <button id="archerTower" class="tower-btn" data-type="archer">Archer Tower ($225)</button>
-        <button id="cannonTower" class="tower-btn" data-type="cannon">Cannon Tower ($300)</button>
-        <button id="sniperTower" class="tower-btn" data-type="sniper">Sniper Tower ($350)</button>
-        <button id="freezeTower" class="tower-btn" data-type="freeze">Freeze Tower ($400)</button>
-        <button id="mortarTower" class="tower-btn" data-type="mortar">Mortar Tower ($450)</button>
-        <button id="laserTower" class="tower-btn" data-type="laser">Laser Tower ($500)</button>
-        <button id="teslaTower" class="tower-btn" data-type="tesla">Tesla Tower ($550)</button>
-        <button id="flamethrowerTower" class="tower-btn" data-type="flamethrower">Flamethrower ($600)</button>
-        <button id="missileTower" class="tower-btn" data-type="missile">Missile Tower ($650)</button>
-        <button id="poisonTower" class="tower-btn" data-type="poison">Poison Tower ($700)</button>
-        <button id="vortexTower" class="tower-btn" data-type="vortex">Vortex Tower ($750)</button>
+    <div id="sidebar">
+      <div id="fixed-controls">
+        <div class="control-group">
+          <button id="startWave">Start Wave</button>
+          <button id="speedUp">Speed Up</button>
+        </div>
+
+        <div class="control-group">
+          <label>
+            <input type="checkbox" id="showRange">
+            Show Tower Range
+          </label>
+        </div>
+
+        <div class="control-group">
+          <button id="openMapSelector">Change Map</button>
+        </div>
       </div>
 
-      <div class="control-group">
-        <button id="startWave">Start Wave</button>
-        <button id="speedUp">Speed Up</button>
-      </div>
-
-      <div class="control-group">
-        <label>
-          <input type="checkbox" id="showRange">
-          Show Tower Range
-        </label>
-      </div>
-
-      <div class="control-group">
-        <button id="openMapSelector">Change Map</button>
+      <div id="tower-container">
+        <h3>Towers</h3>
+        <div id="tower-selection" class="tower-grid">
+          <button id="basicTower" class="tower-btn" data-type="basic">Basic Tower<span class="tower-cost">$50</span></button>
+          <button id="archerTower" class="tower-btn" data-type="archer">Archer Tower<span class="tower-cost">$225</span></button>
+          <button id="cannonTower" class="tower-btn" data-type="cannon">Cannon Tower<span class="tower-cost">$300</span></button>
+          <button id="sniperTower" class="tower-btn" data-type="sniper">Sniper Tower<span class="tower-cost">$350</span></button>
+          <button id="freezeTower" class="tower-btn" data-type="freeze">Freeze Tower<span class="tower-cost">$400</span></button>
+          <button id="mortarTower" class="tower-btn" data-type="mortar">Mortar Tower<span class="tower-cost">$450</span></button>
+          <button id="laserTower" class="tower-btn" data-type="laser">Laser Tower<span class="tower-cost">$500</span></button>
+          <button id="teslaTower" class="tower-btn" data-type="tesla">Tesla Tower<span class="tower-cost">$550</span></button>
+          <button id="flamethrowerTower" class="tower-btn" data-type="flamethrower">Flamethrower<span class="tower-cost">$600</span></button>
+          <button id="missileTower" class="tower-btn" data-type="missile">Missile Tower<span class="tower-cost">$650</span></button>
+          <button id="poisonTower" class="tower-btn" data-type="poison">Poison Tower<span class="tower-cost">$700</span></button>
+          <button id="vortexTower" class="tower-btn" data-type="vortex">Vortex Tower<span class="tower-cost">$750</span></button>
+        </div>
       </div>
     </div>
 

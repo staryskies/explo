@@ -91,18 +91,17 @@ class Enemy {
   update(deltaTime) {
     if (!this.alive) return;
 
-    // Update slow effect duration
+    // Update slow effect duration (deltaTime is now in seconds)
     if (this.slowDuration > 0) {
-      this.slowDuration -= deltaTime;
+      this.slowDuration -= deltaTime * 1000; // Convert seconds to milliseconds for duration
       if (this.slowDuration <= 0) {
         this.slowEffect = 1; // Reset to normal speed
       }
     }
 
-    // Calculate actual speed based on deltaTime (convert to pixels per frame)
-    // deltaTime is in milliseconds, so divide by 1000 to get seconds
-    const timeScale = deltaTime / 1000;
-    const actualSpeed = this.speed * this.slowEffect * timeScale * 60; // Scale for 60fps
+    // Calculate actual speed based on deltaTime
+    // deltaTime is already in seconds
+    const actualSpeed = this.speed * this.slowEffect * deltaTime * 60; // Scale for 60fps
 
     // Move along the path
     this.x += this.dirX * actualSpeed;

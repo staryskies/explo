@@ -34,8 +34,8 @@ class Game {
     this.enemiesKilled = 0;
     this.enemiesLeaked = 0;
     this.totalEnemiesInWave = 0;
-    this.spawnInterval = 1000; // ms
-    this.lastSpawnTime = 0;
+    this.spawnInterval = 1.0; // seconds
+    this.timeSinceLastSpawn = 0;
 
     // Tower placement
     this.selectedTowerType = null;
@@ -256,7 +256,7 @@ class Game {
     }
 
     // Force spawn the first enemy immediately
-    this.lastSpawnTime = 0;
+    this.timeSinceLastSpawn = this.spawnInterval;
     this.spawnEnemy();
   }
 
@@ -290,18 +290,22 @@ class Game {
   update(currentTime) {
     if (this.paused || this.gameOver) return;
 
-    // Calculate delta time (in milliseconds)
+    // Calculate delta time (in seconds)
     // Ensure we have a valid time difference and it's not too large (can happen on first frame or tab switch)
     let deltaTime = 0;
     if (this.lastUpdateTime > 0) {
-      deltaTime = Math.min(currentTime - this.lastUpdateTime, 100) * this.speedMultiplier;
+      // Convert to seconds and apply speed multiplier
+      deltaTime = Math.min(currentTime - this.lastUpdateTime, 100) / 1000 * this.speedMultiplier;
     }
     this.lastUpdateTime = currentTime;
 
-    // Spawn enemies
-    if (this.waveInProgress && currentTime - this.lastSpawnTime > this.spawnInterval / this.speedMultiplier) {
+    // Track time since last spawn in seconds
+    this.timeSinceLastSpawn = (this.timeSinceLastSpawn || 0) + deltaTime;
+
+    // Spawn enemies based on delta time
+    if (this.waveInProgress && this.timeSinceLastSpawn > this.spawnInterval / 1000) {
       this.spawnEnemy();
-      this.lastSpawnTime = currentTime;
+      this.timeSinceLastSpawn = 0;
     }
 
     // Update enemies
@@ -515,17 +519,16 @@ class Game {
 
   // Game loop
   gameLoop(currentTime) {
+    // Request the next frame first to ensure smooth animation
+    if (!this.gameOver) {
+      window.requestAnimationFrame((time) => this.gameLoop(time));
+    }
+
     // Update game state
     this.update(currentTime);
 
     // Draw game state
     this.draw();
-
-    // Continue game loop
-    if (!this.gameOver) {
-      // Use a properly bound function to ensure 'this' context is preserved
-      window.requestAnimationFrame((time) => this.gameLoop(time));
-    }
   }
 
   // Restart the game
@@ -555,6 +558,7 @@ class Game {
     this.enemiesKilled = 0;
     this.enemiesLeaked = 0;
     this.totalEnemiesInWave = 0;
+    this.timeSinceLastSpawn = 0;
 
     // Reset tower placement
     this.selectedTowerType = null;

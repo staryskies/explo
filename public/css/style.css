@@ -52,60 +52,104 @@ body {
   font-weight: 700;
 }
 
-#controls {
+#sidebar {
   position: absolute;
-  top: 80px;
+  top: 20px;
   left: 20px;
+  z-index: 10;
+  width: 280px;
+  height: calc(100vh - 40px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#fixed-controls {
   background: rgba(0, 0, 0, 0.7);
   padding: 20px;
   border-radius: 10px;
   backdrop-filter: blur(5px);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  z-index: 10;
-  width: 280px;
-  max-height: 80vh;
-  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   flex-direction: column;
   gap: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-#controls h3 {
+#tower-container {
+  background: rgba(0, 0, 0, 0.7);
+  padding: 20px;
+  border-radius: 10px;
+  backdrop-filter: blur(5px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  flex: 1;
+  overflow-y: auto;
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+#tower-container h3 {
   margin: 0 0 10px 0;
   color: #fff;
   font-size: 18px;
   text-align: center;
+  flex-shrink: 0;
 }
 
 .tower-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(1, 1fr);
   gap: 8px;
   margin-bottom: 10px;
+  overflow-y: auto;
 }
 
-.tower-btn, #controls button {
-  padding: 8px 6px;
+.tower-btn, #fixed-controls button {
+  padding: 10px 8px;
   background: linear-gradient(45deg, #ff6d00, #ff8f00);
   border: none;
   border-radius: 5px;
   color: #fff;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   text-align: center;
+  width: 100%;
 }
 
-.tower-btn:hover, #controls button:hover {
+.tower-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60px;
+  font-size: 12px;
+  padding: 5px;
+  position: relative;
+}
+
+.tower-cost {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  font-size: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 2px 5px;
+  border-radius: 10px;
+  color: #FFEB3B;
+}
+
+.tower-btn:hover, #fixed-controls button:hover {
   background: linear-gradient(45deg, #ff8f00, #ffab00);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.tower-btn:active, #controls button:active {
+.tower-btn:active, #fixed-controls button:active {
   transform: translateY(1px);
   box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
 }
@@ -313,18 +357,24 @@ body {
   display: flex;
   gap: 8px;
   margin-top: 5px;
+  width: 100%;
 }
 
-#controls label {
+.control-group button {
+  flex: 1;
+}
+
+#fixed-controls label {
   display: flex;
   align-items: center;
   gap: 8px;
   color: #e0e0e0;
   font-size: 14px;
   font-weight: 500;
+  width: 100%;
 }
 
-#controls input[type="checkbox"] {
+#fixed-controls input[type="checkbox"] {
   accent-color: #ff6d00;
   width: 16px;
   height: 16px;

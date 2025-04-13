@@ -34,9 +34,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Start the game loop immediately with a low-priority timeout
   setTimeout(() => {
+    // Initialize the last update time to the current time
+    game.lastUpdateTime = performance.now();
+
     // Start the animation loop with the current time
     window.requestAnimationFrame((time) => game.gameLoop(time));
-    console.log('Game loop started');
+    console.log('Game loop started with delta time');
   }, 100);
 
   // Handle mouse move for tower placement preview
