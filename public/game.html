@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tower Defense Game</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="stats">
+      <div>Lives: <span id="lives">10</span></div>
+      <div>Gold: <span id="gold">100</span></div>
+      <div id="wave-counter">Wave: <span id="wave">1</span></div>
+      <div>Score: <span id="score">0</span></div>
+    </div>
+
+    <div id="sidebar">
+      <div id="fixed-controls">
+        <div class="control-group">
+          <button id="startWave">Start Wave</button>
+          <button id="speedUp">Speed Up</button>
+        </div>
+
+        <div class="control-group">
+          <label>
+            <input type="checkbox" id="showRange">
+            Show Tower Range
+          </label>
+        </div>
+
+        <button id="openMapSelector">Change Map</button>
+        <button id="backToMenu">Back to Menu</button>
+      </div>
+
+      <h3>Towers</h3>
+      <div id="tower-buttons">
+        <button class="tower-btn" id="basicTower" data-type="basic">
+          Basic
+          <span class="tower-cost">$50</span>
+        </button>
+        <button class="tower-btn" id="archerTower" data-type="archer">
+          Archer
+          <span class="tower-cost">$225</span>
+        </button>
+        <button class="tower-btn" id="cannonTower" data-type="cannon">
+          Cannon
+          <span class="tower-cost">$350</span>
+        </button>
+        <button class="tower-btn" id="sniperTower" data-type="sniper">
+          Sniper
+          <span class="tower-cost">$450</span>
+        </button>
+        <button class="tower-btn" id="freezeTower" data-type="freeze">
+          Freeze
+          <span class="tower-cost">$300</span>
+        </button>
+        <button class="tower-btn" id="mortarTower" data-type="mortar">
+          Mortar
+          <span class="tower-cost">$400</span>
+        </button>
+        <button class="tower-btn" id="laserTower" data-type="laser">
+          Laser
+          <span class="tower-cost">$500</span>
+        </button>
+        <button class="tower-btn" id="teslaTower" data-type="tesla">
+          Tesla
+          <span class="tower-cost">$600</span>
+        </button>
+        <button class="tower-btn" id="flameTower" data-type="flame">
+          Flame
+          <span class="tower-cost">$350</span>
+        </button>
+        <button class="tower-btn" id="missileTower" data-type="missile">
+          Missile
+          <span class="tower-cost">$550</span>
+        </button>
+        <button class="tower-btn" id="poisonTower" data-type="poison">
+          Poison
+          <span class="tower-cost">$400</span>
+        </button>
+        <button class="tower-btn" id="vortexTower" data-type="vortex">
+          Vortex
+          <span class="tower-cost">$650</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="upgrade-menu" class="modal">
+      <div class="modal-content upgrade-content">
+        <div class="upgrade-header">
+          <h3 id="upgrade-tower-name">Tower Name</h3>
+          <span class="close-btn" id="closeUpgradeMenu">&times;</span>
+        </div>
+        <div class="upgrade-info">
+          <div class="tower-stats">
+            <p>Level: <span id="tower-level">1</span></p>
+            <p>Damage: <span id="tower-damage">0</span></p>
+            <p>Range: <span id="tower-range">0</span></p>
+            <p>Fire Rate: <span id="tower-fire-rate">0</span></p>
+            <p>Special: <span id="tower-special">None</span></p>
+          </div>
+          <div class="upgrade-paths">
+            <div class="upgrade-path" id="path-a">
+              <h4 id="path-a-name">Path A</h4>
+              <p id="path-a-desc">Description</p>
+              <div class="upgrade-levels">
+                <button class="upgrade-btn" data-path="a" data-level="1">Level 1 ($0)</button>
+                <button class="upgrade-btn" data-path="a" data-level="2" disabled>Level 2 ($0)</button>
+                <button class="upgrade-btn" data-path="a" data-level="3" disabled>Level 3 ($0)</button>
+                <button class="upgrade-btn" data-path="a" data-level="4" disabled>Level 4 ($0)</button>
+              </div>
+            </div>
+            <div class="upgrade-path" id="path-b">
+              <h4 id="path-b-name">Path B</h4>
+              <p id="path-b-desc">Description</p>
+              <div class="upgrade-levels">
+                <button class="upgrade-btn" data-path="b" data-level="1">Level 1 ($0)</button>
+                <button class="upgrade-btn" data-path="b" data-level="2" disabled>Level 2 ($0)</button>
+                <button class="upgrade-btn" data-path="b" data-level="3" disabled>Level 3 ($0)</button>
+                <button class="upgrade-btn" data-path="b" data-level="4" disabled>Level 4 ($0)</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="upgrade-actions">
+          <button id="sellTower">Sell Tower</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Map Selector Modal -->
+    <div id="map-selector" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Select Map</h3>
+          <span class="close-btn" id="closeMapSelector">&times;</span>
+        </div>
+        <div class="map-grid" id="map-options">
+          <!-- Map options will be generated here -->
+        </div>
+      </div>
+    </div>
+
+    <div id="game-over" class="modal">
+      <div class="modal-content">
+        <h2>Game Over</h2>
+        <p>Your final score: <span id="final-score">0</span></p>
+        <p>Silver earned: <span id="silver-earned">0</span></p>
+        <div class="game-over-buttons">
+          <button id="restart">Play Again</button>
+          <button id="return-to-menu">Return to Menu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load game scripts -->
+  <script src="js/utils.js"></script>
+  <script src="js/towerData.js"></script>
+  <script src="js/playerData.js"></script>
+  <script src="js/mapTemplates.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/tower.js"></script>
+  <script src="js/enemy.js"></script>
+  <script src="js/projectile.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/gameUpgrades.js"></script>
+  <script src="js/infiniteMode.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
