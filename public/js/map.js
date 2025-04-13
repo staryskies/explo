@@ -486,6 +486,8 @@ class GameMap {
 
   // Draw the map
   draw() {
+
+
     // Check if canvas and context are valid
     if (!this.canvas || !this.ctx) {
       console.error('Canvas or context is null in map.draw()');
@@ -500,245 +502,16 @@ class GameMap {
       this.findBuildableTiles();
     }
 
-    // Get map template colors or use defaults
-    const mapTemplate = mapTemplates.find(t => t.id === this.mapTemplate.id) || mapTemplates[0];
-    const backgroundColor = mapTemplate.backgroundColor || '#4CAF50';
-    const pathColor = mapTemplate.pathColor || '#795548';
-    const decorationColors = mapTemplate.decorationColors || ['#8BC34A', '#689F38', '#33691E'];
-
-    // Update tile colors based on map template
-    this.tileColors[this.TILE_TYPES.GRASS] = backgroundColor;
-    this.tileColors[this.TILE_TYPES.PATH] = pathColor;
-
     // Draw all tiles
     for (let y = 0; y < this.gridHeight; y++) {
       for (let x = 0; x < this.gridWidth; x++) {
         const tileType = this.grid[y][x];
-        const tileX = x * this.tileSize;
-        const tileY = y * this.tileSize;
-
-        // Fill the tile with base color
         this.ctx.fillStyle = this.tileColors[tileType];
-        this.ctx.fillRect(tileX, tileY, this.tileSize, this.tileSize);
-
-        // Add procedurally generated texture details based on tile type and map template
-        switch(tileType) {
-          case this.TILE_TYPES.GRASS:
-            // Add grass/terrain texture based on map type
-            if (mapTemplate.id === 'desert') {
-              // Desert sand dunes
-              this.ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-              for (let i = 0; i < 3; i++) {
-                const duneY = tileY + (this.tileSize / 3) * i + (Math.sin(tileX / 50) * 5);
-                this.ctx.beginPath();
-                this.ctx.moveTo(tileX, duneY);
-                this.ctx.bezierCurveTo(
-                  tileX + this.tileSize/3, duneY - 5,
-                  tileX + this.tileSize*2/3, duneY - 5,
-                  tileX + this.tileSize, duneY
-                );
-                this.ctx.stroke();
-              }
-            } else if (mapTemplate.id === 'snow') {
-              // Snow flakes
-              this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-              for (let i = 0; i < 8; i++) {
-                const snowX = tileX + Math.random() * this.tileSize;
-                const snowY = tileY + Math.random() * this.tileSize;
-                const size = 1 + Math.random() * 2;
-                this.ctx.beginPath();
-                this.ctx.arc(snowX, snowY, size, 0, Math.PI * 2);
-                this.ctx.fill();
-              }
-            } else if (mapTemplate.id === 'volcano') {
-              // Volcanic rock texture
-              this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-              for (let i = 0; i < 5; i++) {
-                const rockX = tileX + Math.random() * this.tileSize;
-                const rockY = tileY + Math.random() * this.tileSize;
-                const size = 3 + Math.random() * 5;
-                this.ctx.beginPath();
-                this.ctx.arc(rockX, rockY, size, 0, Math.PI * 2);
-                this.ctx.fill();
-              }
-            } else {
-              // Default grass texture
-              this.ctx.fillStyle = decorationColors[0];
-              for (let i = 0; i < 5; i++) {
-                const grassX = tileX + Math.random() * this.tileSize;
-                const grassY = tileY + Math.random() * this.tileSize;
-                const size = 2 + Math.random() * 3;
-                this.ctx.beginPath();
-                this.ctx.arc(grassX, grassY, size, 0, Math.PI * 2);
-                this.ctx.fill();
-              }
-            }
-            break;
-
-          case this.TILE_TYPES.PATH:
-            // Add path texture based on map type
-            if (mapTemplate.id === 'desert') {
-              // Desert path with footprints
-              this.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-              for (let i = 0; i < 3; i++) {
-                const footX = tileX + 10 + (i * 15);
-                const footY = tileY + 20 + (i * 10);
-                this.ctx.beginPath();
-                this.ctx.ellipse(footX, footY, 5, 8, Math.PI/4, 0, Math.PI * 2);
-                this.ctx.fill();
-              }
-            } else if (mapTemplate.id === 'snow') {
-              // Snow path with ice crystals
-              this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-              this.ctx.lineWidth = 1;
-              for (let i = 0; i < 4; i++) {
-                const iceX = tileX + 10 + Math.random() * (this.tileSize - 20);
-                const iceY = tileY + 10 + Math.random() * (this.tileSize - 20);
-                // Draw ice crystal
-                for (let j = 0; j < 3; j++) {
-                  const angle = (Math.PI * 2 / 3) * j;
-                  this.ctx.beginPath();
-                  this.ctx.moveTo(iceX, iceY);
-                  this.ctx.lineTo(
-                    iceX + Math.cos(angle) * 10,
-                    iceY + Math.sin(angle) * 10
-                  );
-                  this.ctx.stroke();
-                }
-              }
-            } else if (mapTemplate.id === 'volcano') {
-              // Lava path with glowing cracks
-              this.ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
-              this.ctx.lineWidth = 2;
-              for (let i = 0; i < 3; i++) {
-                const crackX = tileX + Math.random() * this.tileSize;
-                const crackY = tileY + Math.random() * this.tileSize;
-                const length = 10 + Math.random() * 15;
-                const angle = Math.random() * Math.PI * 2;
-                this.ctx.beginPath();
-                this.ctx.moveTo(crackX, crackY);
-                this.ctx.lineTo(
-                  crackX + Math.cos(angle) * length,
-                  crackY + Math.sin(angle) * length
-                );
-                this.ctx.stroke();
-              }
-            } else {
-              // Default path texture
-              this.ctx.strokeStyle = 'rgba(150, 100, 50, 0.3)';
-              this.ctx.lineWidth = 1;
-              for (let i = 0; i < 3; i++) {
-                const pathY = tileY + (i + 1) * (this.tileSize / 4);
-                this.ctx.beginPath();
-                this.ctx.moveTo(tileX, pathY);
-                this.ctx.lineTo(tileX + this.tileSize, pathY);
-                this.ctx.stroke();
-              }
-            }
-            break;
-
-          case this.TILE_TYPES.WATER:
-            // Add water texture based on map type
-            if (mapTemplate.id === 'desert') {
-              // Desert oasis water
-              this.ctx.fillStyle = 'rgba(0, 255, 255, 0.2)';
-              this.ctx.beginPath();
-              this.ctx.arc(tileX + this.tileSize/2, tileY + this.tileSize/2, this.tileSize/3, 0, Math.PI * 2);
-              this.ctx.fill();
-
-              // Palm tree
-              this.ctx.fillStyle = '#8D6E63';
-              this.ctx.fillRect(tileX + this.tileSize/2 - 2, tileY + 10, 4, 20);
-
-              this.ctx.fillStyle = '#4CAF50';
-              this.ctx.beginPath();
-              this.ctx.arc(tileX + this.tileSize/2, tileY + 10, 10, 0, Math.PI * 2);
-              this.ctx.fill();
-            } else {
-              // Default water texture with waves
-              this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-              for (let i = 0; i < 3; i++) {
-                const waveY = tileY + (i + 1) * (this.tileSize / 4);
-                this.ctx.beginPath();
-                this.ctx.moveTo(tileX, waveY);
-
-                // Create wavy pattern
-                for (let x = 0; x <= this.tileSize; x += 5) {
-                  const height = Math.sin(x / 10 + i) * 2;
-                  this.ctx.lineTo(tileX + x, waveY + height);
-                }
-
-                this.ctx.stroke();
-              }
-            }
-            break;
-
-          case this.TILE_TYPES.WALL:
-            // Add wall texture based on map type
-            if (mapTemplate.id === 'snow') {
-              // Ice wall
-              this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-              this.ctx.lineWidth = 1;
-
-              // Draw ice crystal pattern
-              for (let i = 0; i < 3; i++) {
-                for (let j = 0; j < 3; j++) {
-                  const iceX = tileX + (j + 0.5) * (this.tileSize / 3);
-                  const iceY = tileY + (i + 0.5) * (this.tileSize / 3);
-
-                  // Draw snowflake
-                  for (let k = 0; k < 6; k++) {
-                    const angle = (Math.PI / 3) * k;
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(iceX, iceY);
-                    this.ctx.lineTo(
-                      iceX + Math.cos(angle) * 8,
-                      iceY + Math.sin(angle) * 8
-                    );
-                    this.ctx.stroke();
-                  }
-                }
-              }
-            } else if (mapTemplate.id === 'volcano') {
-              // Volcanic rock wall
-              this.ctx.fillStyle = 'rgba(100, 0, 0, 0.3)';
-              for (let i = 0; i < 8; i++) {
-                const rockX = tileX + Math.random() * this.tileSize;
-                const rockY = tileY + Math.random() * this.tileSize;
-                const size = 3 + Math.random() * 7;
-                this.ctx.beginPath();
-                this.ctx.arc(rockX, rockY, size, 0, Math.PI * 2);
-                this.ctx.fill();
-              }
-            } else {
-              // Default wall texture with bricks
-              this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
-              this.ctx.lineWidth = 1;
-
-              // Draw brick pattern
-              for (let i = 0; i < 4; i++) {
-                const brickY = tileY + i * (this.tileSize / 4);
-                this.ctx.beginPath();
-                this.ctx.moveTo(tileX, brickY);
-                this.ctx.lineTo(tileX + this.tileSize, brickY);
-                this.ctx.stroke();
-
-                const offset = (i % 2) * (this.tileSize / 2);
-                for (let j = 0; j < 2; j++) {
-                  const brickX = tileX + offset + j * (this.tileSize / 2);
-                  this.ctx.beginPath();
-                  this.ctx.moveTo(brickX, brickY);
-                  this.ctx.lineTo(brickX, brickY + (this.tileSize / 4));
-                  this.ctx.stroke();
-                }
-              }
-            }
-            break;
-        }
+        this.ctx.fillRect(x * this.tileSize, y * this.tileSize, this.tileSize, this.tileSize);
 
         // Draw grid lines
         this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
-        this.ctx.strokeRect(tileX, tileY, this.tileSize, this.tileSize);
+        this.ctx.strokeRect(x * this.tileSize, y * this.tileSize, this.tileSize, this.tileSize);
       }
     }
 

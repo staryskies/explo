@@ -44,23 +44,6 @@ body {
   margin-left: 250px; /* Match sidebar width */
 }
 
-#wave-display {
-  display: inline-block;
-  transition: transform 0.3s ease, color 0.3s ease;
-}
-
-#wave-display.wave-active {
-  transform: scale(1.5);
-  color: #F44336;
-  animation: pulse 1s ease-in-out;
-}
-
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.5); }
-  100% { transform: scale(1); }
-}
-
 #stats {
   position: absolute;
   top: 20px;
@@ -137,11 +120,6 @@ body {
     width: calc(100% - 200px);
     margin-left: 200px;
   }
-
-  .back-btn {
-    font-size: 12px;
-    padding: 8px 6px;
-  }
 }
 
 @media (max-width: 480px) {
@@ -152,11 +130,6 @@ body {
   #gameCanvas {
     width: calc(100% - 180px);
     margin-left: 180px;
-  }
-
-  .back-btn {
-    font-size: 11px;
-    padding: 6px 4px;
   }
 }
 
@@ -214,21 +187,6 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   text-align: center;
   width: 100%;
-}
-
-.back-btn {
-  background: linear-gradient(45deg, #f44336, #e57373) !important;
-}
-
-.back-btn:hover {
-  background: linear-gradient(45deg, #e53935, #ef5350) !important;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
-}
-
-.back-btn:active {
-  transform: translateY(1px);
-  box-shadow: 0 1px 5px rgba(244, 67, 54, 0.2);
 }
 
 .tower-btn {

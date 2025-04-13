@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Update available towers based on unlocked status
-  updateAvailableTowers();
+  updateAvailableTowers(game);
 
   // Initialize infinite mode
   game.initializeInfiniteMode();
@@ -146,23 +146,14 @@ document.addEventListener('DOMContentLoaded', () => {
     location.reload();
   });
 
-  // Add return to menu button event listener (from game over screen)
+  // Add return to menu button event listener
   document.getElementById('return-to-menu').addEventListener('click', () => {
-    // No need for confirmation since the game is already over
     window.location.href = 'index.html';
-  });
-
-  // Add back to menu button event listener
-  document.getElementById('backToMenu').addEventListener('click', () => {
-    // Ask for confirmation before leaving the game
-    if (confirm('Are you sure you want to return to the main menu? Your progress will be lost.')) {
-      window.location.href = 'index.html';
-    }
   });
 });
 
 // Update available towers based on player's unlocked towers
-function updateAvailableTowers() {
+function updateAvailableTowers(game) {
   // Skip if playerData is not available
   if (typeof playerData === 'undefined') return;
 
