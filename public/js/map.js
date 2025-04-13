@@ -529,3 +529,43 @@ class GameMap {
     this.findBuildableTiles();
   }
 }
+
+// Map templates for different levels
+const mapTemplates = [
+  {
+    id: "classic",
+    name: "Classic",
+    description: "A simple path from left to right",
+    difficulty: "Easy",
+    pathType: "single",
+    terrainFeatures: "basic",
+    infiniteMode: false
+  },
+  {
+    id: "zigzag",
+    name: "Zigzag",
+    description: "A winding path with multiple turns",
+    difficulty: "Medium",
+    pathType: "zigzag",
+    terrainFeatures: "basic",
+    infiniteMode: false
+  },
+  {
+    id: "spiral",
+    name: "Spiral",
+    description: "A spiral path that winds toward the center",
+    difficulty: "Hard",
+    pathType: "spiral",
+    terrainFeatures: "advanced",
+    infiniteMode: false
+  },
+  {
+    id: "infinite",
+    name: "Infinite Mode",
+    description: "Endless waves with increasing difficulty",
+    difficulty: "Extreme",
+    pathType: "single",
+    terrainFeatures: "basic",
+    infiniteMode: true
+  }
+];

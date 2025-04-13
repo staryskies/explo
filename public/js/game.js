@@ -249,6 +249,13 @@ class Game {
 
     // Update UI
     document.getElementById('startWave').textContent = 'Wave in Progress...';
+    document.getElementById('wave-display').textContent = this.wave;
+    document.getElementById('wave-display').classList.add('wave-active');
+
+    // Add animation to wave counter
+    setTimeout(() => {
+      document.getElementById('wave-display').classList.remove('wave-active');
+    }, 2000);
 
     // Start the game if not already started
     if (!this.gameStarted) {
@@ -562,6 +569,7 @@ class Game {
     document.getElementById('lives').textContent = this.lives;
     document.getElementById('gold').textContent = formatNumber(this.gold);
     document.getElementById('wave').textContent = this.wave;
+    document.getElementById('wave-display').textContent = this.wave;
     document.getElementById('score').textContent = formatNumber(this.score);
   }
 

@@ -4,6 +4,11 @@
 // Log that utils.js is loaded
 console.log('Utility functions loaded');
 
+// Format a number with commas for thousands
+function formatNumber(num) {
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
 // Calculate distance between two points
 function distance(x1, y1, x2, y2) {
   return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
