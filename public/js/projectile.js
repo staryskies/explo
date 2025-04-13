@@ -1,11 +1,8 @@
 /**
  * Projectile class for the tower defense game
  */
-// Log that projectile.js is loaded
-console.log('Projectile class loaded');
-
 class Projectile {
-  constructor(x, y, angle, speed, damage, type, target, towerType) {
+  constructor(x, y, angle, speed, damage, type, target) {
     this.x = x;
     this.y = y;
     this.angle = angle;
@@ -13,7 +10,6 @@ class Projectile {
     this.damage = damage;
     this.type = type;
     this.target = target;
-    this.towerType = towerType; // Store the tower type for damage calculations
     this.active = true;
     this.hit = false;
 
@@ -31,23 +27,23 @@ class Projectile {
       case 'sniper':
         this.size = 4;
         this.color = '#2196F3';
-        this.trailLength = 20;
+        this.trailLength = 8; // Reduced from 20
         break;
       case 'aoe':
         this.size = 8;
         this.color = '#F44336';
-        this.trailLength = 10;
+        this.trailLength = 5; // Reduced from 10
         break;
       case 'slow':
         this.size = 6;
         this.color = '#00BCD4';
-        this.trailLength = 15;
+        this.trailLength = 6; // Reduced from 15
         break;
       case 'basic':
       default:
         this.size = 5;
         this.color = '#4CAF50';
-        this.trailLength = 12;
+        this.trailLength = 5; // Reduced from 12
         break;
     }
 
@@ -62,25 +58,32 @@ class Projectile {
   update() {
     if (!this.active) return;
 
-    // Update trail
-    this.trail.pop();
-    this.trail.unshift({x: this.x, y: this.y});
+    // Update trail (only update every other frame to save resources)
+    if (Math.random() > 0.5) { // 50% chance to update trail
+      this.trail.pop();
+      this.trail.unshift({x: this.x, y: this.y});
+    }
 
     // Move projectile
     this.x += this.vx;
     this.y += this.vy;
 
-    // Check if projectile is out of bounds
-    if (this.x < -50 || this.x > window.innerWidth + 50 ||
-        this.y < -50 || this.y > window.innerHeight + 50) {
+    // Check if projectile is out of bounds (simplified boundary check)
+    if (this.x < -20 || this.x > window.innerWidth + 20 ||
+        this.y < -20 || this.y > window.innerHeight + 20) {
       this.active = false;
       return;
     }
 
     // Check for collision with target
     if (this.target && this.target.alive) {
-      const dist = distance(this.x, this.y, this.target.x, this.target.y);
-      if (dist < this.target.size + this.size) {
+      // Use simplified distance calculation for performance
+      const dx = this.x - this.target.x;
+      const dy = this.y - this.target.y;
+      const distSquared = dx * dx + dy * dy;
+      const radiusSum = this.target.size + this.size;
+
+      if (distSquared < radiusSum * radiusSum) {
         this.hit = true;
         this.active = false;
       }
@@ -90,23 +93,34 @@ class Projectile {
     }
   }
 
-  // Apply damage and effects to enemies
+  // Apply damage and effects to enemies (optimized)
   applyDamage(enemies) {
     if (!this.hit) return [];
 
     const affectedEnemies = [];
 
     if (this.type === 'aoe' && this.aoeRadius) {
-      // Apply AOE damage to all enemies in radius
-      enemies.forEach(enemy => {
+      // Apply AOE damage to enemies in radius (with optimization)
+      const radiusSquared = this.aoeRadius * this.aoeRadius;
+
+      // Only process a subset of enemies for performance
+      const maxEnemiesToProcess = 10; // Limit the number of enemies to process
+      const enemiesToProcess = enemies.length > maxEnemiesToProcess ?
+        enemies.slice(0, maxEnemiesToProcess) : enemies;
+
+      enemiesToProcess.forEach(enemy => {
         if (enemy.alive) {
-          const dist = distance(this.x, this.y, enemy.x, enemy.y);
-          if (dist <= this.aoeRadius) {
-            // Calculate damage falloff based on distance
-            const falloff = 1 - (dist / this.aoeRadius) * 0.7;
+          // Use squared distance for performance
+          const dx = this.x - enemy.x;
+          const dy = this.y - enemy.y;
+          const distSquared = dx * dx + dy * dy;
+
+          if (distSquared <= radiusSquared) {
+            // Simplified damage calculation
+            const falloff = 1 - Math.sqrt(distSquared) / this.aoeRadius * 0.5; // Reduced falloff
             const actualDamage = Math.floor(this.damage * falloff);
 
-            const killed = enemy.takeDamage(actualDamage, this.towerType);
+            const killed = enemy.takeDamage(actualDamage);
             affectedEnemies.push({enemy, killed, damage: actualDamage});
           }
         }
@@ -114,11 +128,11 @@ class Projectile {
     } else if (this.type === 'slow' && this.target && this.target.alive) {
       // Apply slow effect to target
       this.target.applySlowEffect(this.slowFactor, this.slowDuration);
-      const killed = this.target.takeDamage(this.damage, this.towerType);
+      const killed = this.target.takeDamage(this.damage);
       affectedEnemies.push({enemy: this.target, killed, damage: this.damage});
     } else if (this.target && this.target.alive) {
       // Apply direct damage to target
-      const killed = this.target.takeDamage(this.damage, this.towerType);
+      const killed = this.target.takeDamage(this.damage);
       affectedEnemies.push({enemy: this.target, killed, damage: this.damage});
     }
 
@@ -129,119 +143,64 @@ class Projectile {
   draw(ctx) {
     if (!this.active) return;
 
-    // Draw trail
+    // Draw simplified trail (only draw every other point to save resources)
     ctx.save();
-    for (let i = 0; i < this.trail.length; i++) {
+    for (let i = 0; i < this.trail.length; i += 2) {
       const point = this.trail[i];
-      const alpha = 1 - (i / this.trail.length);
-      const size = this.size * (1 - i / this.trail.length * 0.8);
+      const alpha = 0.5 - (i / this.trail.length) * 0.5; // Reduced opacity
 
-      ctx.globalAlpha = alpha * 0.7;
+      ctx.globalAlpha = alpha;
       ctx.fillStyle = this.color;
       ctx.beginPath();
-      ctx.arc(point.x, point.y, size, 0, Math.PI * 2);
+      ctx.arc(point.x, point.y, this.size * 0.7, 0, Math.PI * 2); // Smaller trail points
       ctx.fill();
     }
     ctx.restore();
 
-    // Draw projectile
+    // Draw projectile (simplified)
     ctx.fillStyle = this.color;
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
     ctx.fill();
 
-    // Draw glow effect
-    ctx.save();
-    ctx.globalAlpha = 0.5;
-    ctx.filter = `blur(${this.size}px)`;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size * 1.5, 0, Math.PI * 2);
-    ctx.fillStyle = this.color;
-    ctx.fill();
-    ctx.restore();
-
-    // Draw special effects based on type
-    if (this.type === 'sniper') {
-      // Draw laser sight
+    // Draw simplified special effects based on type (only for AOE)
+    if (this.type === 'aoe') {
+      // Draw simplified explosion radius indicator
       ctx.save();
-      ctx.globalAlpha = 0.2;
+      ctx.globalAlpha = 0.05; // Reduced opacity
       ctx.strokeStyle = this.color;
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(this.x, this.y);
-      ctx.lineTo(
-        this.x + Math.cos(this.angle) * 1000,
-        this.y + Math.sin(this.angle) * 1000
-      );
-      ctx.stroke();
-      ctx.restore();
-    } else if (this.type === 'aoe') {
-      // Draw explosion radius indicator
-      ctx.save();
-      ctx.globalAlpha = 0.1;
-      ctx.fillStyle = this.color;
-      ctx.beginPath();
       ctx.arc(this.x, this.y, this.aoeRadius || 0, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.stroke(); // Use stroke instead of fill to save resources
       ctx.restore();
     }
   }
 
-  // Draw explosion effect when projectile hits
+  // Draw simplified explosion effect when projectile hits
   drawExplosion(ctx) {
     if (this.active || !this.hit) return;
 
+    // Use a single simplified explosion effect for all projectile types
+    ctx.save();
+
     if (this.type === 'aoe' && this.aoeRadius) {
-      // Draw AOE explosion
-      ctx.save();
-      ctx.globalAlpha = 0.7;
-      ctx.fillStyle = this.color;
+      // Simplified AOE explosion - just a circle with stroke
+      ctx.globalAlpha = 0.3; // Reduced opacity
+      ctx.strokeStyle = this.color;
+      ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.aoeRadius, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Draw explosion rings
-      for (let i = 0; i < 3; i++) {
-        ctx.globalAlpha = 0.5 - i * 0.15;
-        ctx.strokeStyle = '#FFF';
-        ctx.lineWidth = 3 - i;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.aoeRadius * (0.4 + i * 0.3), 0, Math.PI * 2);
-        ctx.stroke();
-      }
-      ctx.restore();
-    } else if (this.type === 'slow') {
-      // Draw freeze effect
-      ctx.save();
-      ctx.globalAlpha = 0.5;
-      ctx.fillStyle = this.color;
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.size * 3, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Draw snowflake pattern
-      ctx.strokeStyle = '#FFF';
-      ctx.lineWidth = 1;
-      for (let i = 0; i < 6; i++) {
-        const angle = (Math.PI / 3) * i;
-        ctx.beginPath();
-        ctx.moveTo(this.x, this.y);
-        ctx.lineTo(
-          this.x + Math.cos(angle) * this.size * 4,
-          this.y + Math.sin(angle) * this.size * 4
-        );
-        ctx.stroke();
-      }
-      ctx.restore();
+      ctx.stroke(); // Use stroke instead of fill
     } else {
-      // Draw simple hit effect
-      ctx.save();
-      ctx.globalAlpha = 0.7;
+      // Simple hit effect for all other types
+      ctx.globalAlpha = 0.4; // Reduced opacity
       ctx.fillStyle = this.color;
       ctx.beginPath();
-      ctx.arc(this.x, this.y, this.size * 2, 0, Math.PI * 2);
+      ctx.arc(this.x, this.y, this.size * 1.5, 0, Math.PI * 2); // Smaller explosion
       ctx.fill();
-      ctx.restore();
     }
+
+    ctx.restore();
   }
 }

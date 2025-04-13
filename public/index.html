@@ -3,95 +3,57 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tower Defense Game - Main Menu</title>
+  <title>Tower Defense Game</title>
   <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/menu.css">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div id="main-menu-container">
-    <div class="menu-content">
-      <h1>Tower Defense</h1>
-      <div class="menu-buttons">
-        <button id="play-button" class="menu-btn">Play Game</button>
-        <button id="shop-button" class="menu-btn">Tower Shop</button>
-        <button id="upgrades-button" class="menu-btn">Upgrades</button>
+  <div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="stats">
+      <div>Lives: <span id="lives">10</span></div>
+      <div>Gold: <span id="gold">100</span></div>
+      <div>Wave: <span id="wave">1</span></div>
+      <div>Score: <span id="score">0</span></div>
+    </div>
+    
+    <div id="controls">
+      <h3>Towers</h3>
+      <button id="basicTower" class="tower-btn">Basic Tower ($50)</button>
+      <button id="sniperTower" class="tower-btn">Sniper Tower ($100)</button>
+      <button id="aoeTower" class="tower-btn">AoE Tower ($150)</button>
+      <button id="slowTower" class="tower-btn">Slow Tower ($75)</button>
+      
+      <div class="control-group">
+        <button id="startWave">Start Wave</button>
+        <button id="speedUp">Speed Up</button>
       </div>
       
-      <div class="player-stats">
-        <div class="stat-item">
-          <span class="stat-label">Silver:</span>
-          <span id="silver-amount" class="stat-value">0</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Towers Unlocked:</span>
-          <span id="towers-unlocked" class="stat-value">1/12</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">High Score:</span>
-          <span id="high-score" class="stat-value">0</span>
-        </div>
+      <div class="control-group">
+        <label>
+          <input type="checkbox" id="showRange">
+          Show Tower Range
+        </label>
       </div>
     </div>
     
-    <!-- Map Selection Modal -->
-    <div id="map-selection-modal" class="modal">
+    <div id="game-over" class="modal">
       <div class="modal-content">
-        <div class="modal-header">
-          <h2>Select Map</h2>
-          <span class="close-btn" id="close-map-selection">&times;</span>
-        </div>
-        <div class="map-grid" id="map-selection-options">
-          <!-- Map options will be generated here -->
-        </div>
-        <div class="modal-footer">
-          <button id="start-game-btn" class="primary-btn">Start Game</button>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Tower Shop Modal -->
-    <div id="tower-shop-modal" class="modal">
-      <div class="modal-content shop-content">
-        <div class="modal-header">
-          <h2>Tower Shop</h2>
-          <span class="close-btn" id="close-tower-shop">&times;</span>
-        </div>
-        <div class="shop-grid" id="tower-shop-options">
-          <!-- Tower options will be generated here -->
-        </div>
-        <div class="modal-footer">
-          <div class="silver-display">
-            <span>Silver: </span>
-            <span id="shop-silver-amount">0</span>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Tower Upgrades Modal -->
-    <div id="tower-upgrades-modal" class="modal">
-      <div class="modal-content upgrades-content">
-        <div class="modal-header">
-          <h2>Tower Upgrades</h2>
-          <span class="close-btn" id="close-tower-upgrades">&times;</span>
-        </div>
-        <div class="upgrades-grid" id="tower-upgrades-options">
-          <!-- Tower upgrade options will be generated here -->
-        </div>
-        <div class="modal-footer">
-          <div class="silver-display">
-            <span>Silver: </span>
-            <span id="upgrades-silver-amount">0</span>
-          </div>
-        </div>
+        <h2>Game Over</h2>
+        <p>Your final score: <span id="final-score">0</span></p>
+        <button id="restart">Play Again</button>
       </div>
     </div>
   </div>
 
-  <!-- Load game scripts -->
-  <script src="js/towerData.js"></script>
-  <script src="js/playerData.js"></script>
-  <script src="js/menu.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/enemy.js"></script>
+  <script src="js/tower.js"></script>
+  <script src="js/projectile.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/main.js"></script>
 </body>
 </html>
