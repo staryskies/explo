@@ -39,11 +39,6 @@ function randomColor() {
   return `hsl(${randomInt(0, 360)}, ${randomInt(50, 100)}%, ${randomInt(40, 60)}%)`;
 }
 
-// Format number with commas
-function formatNumber(num) {
-  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
-
 // Ease in-out function for smooth animations
 function easeInOut(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;

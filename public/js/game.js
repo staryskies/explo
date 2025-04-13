@@ -585,12 +585,13 @@ class Game {
     document.getElementById('lives').textContent = this.lives;
     document.getElementById('gold').textContent = formatNumber(this.gold);
     document.getElementById('wave').textContent = this.wave;
-    document.getElementById('wave-display').textContent = this.wave;
     document.getElementById('score').textContent = formatNumber(this.score);
 
     // Update wave display with infinite mode indicator if applicable
     if (this.isInfiniteMode) {
-      document.getElementById('wave-counter').innerHTML = 'Infinite Mode: Wave <span id="wave-display">' + this.wave + '</span>';
+      document.getElementById('wave-counter').innerHTML = 'Infinite Mode: Wave <span id="wave">' + this.wave + '</span>';
+    } else {
+      document.getElementById('wave-counter').innerHTML = 'Wave: <span id="wave">' + this.wave + '</span>';
     }
   }
 
