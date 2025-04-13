@@ -47,8 +47,16 @@ class Game {
     // Initialize event listeners
     this.initEventListeners();
 
+    // Initialize upgrade system
+    this.initializeUpgradeSystem();
+
     // Update UI
     this.updateUI();
+
+    // Draw the initial map
+    this.draw();
+
+    console.log('Game initialized, map should be visible');
   }
 
   // Initialize event listeners
@@ -65,20 +73,13 @@ class Game {
     });
 
     // Tower selection buttons
-    document.getElementById('basicTower').addEventListener('click', () => {
-      this.selectTowerType('basic');
-    });
-
-    document.getElementById('sniperTower').addEventListener('click', () => {
-      this.selectTowerType('sniper');
-    });
-
-    document.getElementById('aoeTower').addEventListener('click', () => {
-      this.selectTowerType('aoe');
-    });
-
-    document.getElementById('slowTower').addEventListener('click', () => {
-      this.selectTowerType('slow');
+    document.querySelectorAll('.tower-btn').forEach(button => {
+      button.addEventListener('click', (e) => {
+        const towerType = e.target.dataset.type;
+        if (towerType) {
+          this.selectTowerType(towerType);
+        }
+      });
     });
 
     // Start wave button
@@ -112,8 +113,19 @@ class Game {
 
   // Resize canvas to fit window
   resizeCanvas() {
+    console.log('Resizing canvas...');
+    // Set canvas dimensions
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
+
+    // Log the new dimensions
+    console.log(`Canvas resized to ${this.canvas.width}x${this.canvas.height}`);
+
+    // If map exists, resize it too
+    if (this.map) {
+      this.map.resize();
+      console.log('Map resized');
+    }
   }
 
   // Select tower type for placement
@@ -123,10 +135,17 @@ class Game {
       btn.classList.remove('selected');
     });
 
+    // If clicking the same tower type, deselect it
+    if (this.selectedTowerType === type) {
+      this.selectedTowerType = null;
+      return;
+    }
+
     // Check if player has enough gold
     const towerCost = this.getTowerCost(type);
     if (this.gold < towerCost) {
       // Not enough gold, show feedback
+      console.log(`Not enough gold for ${type} tower. Need ${towerCost}, have ${this.gold}`);
       return;
     }
 
@@ -137,17 +156,21 @@ class Game {
 
   // Get tower cost based on type
   getTowerCost(type) {
-    const costs = {
-      'basic': 50,
-      'sniper': 100,
-      'aoe': 150,
-      'slow': 75
-    };
-    return costs[type] || 50;
+    // Get cost from towerStats
+    return towerStats[type]?.persistentCost || 50;
   }
 
-  // Place a tower at the given coordinates
+  // Place a tower at the given coordinates or select a tower for upgrade
   placeTower(x, y) {
+    // Check if we're clicking on an existing tower for upgrade
+    const clickedTower = this.getTowerAtPosition(x, y);
+    if (clickedTower) {
+      // Select the tower for upgrade
+      this.selectTowerForUpgrade(clickedTower);
+      return;
+    }
+
+    // If no tower type is selected, do nothing
     if (!this.selectedTowerType) return;
 
     // Convert pixel coordinates to grid coordinates
@@ -160,6 +183,7 @@ class Game {
 
       // Check if player has enough gold
       if (this.gold < towerCost) {
+        console.log(`Not enough gold to place tower. Need ${towerCost}, have ${this.gold}`);
         return;
       }
 
@@ -178,7 +202,23 @@ class Game {
 
       // Update UI
       this.updateUI();
+
+      console.log(`Placed ${this.selectedTowerType} tower at (${gridPos.x}, ${gridPos.y})`);
+    } else {
+      console.log('Cannot place tower here');
     }
+  }
+
+  // Get a tower at the given position
+  getTowerAtPosition(x, y) {
+    // Check if the click is on a tower
+    for (const tower of this.towers) {
+      const distance = Math.sqrt(Math.pow(tower.x - x, 2) + Math.pow(tower.y - y, 2));
+      if (distance <= 25) { // Tower radius for clicking
+        return tower;
+      }
+    }
+    return null;
   }
 
   // Toggle game speed
@@ -346,8 +386,15 @@ class Game {
     // Clear canvas
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Draw map
+    // Draw map - always draw the map regardless of game state
+    console.log('Drawing map...');
     this.map.draw();
+
+    // If the game hasn't started yet, we can return after drawing the map
+    // This ensures the map is visible even before the game starts
+    if (!this.gameStarted && !this.selectedTowerType) {
+      return;
+    }
 
     // Draw enemies
     this.enemies.forEach(enemy => {

@@ -18,14 +18,35 @@ document.addEventListener('DOMContentLoaded', () => {
   // Create the game instance
   const game = new Game(canvas);
 
+  // Force canvas resize to ensure proper dimensions
+  game.resizeCanvas();
+
+  // Force map initialization
+  if (game.map) {
+    game.map.initializeGrid();
+    game.map.generatePath();
+    game.map.findBuildableTiles();
+    console.log('Map forcefully initialized');
+  }
+
+  // Force initial draw to show the map immediately
+  game.draw();
+
+  // Start the game loop immediately with a low-priority timeout
+  setTimeout(() => {
+    // Start the animation loop with the current time
+    window.requestAnimationFrame((time) => game.gameLoop(time));
+    console.log('Game loop started');
+  }, 100);
+
   // Handle mouse move for tower placement preview
   canvas.addEventListener('mousemove', (e) => {
     // Track mouse position
     game.trackMouseMovement(e);
 
-    // The preview is drawn in the game's draw method
-    // We just need to trigger a redraw
-    if (game.selectedTowerType) {
+    // Always redraw on mouse move to ensure the map is visible
+    // This is especially important before the game loop starts
+    if (!game.gameStarted) {
       game.draw();
     }
   });
@@ -79,7 +100,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Handle window resize
   window.addEventListener('resize', () => {
-    // Resize is handled in the Game class
+    // Resize the canvas and redraw
+    game.resizeCanvas();
+    game.draw();
+    console.log('Window resized, canvas updated');
   });
 
   // Handle canvas click for tower placement
