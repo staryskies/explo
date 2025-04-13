@@ -27,6 +27,16 @@ document.addEventListener('DOMContentLoaded', () => {
   createStars();
 });
 
+// Helper function to check if a tower is unlocked
+function isTowerUnlocked(towerType) {
+  return playerData.unlockedTowers.includes(towerType);
+}
+
+// Helper function to check if a tower variant is unlocked
+function isVariantUnlocked(towerType, variant) {
+  return playerData.towerVariants[towerType]?.includes(variant);
+}
+
 // Create animated stars in the background
 function createStars() {
   const container = document.getElementById('main-menu-container');
@@ -518,10 +528,10 @@ function generateShopOptions() {
 
     // Add tower details
     const towerName = document.createElement('h3');
-    towerName.textContent = towerStats[towerType].name;
+    towerName.textContent = towerStats[towerType]?.name || towerType.charAt(0).toUpperCase() + towerType.slice(1);
 
     const towerDesc = document.createElement('p');
-    towerDesc.textContent = towerStats[towerType].description;
+    towerDesc.textContent = towerStats[towerType]?.description || `A powerful ${towerType} tower`;
 
     const towerPrice = document.createElement('span');
     towerPrice.className = 'price';
@@ -831,10 +841,11 @@ function generateUpgradeOptions() {
 
       // Add variant details
       const variantName = document.createElement('h3');
-      variantName.textContent = `${variant.charAt(0).toUpperCase() + variant.slice(1)} ${towerStats[towerType].name}`;
+      const towerDisplayName = towerStats[towerType]?.name || towerType.charAt(0).toUpperCase() + towerType.slice(1);
+      variantName.textContent = `${variant.charAt(0).toUpperCase() + variant.slice(1)} ${towerDisplayName}`;
 
       const variantDesc = document.createElement('p');
-      variantDesc.textContent = `Special ${variant} variant of the ${towerStats[towerType].name}`;
+      variantDesc.textContent = `Special ${variant} variant of the ${towerDisplayName}`;
 
       const variantPrice = document.createElement('span');
       variantPrice.className = 'price';
