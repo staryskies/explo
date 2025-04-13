@@ -598,7 +598,7 @@ class Game {
 
   // Frame rate control variables
   lastFrameTime = 0;
-  targetFPS = 30; // Lower FPS for slower gameplay
+  targetFPS = 15; // Very low FPS for much slower gameplay
   frameInterval = 1000 / this.targetFPS;
 
   // Game loop
