@@ -445,7 +445,7 @@ class GameMap {
 
   // Draw the map
   draw() {
-    console.log(`Drawing map: ${this.gridWidth}x${this.gridHeight} grid`);
+
 
     // Check if canvas and context are valid
     if (!this.canvas || !this.ctx) {
