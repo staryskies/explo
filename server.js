@@ -13,20 +13,6 @@ const helmet = require('helmet');
 const app = express();
 const server = http.createServer(app);
 
-// Security middleware
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-      imgSrc: ["'self'", 'data:'],
-      connectSrc: ["'self'", 'wss:', 'ws:']
-    }
-  }
-}));
-
 // Enable CORS
 app.use(cors());
 
@@ -36,10 +22,38 @@ app.use(compression());
 // Parse JSON bodies
 app.use(express.json());
 
-// Serve static files from the public directory with caching
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
+// Serve static files from the public directory with proper MIME types and caching
 app.use(express.static(path.join(__dirname, 'public'), {
   maxAge: '1d',
-  etag: true
+  etag: true,
+  setHeaders: (res, path) => {
+    // Set proper MIME types for JavaScript files
+    if (path.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    }
+  }
+}));
+
+// Security middleware with relaxed CSP for development
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://explo-98bi.onrender.com'],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+      imgSrc: ["'self'", 'data:'],
+      connectSrc: ["'self'", 'wss:', 'ws:', 'https://explo-98bi.onrender.com', 'wss://explo-98bi.onrender.com']
+    }
+  },
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
 }));
 
 // Health check endpoint for monitoring
@@ -55,9 +69,17 @@ app.get('/', (req, res) => {
 // Initialize Socket.IO with CORS settings
 const io = socketIo(server, {
   cors: {
-    origin: process.env.NODE_ENV === 'production' ? false : '*',
-    methods: ['GET', 'POST']
-  }
+    origin: '*', // Allow all origins for now
+    methods: ['GET', 'POST'],
+    credentials: true
+  },
+  transports: ['websocket', 'polling']
+});
+
+// Serve socket.io client library explicitly
+app.get('/socket.io/socket.io.js', (req, res) => {
+  res.setHeader('Content-Type', 'application/javascript');
+  res.sendFile(require.resolve('socket.io/client-dist/socket.io.js'));
 });
 
 // Socket.io connection handling
@@ -80,7 +102,14 @@ app.use((err, req, res, next) => {
 
 // Handle 404 errors
 app.use((req, res) => {
-  res.status(404).sendFile(path.join(__dirname, 'public', 'index.html'));
+  // Check if the request is for a JavaScript file
+  if (req.path.endsWith('.js')) {
+    res.status(404).type('application/javascript').send('console.error("File not found: ' + req.path + '");');
+  } else if (req.accepts('html')) {
+    res.status(404).sendFile(path.join(__dirname, 'public', 'index.html'));
+  } else {
+    res.status(404).send('Not found');
+  }
 });
 
 // Start the server

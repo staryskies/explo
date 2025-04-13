@@ -1,13 +1,23 @@
 /**
  * Main entry point for the tower defense game
  */
+// Add global debugging
+window.DEBUG = true;
+
+// Add a global error handler
+window.onerror = function(message, source, lineno, colno, error) {
+  console.error('Global error:', message, 'at', source, lineno, colno, error);
+  return false;
+};
+
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('DOM loaded, initializing game...');
   // Get the canvas element
   const canvas = document.getElementById('gameCanvas');
-  
+
   // Create the game instance
   const game = new Game(canvas);
-  
+
   // Handle mouse move for tower placement preview
   canvas.addEventListener('mousemove', (e) => {
     // The preview is drawn in the game's draw method
@@ -16,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
       game.draw();
     }
   });
-  
+
   // Handle keyboard shortcuts
   document.addEventListener('keydown', (e) => {
     switch (e.key) {
@@ -60,18 +70,41 @@ document.addEventListener('DOMContentLoaded', () => {
         break;
     }
   });
-  
-  // Connect to socket.io
-  const socket = io();
-  
-  socket.on('connect', () => {
-    console.log('Connected to server');
-  });
-  
+
+  // Connect to socket.io with error handling
+  let socket;
+  try {
+    // Try to connect with explicit URL and options
+    socket = io(window.location.origin, {
+      transports: ['websocket', 'polling'],
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      timeout: 20000
+    });
+
+    socket.on('connect', () => {
+      console.log('Connected to server');
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Socket.IO connection error:', error);
+    });
+
+    socket.on('error', (error) => {
+      console.error('Socket.IO error:', error);
+    });
+  } catch (error) {
+    console.error('Failed to initialize Socket.IO:', error);
+    // Game can still run without Socket.IO
+  }
+
   // You can add more socket events for multiplayer features later
-  
+
   // Handle window resize
   window.addEventListener('resize', () => {
     // Resize is handled in the Game class
   });
+
+  // Log that initialization is complete
+  console.log('Game initialized successfully');
 });

@@ -12,14 +12,14 @@ class Enemy {
     this.reachedEnd = false;
     this.slowEffect = 1; // 1 = normal speed, < 1 = slowed
     this.slowDuration = 0;
-    
+
     // Set properties based on enemy type
     this.setPropertiesByType();
-    
+
     // Calculate direction to the next point
     this.calculateDirection();
   }
-  
+
   // Set enemy properties based on type
   setPropertiesByType() {
     switch (this.type) {
@@ -67,7 +67,7 @@ class Enemy {
         break;
     }
   }
-  
+
   // Calculate direction to the next point in the path
   calculateDirection() {
     if (this.pathIndex < this.path.length - 1) {
@@ -75,7 +75,7 @@ class Enemy {
       const dx = nextPoint.x - this.x;
       const dy = nextPoint.y - this.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
-      
+
       this.dirX = dx / distance;
       this.dirY = dy / distance;
     } else {
@@ -83,11 +83,11 @@ class Enemy {
       this.dirY = 0;
     }
   }
-  
+
   // Update enemy position and state
   update(deltaTime) {
     if (!this.alive) return;
-    
+
     // Update slow effect duration
     if (this.slowDuration > 0) {
       this.slowDuration -= deltaTime;
@@ -95,23 +95,27 @@ class Enemy {
         this.slowEffect = 1; // Reset to normal speed
       }
     }
-    
+
+    // Calculate actual speed based on deltaTime (convert to pixels per frame)
+    // deltaTime is in milliseconds, so divide by 1000 to get seconds
+    const timeScale = deltaTime / 1000;
+    const actualSpeed = this.speed * this.slowEffect * timeScale * 60; // Scale for 60fps
+
     // Move along the path
-    const actualSpeed = this.speed * this.slowEffect;
     this.x += this.dirX * actualSpeed;
     this.y += this.dirY * actualSpeed;
-    
+
     // Check if reached the next point in the path
     if (this.pathIndex < this.path.length - 1) {
       const nextPoint = this.path[this.pathIndex + 1];
       const distanceToNext = distance(this.x, this.y, nextPoint.x, nextPoint.y);
-      
+
       if (distanceToNext < actualSpeed) {
         // Reached the next point
         this.x = nextPoint.x;
         this.y = nextPoint.y;
         this.pathIndex++;
-        
+
         // Calculate new direction if not at the end
         if (this.pathIndex < this.path.length - 1) {
           this.calculateDirection();
@@ -123,7 +127,7 @@ class Enemy {
       }
     }
   }
-  
+
   // Take damage from towers
   takeDamage(amount) {
     this.health -= amount;
@@ -134,7 +138,7 @@ class Enemy {
     }
     return false; // Enemy still alive
   }
-  
+
   // Apply slow effect
   applySlowEffect(slowFactor, duration) {
     // Only apply if the new slow is stronger or extends the duration
@@ -143,27 +147,27 @@ class Enemy {
       this.slowDuration = duration;
     }
   }
-  
+
   // Draw the enemy
   draw(ctx) {
     if (!this.alive) return;
-    
+
     // Draw enemy body
     ctx.fillStyle = this.color;
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
     ctx.fill();
-    
+
     // Draw border
     ctx.strokeStyle = '#000';
     ctx.lineWidth = 2;
     ctx.stroke();
-    
+
     // Draw health bar
     const healthBarWidth = this.size * 2;
     const healthBarHeight = 6;
     const healthPercentage = this.health / this.maxHealth;
-    
+
     ctx.fillStyle = '#333';
     ctx.fillRect(
       this.x - healthBarWidth / 2,
@@ -171,7 +175,7 @@ class Enemy {
       healthBarWidth,
       healthBarHeight
     );
-    
+
     // Health color based on percentage
     let healthColor;
     if (healthPercentage > 0.6) {
@@ -181,7 +185,7 @@ class Enemy {
     } else {
       healthColor = '#F44336'; // Red
     }
-    
+
     ctx.fillStyle = healthColor;
     ctx.fillRect(
       this.x - healthBarWidth / 2,
@@ -189,7 +193,7 @@ class Enemy {
       healthBarWidth * healthPercentage,
       healthBarHeight
     );
-    
+
     // Draw slow effect indicator if slowed
     if (this.slowEffect < 1) {
       ctx.fillStyle = 'rgba(0, 149, 255, 0.5)';
@@ -197,7 +201,7 @@ class Enemy {
       ctx.arc(this.x, this.y, this.size + 5, 0, Math.PI * 2);
       ctx.fill();
     }
-    
+
     // Draw enemy type indicator
     if (this.flying) {
       // Draw wings for flying enemies
@@ -213,7 +217,7 @@ class Enemy {
         Math.PI * 2
       );
       ctx.fill();
-      
+
       ctx.beginPath();
       ctx.ellipse(
         this.x + this.size / 2,
@@ -226,7 +230,7 @@ class Enemy {
       );
       ctx.fill();
     }
-    
+
     // Draw special indicator for boss enemies
     if (this.type === 'boss') {
       ctx.fillStyle = '#FFEB3B';
