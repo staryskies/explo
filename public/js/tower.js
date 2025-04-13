@@ -524,9 +524,70 @@ class Tower {
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
 
-    // Tower body
-    ctx.fillStyle = this.color;
-    ctx.fillRect(-8, -25, 16, 25);
+    // Tower body based on type
+    switch(this.type) {
+      case 'basic':
+        // Basic tower - simple rectangle
+        ctx.fillStyle = this.color;
+        ctx.fillRect(-8, -25, 16, 25);
+        break;
+      case 'archer':
+        // Archer tower - bow shape
+        ctx.fillStyle = this.color;
+        ctx.fillRect(-8, -25, 16, 25);
+        // Draw bow
+        ctx.strokeStyle = '#8D6E63';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, -15, 10, Math.PI * 0.25, Math.PI * 0.75, false);
+        ctx.stroke();
+        // Draw string
+        ctx.beginPath();
+        ctx.moveTo(7, -18);
+        ctx.lineTo(-7, -18);
+        ctx.stroke();
+        break;
+      case 'cannon':
+        // Cannon tower - circular with barrel
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(0, -10, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(-6, -25, 12, 15);
+        break;
+      case 'sniper':
+        // Sniper tower - long thin barrel
+        ctx.fillStyle = this.color;
+        ctx.fillRect(-4, -35, 8, 35);
+        // Scope
+        ctx.fillStyle = '#333';
+        ctx.beginPath();
+        ctx.arc(0, -25, 6, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      case 'freeze':
+        // Freeze tower - snowflake pattern
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(0, -15, 15, 0, Math.PI * 2);
+        ctx.fill();
+        // Snowflake pattern
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 6; i++) {
+          ctx.beginPath();
+          ctx.moveTo(0, -15);
+          ctx.lineTo(0, -30);
+          ctx.stroke();
+          ctx.rotate(Math.PI / 3);
+        }
+        break;
+      default:
+        // Default tower shape
+        ctx.fillStyle = this.color;
+        ctx.fillRect(-8, -25, 16, 25);
+        break;
+    }
 
     // Tower head
     ctx.beginPath();

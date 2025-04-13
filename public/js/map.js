@@ -506,12 +506,89 @@ class GameMap {
     for (let y = 0; y < this.gridHeight; y++) {
       for (let x = 0; x < this.gridWidth; x++) {
         const tileType = this.grid[y][x];
+        const tileX = x * this.tileSize;
+        const tileY = y * this.tileSize;
+
+        // Fill the tile with base color
         this.ctx.fillStyle = this.tileColors[tileType];
-        this.ctx.fillRect(x * this.tileSize, y * this.tileSize, this.tileSize, this.tileSize);
+        this.ctx.fillRect(tileX, tileY, this.tileSize, this.tileSize);
+
+        // Add texture details based on tile type
+        switch(tileType) {
+          case this.TILE_TYPES.GRASS:
+            // Add grass texture
+            this.ctx.fillStyle = 'rgba(0, 180, 0, 0.2)';
+            for (let i = 0; i < 5; i++) {
+              const grassX = tileX + Math.random() * this.tileSize;
+              const grassY = tileY + Math.random() * this.tileSize;
+              const size = 2 + Math.random() * 3;
+              this.ctx.beginPath();
+              this.ctx.arc(grassX, grassY, size, 0, Math.PI * 2);
+              this.ctx.fill();
+            }
+            break;
+
+          case this.TILE_TYPES.PATH:
+            // Add path texture
+            this.ctx.strokeStyle = 'rgba(150, 100, 50, 0.3)';
+            this.ctx.lineWidth = 1;
+
+            // Draw horizontal lines
+            for (let i = 0; i < 3; i++) {
+              const pathY = tileY + (i + 1) * (this.tileSize / 4);
+              this.ctx.beginPath();
+              this.ctx.moveTo(tileX, pathY);
+              this.ctx.lineTo(tileX + this.tileSize, pathY);
+              this.ctx.stroke();
+            }
+            break;
+
+          case this.TILE_TYPES.WATER:
+            // Add water texture
+            this.ctx.fillStyle = 'rgba(100, 200, 255, 0.3)';
+            for (let i = 0; i < 3; i++) {
+              const waveY = tileY + (i + 1) * (this.tileSize / 4);
+              this.ctx.beginPath();
+              this.ctx.moveTo(tileX, waveY);
+
+              // Create wavy pattern
+              for (let x = 0; x <= this.tileSize; x += 5) {
+                const height = Math.sin(x / 10 + i) * 2;
+                this.ctx.lineTo(tileX + x, waveY + height);
+              }
+
+              this.ctx.stroke();
+            }
+            break;
+
+          case this.TILE_TYPES.WALL:
+            // Add wall texture
+            this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+            this.ctx.lineWidth = 1;
+
+            // Draw brick pattern
+            for (let i = 0; i < 4; i++) {
+              const brickY = tileY + i * (this.tileSize / 4);
+              this.ctx.beginPath();
+              this.ctx.moveTo(tileX, brickY);
+              this.ctx.lineTo(tileX + this.tileSize, brickY);
+              this.ctx.stroke();
+
+              const offset = (i % 2) * (this.tileSize / 2);
+              for (let j = 0; j < 2; j++) {
+                const brickX = tileX + offset + j * (this.tileSize / 2);
+                this.ctx.beginPath();
+                this.ctx.moveTo(brickX, brickY);
+                this.ctx.lineTo(brickX, brickY + (this.tileSize / 4));
+                this.ctx.stroke();
+              }
+            }
+            break;
+        }
 
         // Draw grid lines
         this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
-        this.ctx.strokeRect(x * this.tileSize, y * this.tileSize, this.tileSize, this.tileSize);
+        this.ctx.strokeRect(tileX, tileY, this.tileSize, this.tileSize);
       }
     }
 

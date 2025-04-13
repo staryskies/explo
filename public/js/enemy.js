@@ -279,6 +279,16 @@ class Enemy {
     ctx.lineWidth = 2;
     ctx.stroke();
 
+    // Add enemy type indicator
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 12px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Show first letter of enemy type
+    const typeIndicator = this.type.charAt(0).toUpperCase();
+    ctx.fillText(typeIndicator, this.x, this.y);
+
     // Draw health bar
     const healthBarWidth = this.size * 2;
     const healthBarHeight = 6;
@@ -292,13 +302,8 @@ class Enemy {
       healthBarHeight
     );
 
-    // Health color based on enemy type
-    let healthBarClass = 'health-bar-normal';
-    if (this.isBoss) {
-      healthBarClass = 'health-bar-boss';
-    } else if (this.type && enemyTypes && enemyTypes[this.type]) {
-      healthBarClass = `health-bar-${this.type}`;
-    }
+    // Health color based on enemy type - directly use colors instead of classes
+    // We'll determine the color directly in the code
 
     // Fallback colors based on health percentage
     let healthColor;
