@@ -15,8 +15,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // Get the canvas element
   const canvas = document.getElementById('gameCanvas');
 
-  // Create the game instance
-  const game = new Game(canvas);
+  // Get selected map from session storage
+  const selectedMapId = sessionStorage.getItem('selectedMap') || 'classic';
+  console.log(`Selected map: ${selectedMapId}`);
+
+  // Find the map template
+  const selectedMapTemplate = mapTemplates.find(map => map.id === selectedMapId) || mapTemplates[0];
+
+  // Create the game instance with the selected map
+  const game = new Game(canvas, selectedMapTemplate);
 
   // Force canvas resize to ensure proper dimensions
   game.resizeCanvas();
@@ -28,6 +35,14 @@ document.addEventListener('DOMContentLoaded', () => {
     game.map.findBuildableTiles();
     console.log('Map forcefully initialized');
   }
+
+  // Load player data to get unlocked towers
+  if (typeof loadPlayerData === 'function') {
+    loadPlayerData();
+  }
+
+  // Update available towers based on unlocked status
+  updateAvailableTowers(game);
 
   // Initialize infinite mode
   game.initializeInfiniteMode();
@@ -125,4 +140,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Log that initialization is complete
   console.log('Game initialized successfully');
+
+  // Add restart button event listener
+  document.getElementById('restart').addEventListener('click', () => {
+    location.reload();
+  });
+
+  // Add return to menu button event listener
+  document.getElementById('return-to-menu').addEventListener('click', () => {
+    window.location.href = 'index.html';
+  });
 });
+
+// Update available towers based on player's unlocked towers
+function updateAvailableTowers(game) {
+  // Skip if playerData is not available
+  if (typeof playerData === 'undefined') return;
+
+  // Get all tower buttons
+  const towerButtons = document.querySelectorAll('.tower-btn');
+
+  // Disable buttons for towers that are not unlocked
+  towerButtons.forEach(button => {
+    const towerType = button.dataset.type;
+    if (!playerData.unlockedTowers.includes(towerType)) {
+      button.disabled = true;
+      button.title = 'Unlock this tower in the shop';
+      button.style.opacity = '0.5';
+    } else {
+      // If tower is unlocked, check if there's a selected variant
+      const selectedVariant = playerData.selectedVariants[towerType];
+      if (selectedVariant && selectedVariant !== towerType) {
+        // Update button text to show variant
+        const variantName = selectedVariant.charAt(0).toUpperCase() + selectedVariant.slice(1);
+        button.innerHTML = `${variantName}<br>${button.textContent.split('<')[0]}<span class="tower-cost">${button.querySelector('.tower-cost').textContent}</span>`;
+      }
+    }
+  });
+}

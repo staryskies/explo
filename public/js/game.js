@@ -2,7 +2,7 @@
  * Game class for the tower defense game
  */
 class Game {
-  constructor(canvas) {
+  constructor(canvas, mapTemplate = null) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
 
@@ -16,11 +16,14 @@ class Game {
     this.speedMultiplier = 1;
 
     // Game objects
-    this.map = new GameMap(canvas, this.ctx);
+    this.map = new GameMap(canvas, this.ctx, mapTemplate);
     this.towers = [];
     this.enemies = [];
     this.projectiles = [];
     this.effects = [];
+
+    // Silver earned in this game (permanent currency)
+    this.silverEarned = 0;
 
     // Player stats
     this.lives = 10;
@@ -34,7 +37,7 @@ class Game {
     this.enemiesKilled = 0;
     this.enemiesLeaked = 0;
     this.totalEnemiesInWave = 0;
-    this.spawnInterval = 3.0; // seconds - increased to make enemies spawn slower
+    this.spawnInterval = 15.0; // seconds - increased to make enemies spawn slower
     this.timeSinceLastSpawn = 0;
 
     // Tower placement
@@ -190,8 +193,8 @@ class Game {
       // Convert grid coordinates to pixel coordinates (center of tile)
       const pixelPos = this.map.gridToPixel(gridPos.x, gridPos.y);
 
-      // Create the tower
-      const tower = new Tower(pixelPos.x, pixelPos.y, this.selectedTowerType);
+      // Create the tower with grid coordinates
+      const tower = new Tower(pixelPos.x, pixelPos.y, this.selectedTowerType, gridPos.x, gridPos.y);
       this.towers.push(tower);
 
       // Mark the tile as occupied
@@ -324,9 +327,27 @@ class Game {
         // Check if game over
         if (this.lives <= 0) {
           this.gameOver = true;
+
+          // Calculate silver earned (10% of score + 5 per wave completed)
+          this.silverEarned = Math.floor(this.score * 0.1) + (this.wave * 5);
+
+          // Update player data if available
+          if (typeof addSilver === 'function') {
+            addSilver(this.silverEarned);
+            updateHighScore(this.score);
+          }
+
+          // Show game over screen
           document.getElementById('game-over').classList.add('active');
           document.getElementById('final-score').textContent = formatNumber(this.score);
-          console.log(`Game over! Final score: ${this.score}`);
+
+          // Add silver earned to game over screen
+          const silverElement = document.getElementById('silver-earned');
+          if (silverElement) {
+            silverElement.textContent = this.silverEarned;
+          }
+
+          console.log(`Game over! Final score: ${this.score}, Silver earned: ${this.silverEarned}`);
         }
       }
     });
@@ -390,10 +411,22 @@ class Game {
       this.gold += waveBonus;
 
       // Update UI
-      document.getElementById('startWave').textContent = 'Start Wave';
+      document.getElementById('startWave').textContent = 'Next Wave in 3s...';
 
       // Update UI
       this.updateUI();
+
+      // Auto-start next wave after 3 seconds (but not for the first wave)
+      if (this.wave > 1) {
+        console.log(`Wave ${this.wave-1} complete. Next wave starting in 3 seconds...`);
+        setTimeout(() => {
+          if (!this.gameOver && !this.waveInProgress) {
+            this.startWave();
+          }
+        }, 3000);
+      } else {
+        document.getElementById('startWave').textContent = 'Start Wave';
+      }
     }
 
     // Update UI

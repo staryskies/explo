@@ -5,9 +5,11 @@
 console.log('Tower class loaded');
 
 class Tower {
-  constructor(x, y, type = 'basic') {
+  constructor(x, y, type = 'basic', gridX, gridY) {
     this.x = x;
     this.y = y;
+    this.gridX = gridX; // Store grid coordinates for tower removal
+    this.gridY = gridY;
     this.type = type;
     this.level = 1;
     this.target = null;

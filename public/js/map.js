@@ -456,6 +456,18 @@ class GameMap {
     return false;
   }
 
+  // Remove a tower and mark the tile as grass again
+  removeTower(gridX, gridY) {
+    if (gridX >= 0 && gridX < this.gridWidth && gridY >= 0 && gridY < this.gridHeight) {
+      if (this.grid[gridY][gridX] === this.TILE_TYPES.OCCUPIED) {
+        this.grid[gridY][gridX] = this.TILE_TYPES.GRASS;
+        console.log(`Tile at (${gridX}, ${gridY}) marked as grass again`);
+        return true;
+      }
+    }
+    return false;
+  }
+
   // Convert pixel coordinates to grid coordinates
   pixelToGrid(x, y) {
     return {

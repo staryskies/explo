@@ -113,20 +113,20 @@ const enemyTypes = {
 const bossTypes = {
   megaTank: {
     name: "Mega Tank",
-    baseHealth: 1000,
-    speed: 0.6,
-    reward: 200,
-    damage: 5,
+    baseHealth: 500, // Reduced from 1000 to make it easier in early waves
+    speed: 0.7, // Slightly faster
+    reward: 250, // Increased reward
+    damage: 4, // Reduced damage
     color: '#263238',
     size: 45,
     flying: false,
-    armor: 0.7,
+    armor: 0.5, // Reduced armor from 0.7
     abilities: [
       {
         name: "Regeneration",
-        effect: "Regenerates 10 health per second",
-        healAmount: 10,
-        interval: 1
+        effect: "Regenerates health over time",
+        healAmount: 5, // Reduced from 10
+        interval: 2 // Increased from 1 (less frequent healing)
       }
     ]
   },
