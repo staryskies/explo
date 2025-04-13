@@ -1,9 +1,9 @@
 body {
   margin: 0;
   padding: 0;
-  background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+  background: linear-gradient(135deg, #1e3c72, #2a5298);
   font-family: 'Roboto', sans-serif;
-  color: #333;
+  color: #fff;
   overflow: hidden;
   display: flex;
   justify-content: center;
@@ -18,9 +18,9 @@ body {
   max-width: 1920px;
   max-height: 1080px;
   overflow: hidden;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
   border-radius: 10px;
-  background: #f0f2f5;
+  background: #000;
 }
 
 #gameCanvas {
@@ -30,53 +30,27 @@ body {
   margin-left: 250px; /* Match sidebar width */
 }
 
-#wave-counter {
-  position: absolute;
-  top: 10px;
-  left: 0;
-  right: 0;
-  text-align: center;
-  z-index: 10;
-  font-size: 24px;
-  font-weight: 700;
-  color: #1976D2;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  margin-left: 250px; /* Match sidebar width */
-}
-
 #stats {
   position: absolute;
   top: 20px;
   left: 270px; /* Sidebar width (250px) + 20px margin */
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.7);
   padding: 15px 20px;
   border-radius: 10px;
   backdrop-filter: blur(5px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   z-index: 10;
   font-size: 16px;
   font-weight: 500;
   display: flex;
   gap: 15px;
-  color: #333;
-  border: 1px solid rgba(33, 150, 243, 0.3);
+  color: #534c4c;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 #stats span {
-  color: #1976D2;
+  color: #00e676;
   font-weight: 700;
-}
-
-@media (max-width: 768px) {
-  #wave-counter {
-    margin-left: 200px;
-  }
-}
-
-@media (max-width: 480px) {
-  #wave-counter {
-    margin-left: 180px;
-  }
 }
 
 #sidebar {
@@ -89,48 +63,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.7);
   padding: 10px;
   box-sizing: border-box;
-  overflow-y: auto; /* Make sidebar scrollable */
-  scrollbar-width: thin;
-  scrollbar-color: #ccc transparent;
-}
-
-#sidebar::-webkit-scrollbar {
-  width: 6px;
-}
-
-#sidebar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-#sidebar::-webkit-scrollbar-thumb {
-  background-color: #ccc;
-  border-radius: 6px;
-}
-
-/* Mobile styles */
-@media (max-width: 768px) {
-  #sidebar {
-    width: 200px;
-  }
-
-  #gameCanvas {
-    width: calc(100% - 200px);
-    margin-left: 200px;
-  }
-}
-
-@media (max-width: 480px) {
-  #sidebar {
-    width: 180px;
-  }
-
-  #gameCanvas {
-    width: calc(100% - 180px);
-    margin-left: 180px;
-  }
 }
 
 #fixed-controls {
@@ -141,21 +76,13 @@ body {
   gap: 10px;
 }
 
-#tower-buttons {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  overflow-y: auto;
-  padding-right: 5px;
-  max-height: calc(100vh - 200px);
-}
-
 #tower-container {
   background: transparent;
   padding: 10px 0;
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 #tower-container h3 {
@@ -176,7 +103,7 @@ body {
 
 .tower-btn, #fixed-controls button {
   padding: 10px 8px;
-  background: linear-gradient(45deg, #2196F3, #42A5F5);
+  background: linear-gradient(45deg, #ff6d00, #ff8f00);
   border: none;
   border-radius: 5px;
   color: #fff;
@@ -205,26 +132,26 @@ body {
   bottom: 5px;
   right: 5px;
   font-size: 10px;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(255, 191, 191, 0.5);
   padding: 2px 5px;
   border-radius: 10px;
-  color: #fff;
+  color: #FFEB3B;
 }
 
 .tower-btn:hover, #fixed-controls button:hover {
-  background: linear-gradient(45deg, #1E88E5, #64B5F6);
+  background: linear-gradient(45deg, #ff8f00, #ffab00);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .tower-btn:active, #fixed-controls button:active {
   transform: translateY(1px);
-  box-shadow: 0 1px 5px rgba(33, 150, 243, 0.2);
+  box-shadow: 0 1px 5px rgba(255, 215, 215, 0.2);
 }
 
 .tower-btn.selected {
-  background: linear-gradient(45deg, #0D47A1, #1976D2);
-  box-shadow: 0 0 10px rgba(25, 118, 210, 0.5);
+  background: linear-gradient(45deg, #00b0ff, #0091ea);
+  box-shadow: 0 0 10px rgba(0, 176, 255, 0.7);
 }
 
 /* Tower Upgrade Menu Styles */

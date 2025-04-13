@@ -4,11 +4,6 @@
 // Log that utils.js is loaded
 console.log('Utility functions loaded');
 
-// Format a number with commas for thousands
-function formatNumber(num) {
-  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
-
 // Calculate distance between two points
 function distance(x1, y1, x2, y2) {
   return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
@@ -32,6 +27,11 @@ function radToDeg(rad) {
 // Generate a random integer between min and max (inclusive)
 function randomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+// Format number with commas for thousands
+function formatNumber(num) {
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
 // Generate a random color

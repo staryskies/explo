@@ -25,6 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // Create the game instance with the selected map
   const game = new Game(canvas, selectedMapTemplate);
 
+  // Check if this is infinite mode
+  if (selectedMapTemplate.isInfiniteMode) {
+    console.log('Starting infinite mode');
+    game.isInfiniteMode = true;
+  }
+
   // Force canvas resize to ensure proper dimensions
   game.resizeCanvas();
 

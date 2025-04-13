@@ -14,6 +14,7 @@ class Game {
     this.gameOver = false;
     this.paused = false;
     this.speedMultiplier = 1;
+    this.isInfiniteMode = false;
 
     // Game objects
     this.map = new GameMap(canvas, this.ctx, mapTemplate);
@@ -245,7 +246,12 @@ class Game {
     this.enemiesLeaked = 0;
 
     // Calculate number of enemies based on wave (reduced for slower spawning)
-    this.totalEnemiesInWave = 5 + Math.floor(this.wave * 1.0);
+    if (this.isInfiniteMode) {
+      // Infinite mode has more enemies and they get stronger faster
+      this.totalEnemiesInWave = 8 + Math.floor(this.wave * 1.5);
+    } else {
+      this.totalEnemiesInWave = 5 + Math.floor(this.wave * 1.0);
+    }
 
     // Update UI
     document.getElementById('startWave').textContent = 'Wave in Progress...';
@@ -271,15 +277,32 @@ class Game {
     let enemyType = 'normal';
     const rand = Math.random();
 
-    if (this.wave >= 8 && this.enemiesSpawned === this.totalEnemiesInWave - 1) {
-      // Spawn a boss at the end of waves 8+ (reduced from 10)
-      enemyType = 'boss';
-    } else if (this.wave >= 4 && rand < 0.15) {
-      enemyType = 'tank';
-    } else if (this.wave >= 2 && rand < 0.25) {
-      enemyType = 'fast';
-    } else if (this.wave >= 6 && rand < 0.2) {
-      enemyType = 'flying';
+    if (this.isInfiniteMode) {
+      // Infinite mode has more varied and challenging enemies
+      if (this.wave >= 5 && this.enemiesSpawned === this.totalEnemiesInWave - 1) {
+        // Spawn a boss at the end of waves 5+ in infinite mode
+        enemyType = 'boss';
+      } else if (this.wave >= 3 && rand < 0.2) {
+        enemyType = 'tank';
+      } else if (this.wave >= 2 && rand < 0.3) {
+        enemyType = 'fast';
+      } else if (this.wave >= 4 && rand < 0.15) {
+        enemyType = 'flying';
+      } else if (this.wave >= 6 && rand < 0.1) {
+        enemyType = 'invisible';
+      }
+    } else {
+      // Normal mode enemy spawning
+      if (this.wave >= 8 && this.enemiesSpawned === this.totalEnemiesInWave - 1) {
+        // Spawn a boss at the end of waves 8+ (reduced from 10)
+        enemyType = 'boss';
+      } else if (this.wave >= 4 && rand < 0.15) {
+        enemyType = 'tank';
+      } else if (this.wave >= 2 && rand < 0.25) {
+        enemyType = 'fast';
+      } else if (this.wave >= 6 && rand < 0.2) {
+        enemyType = 'flying';
+      }
     }
 
     // Create the enemy
@@ -564,6 +587,11 @@ class Game {
     document.getElementById('wave').textContent = this.wave;
     document.getElementById('wave-display').textContent = this.wave;
     document.getElementById('score').textContent = formatNumber(this.score);
+
+    // Update wave display with infinite mode indicator if applicable
+    if (this.isInfiniteMode) {
+      document.getElementById('wave-counter').innerHTML = 'Infinite Mode: Wave <span id="wave-display">' + this.wave + '</span>';
+    }
   }
 
   // Resize canvas to fit the screen

@@ -4,22 +4,6 @@
 // Log that infiniteMode.js is loaded
 console.log('Infinite Mode loaded');
 
-// Initialize infinite mode based on map template
-Game.prototype.initializeInfiniteMode = function() {
-  // Check if the map template has infinite mode enabled
-  this.infiniteMode = this.map.mapTemplate && this.map.mapTemplate.infiniteMode === true;
-
-  // Store the current map template
-  this.currentMapTemplate = this.map.mapTemplate;
-
-  // Initialize infinite mode specific properties
-  if (this.infiniteMode) {
-    console.log('Initializing infinite mode');
-    this.waveManager = new InfiniteWaveManager(this);
-    this.defeatedBosses = [];
-  }
-};
-
 // Enemy types with their properties
 const enemyTypes = {
   normal: {

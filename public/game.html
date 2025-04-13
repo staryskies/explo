@@ -11,8 +11,6 @@
   <div id="game-container">
     <canvas id="gameCanvas"></canvas>
 
-    <div id="wave-counter">Wave <span id="wave-display">1</span></div>
-
     <div id="stats">
       <div>Lives: <span id="lives">10</span></div>
       <div>Gold: <span id="gold">100</span></div>
@@ -31,6 +29,10 @@
           <label>
             <input type="checkbox" id="showRange">
             Show Tower Range
+          </label>
+          <label>
+            <input type="checkbox" id="infiniteMode">
+            Infinite Mode
           </label>
         </div>
 
@@ -160,7 +162,6 @@
   </div>
 
   <!-- Load game scripts -->
-  <script src="js/utils.js"></script>
   <script src="js/towerData.js"></script>
   <script src="js/playerData.js"></script>
   <script src="js/map.js"></script>
