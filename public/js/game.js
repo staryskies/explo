@@ -387,7 +387,7 @@ class Game {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     // Draw map - always draw the map regardless of game state
-    console.log('Drawing map...');
+
     this.map.draw();
 
     // If the game hasn't started yet, we can return after drawing the map
