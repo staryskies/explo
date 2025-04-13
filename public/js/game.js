@@ -532,6 +532,18 @@ class Game {
     document.getElementById('score').textContent = formatNumber(this.score);
   }
 
+  // Resize canvas to fit the screen
+  resizeCanvas() {
+    const container = this.canvas.parentElement;
+    const sidebarWidth = 250; // Match the sidebar width
+
+    // Set canvas size to fit the container minus the sidebar width
+    this.canvas.width = Math.max(800, container.clientWidth - sidebarWidth);
+    this.canvas.height = Math.max(600, container.clientHeight);
+
+    console.log(`Canvas resized to ${this.canvas.width}x${this.canvas.height}`);
+  }
+
   // Game loop
   gameLoop(currentTime) {
     // Request the next frame first to ensure smooth animation

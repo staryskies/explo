@@ -25,14 +25,15 @@ body {
 
 #gameCanvas {
   display: block;
-  width: 100%;
+  width: calc(100% - 250px);
   height: 100%;
+  margin-left: 250px; /* Match sidebar width */
 }
 
 #stats {
   position: absolute;
   top: 20px;
-  left: 20px;
+  left: 270px; /* Sidebar width (250px) + 20px margin */
   background: rgba(0, 0, 0, 0.7);
   padding: 15px 20px;
   border-radius: 10px;
@@ -53,41 +54,35 @@ body {
 }
 
 #sidebar {
-  position: absolute;
-  top: 20px;
-  left: 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
   z-index: 10;
-  width: 280px;
-  height: calc(100vh - 40px);
+  width: 250px;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 10px;
+  box-sizing: border-box;
 }
 
 #fixed-controls {
-  background: rgba(0, 0, 0, 0.7);
-  padding: 20px;
-  border-radius: 10px;
-  backdrop-filter: blur(5px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  padding: 10px 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
 #tower-container {
-  background: rgba(0, 0, 0, 0.7);
-  padding: 20px;
-  border-radius: 10px;
-  backdrop-filter: blur(5px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  padding: 10px 0;
   flex: 1;
-  overflow-y: auto;
-  margin-top: 10px;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 #tower-container h3 {
@@ -101,9 +96,9 @@ body {
 .tower-grid {
   display: grid;
   grid-template-columns: repeat(1, 1fr);
-  gap: 8px;
+  gap: 5px;
   margin-bottom: 10px;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .tower-btn, #fixed-controls button {
@@ -126,7 +121,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 60px;
+  height: 40px;
   font-size: 12px;
   padding: 5px;
   position: relative;

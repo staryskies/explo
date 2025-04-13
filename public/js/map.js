@@ -363,20 +363,15 @@ class GameMap {
     }
   }
 
-  // Find all tiles where towers can be built (adjacent to path but not on path)
+  // Find all tiles where towers can be built
   findBuildableTiles() {
     this.buildableTiles = [];
 
-    // Check all grass tiles
+    // Make all grass tiles buildable
     for (let y = 0; y < this.gridHeight; y++) {
       for (let x = 0; x < this.gridWidth; x++) {
         if (this.grid[y][x] === this.TILE_TYPES.GRASS) {
-          // Check if adjacent to path
-          const adjacentToPath = this.isAdjacentToPath(x, y);
-
-          if (adjacentToPath) {
-            this.buildableTiles.push({x, y});
-          }
+          this.buildableTiles.push({x, y});
         }
       }
     }
@@ -413,9 +408,8 @@ class GameMap {
       return false;
     }
 
-    // Check if the tile is grass and buildable
-    return this.grid[gridY][gridX] === this.TILE_TYPES.GRASS &&
-           this.buildableTiles.some(tile => tile.x === gridX && tile.y === gridY);
+    // Check if the tile is grass (not path, water, or already occupied)
+    return this.grid[gridY][gridX] === this.TILE_TYPES.GRASS;
   }
 
   // Mark a tile as occupied by a tower
