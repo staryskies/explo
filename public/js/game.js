@@ -314,20 +314,35 @@ class Game {
 
       // Check if enemy reached the end
       if (enemy.reachedEnd) {
-        this.lives--;
+        // Reduce lives based on enemy damage (default to 1 if not specified)
+        const damageTaken = enemy.damage || 1;
+        this.lives -= damageTaken;
         this.enemiesLeaked++;
+
+        console.log(`Enemy reached the end! -${damageTaken} lives. Remaining: ${this.lives}`);
 
         // Check if game over
         if (this.lives <= 0) {
           this.gameOver = true;
           document.getElementById('game-over').classList.add('active');
           document.getElementById('final-score').textContent = formatNumber(this.score);
+          console.log(`Game over! Final score: ${this.score}`);
         }
       }
     });
 
     // Remove dead or leaked enemies
-    this.enemies = this.enemies.filter(enemy => enemy.alive && !enemy.reachedEnd);
+    this.enemies = this.enemies.filter(enemy => {
+      const shouldRemove = !enemy.alive || enemy.reachedEnd;
+
+      // Handle enemy death
+      if (!enemy.alive && !enemy.reachedEnd && !enemy.deathHandled) {
+        enemy.deathHandled = true;
+        this.handleEnemyDeath(enemy);
+      }
+
+      return !shouldRemove;
+    });
 
     // Update towers and find targets
     this.towers.forEach(tower => {

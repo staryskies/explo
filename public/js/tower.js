@@ -475,7 +475,8 @@ class Tower {
         this.projectileSpeed,
         this.damage,
         this.type,
-        this.target
+        this.target,
+        this.type // Pass the tower type for damage calculations
       );
 
       // Add special properties based on tower type

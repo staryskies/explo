@@ -5,7 +5,7 @@
 console.log('Projectile class loaded');
 
 class Projectile {
-  constructor(x, y, angle, speed, damage, type, target) {
+  constructor(x, y, angle, speed, damage, type, target, towerType) {
     this.x = x;
     this.y = y;
     this.angle = angle;
@@ -13,6 +13,7 @@ class Projectile {
     this.damage = damage;
     this.type = type;
     this.target = target;
+    this.towerType = towerType; // Store the tower type for damage calculations
     this.active = true;
     this.hit = false;
 
@@ -105,7 +106,7 @@ class Projectile {
             const falloff = 1 - (dist / this.aoeRadius) * 0.7;
             const actualDamage = Math.floor(this.damage * falloff);
 
-            const killed = enemy.takeDamage(actualDamage);
+            const killed = enemy.takeDamage(actualDamage, this.towerType);
             affectedEnemies.push({enemy, killed, damage: actualDamage});
           }
         }
@@ -113,11 +114,11 @@ class Projectile {
     } else if (this.type === 'slow' && this.target && this.target.alive) {
       // Apply slow effect to target
       this.target.applySlowEffect(this.slowFactor, this.slowDuration);
-      const killed = this.target.takeDamage(this.damage);
+      const killed = this.target.takeDamage(this.damage, this.towerType);
       affectedEnemies.push({enemy: this.target, killed, damage: this.damage});
     } else if (this.target && this.target.alive) {
       // Apply direct damage to target
-      const killed = this.target.takeDamage(this.damage);
+      const killed = this.target.takeDamage(this.damage, this.towerType);
       affectedEnemies.push({enemy: this.target, killed, damage: this.damage});
     }
 

@@ -381,6 +381,23 @@ body {
   cursor: pointer;
 }
 
+/* Infinite mode toggle */
+#infiniteMode {
+  accent-color: #9C27B0;
+}
+
+/* Enemy health bar colors for different enemy types */
+.health-bar-normal { background: #4CAF50; }
+.health-bar-fast { background: #FF5722; }
+.health-bar-tank { background: #607D8B; }
+.health-bar-flying { background: #9C27B0; }
+.health-bar-healing { background: #8BC34A; }
+.health-bar-spawner { background: #FF9800; }
+.health-bar-armored { background: #795548; }
+.health-bar-invisible { background: rgba(255, 255, 255, 0.7); }
+.health-bar-explosive { background: #F44336; }
+.health-bar-boss { background: linear-gradient(90deg, #F44336, #9C27B0, #3F51B5); }
+
 .modal {
   display: none;
   position: absolute;

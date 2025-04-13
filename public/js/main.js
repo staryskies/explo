@@ -29,6 +29,9 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Map forcefully initialized');
   }
 
+  // Initialize infinite mode
+  game.initializeInfiniteMode();
+
   // Force initial draw to show the map immediately
   game.draw();
 
