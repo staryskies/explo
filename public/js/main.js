@@ -20,6 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Handle mouse move for tower placement preview
   canvas.addEventListener('mousemove', (e) => {
+    // Track mouse position
+    game.trackMouseMovement(e);
+
     // The preview is drawn in the game's draw method
     // We just need to trigger a redraw
     if (game.selectedTowerType) {
@@ -71,38 +74,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Connect to socket.io with error handling
-  let socket;
-  try {
-    // Try to connect with explicit URL and options
-    socket = io(window.location.origin, {
-      transports: ['websocket', 'polling'],
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      timeout: 20000
-    });
-
-    socket.on('connect', () => {
-      console.log('Connected to server');
-    });
-
-    socket.on('connect_error', (error) => {
-      console.error('Socket.IO connection error:', error);
-    });
-
-    socket.on('error', (error) => {
-      console.error('Socket.IO error:', error);
-    });
-  } catch (error) {
-    console.error('Failed to initialize Socket.IO:', error);
-    // Game can still run without Socket.IO
-  }
-
-  // You can add more socket events for multiplayer features later
+  // No Socket.IO - single player only
+  console.log('Running in single-player mode');
 
   // Handle window resize
   window.addEventListener('resize', () => {
     // Resize is handled in the Game class
+  });
+
+  // Handle canvas click for tower placement
+  canvas.addEventListener('click', (e) => {
+    // Track mouse position first to ensure coordinates are up to date
+    game.trackMouseMovement(e);
+
+    // Then place tower at current mouse position
+    if (game.selectedTowerType) {
+      game.placeTower(game.mouseX, game.mouseY);
+    }
   });
 
   // Log that initialization is complete

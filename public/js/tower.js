@@ -1,6 +1,9 @@
 /**
  * Tower class for the tower defense game
  */
+// Log that tower.js is loaded
+console.log('Tower class loaded');
+
 class Tower {
   constructor(x, y, type = 'basic') {
     this.x = x;

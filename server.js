@@ -4,7 +4,6 @@ require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const path = require('path');
-const socketIo = require('socket.io');
 const compression = require('compression');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -66,33 +65,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Initialize Socket.IO with CORS settings
-const io = socketIo(server, {
-  cors: {
-    origin: '*', // Allow all origins for now
-    methods: ['GET', 'POST'],
-    credentials: true
-  },
-  transports: ['websocket', 'polling']
-});
-
-// Serve socket.io client library explicitly
-app.get('/socket.io/socket.io.js', (req, res) => {
-  res.setHeader('Content-Type', 'application/javascript');
-  res.sendFile(require.resolve('socket.io/client-dist/socket.io.js'));
-});
-
-// Socket.io connection handling
-io.on('connection', (socket) => {
-  console.log(`A user connected: ${socket.id}`);
-
-  // Handle disconnection
-  socket.on('disconnect', () => {
-    console.log(`User disconnected: ${socket.id}`);
-  });
-
-  // You can add more socket events for multiplayer features later
-});
+// No Socket.IO - single player only
 
 // Error handling middleware
 app.use((err, req, res, next) => {

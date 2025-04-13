@@ -1,6 +1,9 @@
 /**
  * Enemy class for the tower defense game
  */
+// Log that enemy.js is loaded
+console.log('Enemy class loaded');
+
 class Enemy {
   constructor(path, type = 'normal') {
     this.path = path;

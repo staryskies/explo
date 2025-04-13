@@ -1,6 +1,9 @@
 /**
  * Projectile class for the tower defense game
  */
+// Log that projectile.js is loaded
+console.log('Projectile class loaded');
+
 class Projectile {
   constructor(x, y, angle, speed, damage, type, target) {
     this.x = x;
@@ -12,15 +15,15 @@ class Projectile {
     this.target = target;
     this.active = true;
     this.hit = false;
-    
+
     // Calculate velocity based on angle
     this.vx = Math.cos(angle) * speed;
     this.vy = Math.sin(angle) * speed;
-    
+
     // Set properties based on projectile type
     this.setPropertiesByType();
   }
-  
+
   // Set projectile properties based on type
   setPropertiesByType() {
     switch (this.type) {
@@ -46,33 +49,33 @@ class Projectile {
         this.trailLength = 12;
         break;
     }
-    
+
     // Initialize trail
     this.trail = [];
     for (let i = 0; i < this.trailLength; i++) {
       this.trail.push({x: this.x, y: this.y});
     }
   }
-  
+
   // Update projectile position and state
   update() {
     if (!this.active) return;
-    
+
     // Update trail
     this.trail.pop();
     this.trail.unshift({x: this.x, y: this.y});
-    
+
     // Move projectile
     this.x += this.vx;
     this.y += this.vy;
-    
+
     // Check if projectile is out of bounds
-    if (this.x < -50 || this.x > window.innerWidth + 50 || 
+    if (this.x < -50 || this.x > window.innerWidth + 50 ||
         this.y < -50 || this.y > window.innerHeight + 50) {
       this.active = false;
       return;
     }
-    
+
     // Check for collision with target
     if (this.target && this.target.alive) {
       const dist = distance(this.x, this.y, this.target.x, this.target.y);
@@ -85,13 +88,13 @@ class Projectile {
       this.active = false;
     }
   }
-  
+
   // Apply damage and effects to enemies
   applyDamage(enemies) {
     if (!this.hit) return [];
-    
+
     const affectedEnemies = [];
-    
+
     if (this.type === 'aoe' && this.aoeRadius) {
       // Apply AOE damage to all enemies in radius
       enemies.forEach(enemy => {
@@ -101,7 +104,7 @@ class Projectile {
             // Calculate damage falloff based on distance
             const falloff = 1 - (dist / this.aoeRadius) * 0.7;
             const actualDamage = Math.floor(this.damage * falloff);
-            
+
             const killed = enemy.takeDamage(actualDamage);
             affectedEnemies.push({enemy, killed, damage: actualDamage});
           }
@@ -117,21 +120,21 @@ class Projectile {
       const killed = this.target.takeDamage(this.damage);
       affectedEnemies.push({enemy: this.target, killed, damage: this.damage});
     }
-    
+
     return affectedEnemies;
   }
-  
+
   // Draw the projectile
   draw(ctx) {
     if (!this.active) return;
-    
+
     // Draw trail
     ctx.save();
     for (let i = 0; i < this.trail.length; i++) {
       const point = this.trail[i];
       const alpha = 1 - (i / this.trail.length);
       const size = this.size * (1 - i / this.trail.length * 0.8);
-      
+
       ctx.globalAlpha = alpha * 0.7;
       ctx.fillStyle = this.color;
       ctx.beginPath();
@@ -139,13 +142,13 @@ class Projectile {
       ctx.fill();
     }
     ctx.restore();
-    
+
     // Draw projectile
     ctx.fillStyle = this.color;
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
     ctx.fill();
-    
+
     // Draw glow effect
     ctx.save();
     ctx.globalAlpha = 0.5;
@@ -155,7 +158,7 @@ class Projectile {
     ctx.fillStyle = this.color;
     ctx.fill();
     ctx.restore();
-    
+
     // Draw special effects based on type
     if (this.type === 'sniper') {
       // Draw laser sight
@@ -182,11 +185,11 @@ class Projectile {
       ctx.restore();
     }
   }
-  
+
   // Draw explosion effect when projectile hits
   drawExplosion(ctx) {
     if (this.active || !this.hit) return;
-    
+
     if (this.type === 'aoe' && this.aoeRadius) {
       // Draw AOE explosion
       ctx.save();
@@ -195,7 +198,7 @@ class Projectile {
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.aoeRadius, 0, Math.PI * 2);
       ctx.fill();
-      
+
       // Draw explosion rings
       for (let i = 0; i < 3; i++) {
         ctx.globalAlpha = 0.5 - i * 0.15;
@@ -214,7 +217,7 @@ class Projectile {
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.size * 3, 0, Math.PI * 2);
       ctx.fill();
-      
+
       // Draw snowflake pattern
       ctx.strokeStyle = '#FFF';
       ctx.lineWidth = 1;

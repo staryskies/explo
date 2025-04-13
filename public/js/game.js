@@ -377,12 +377,23 @@ class Game {
     }
   }
 
+  // Store mouse position
+  mouseX = 0;
+  mouseY = 0;
+
+  // Track mouse movement
+  trackMouseMovement(event) {
+    if (!event) return;
+    const rect = this.canvas.getBoundingClientRect();
+    this.mouseX = event.clientX - rect.left;
+    this.mouseY = event.clientY - rect.top;
+  }
+
   // Draw tower placement preview
   drawTowerPlacementPreview() {
-    // Get mouse position
-    const rect = this.canvas.getBoundingClientRect();
-    const mouseX = event.clientX - rect.left;
-    const mouseY = event.clientY - rect.top;
+    // Use stored mouse position
+    const mouseX = this.mouseX;
+    const mouseY = this.mouseY;
 
     // Convert to grid coordinates
     const gridPos = this.map.pixelToGrid(mouseX, mouseY);

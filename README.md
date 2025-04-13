@@ -105,7 +105,6 @@ The application is designed to work with most Node.js hosting platforms:
 
 - Node.js
 - Express
-- Socket.IO
 - HTML5 Canvas
 - JavaScript (ES6+)
 - CSS3
