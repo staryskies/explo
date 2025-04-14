@@ -503,12 +503,20 @@ class Game {
 
   // Draw tower placement preview
   drawTowerPlacementPreview() {
+    if (!this.selectedTowerType) return; // Don't draw if no tower is selected
+
     // Use stored mouse position
     const mouseX = this.mouseX;
     const mouseY = this.mouseY;
 
+    // Make sure we have valid mouse coordinates
+    if (isNaN(mouseX) || isNaN(mouseY) || mouseX === 0 && mouseY === 0) return;
+
     // Convert to grid coordinates
     const gridPos = this.map.pixelToGrid(mouseX, mouseY);
+
+    // Make sure grid position is valid
+    if (!gridPos || gridPos.x < 0 || gridPos.y < 0) return;
 
     // Check if tower can be placed here
     const canPlace = this.map.canPlaceTower(gridPos.x, gridPos.y);

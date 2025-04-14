@@ -71,9 +71,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Track mouse position
     game.trackMouseMovement(e);
 
-    // Always redraw on mouse move to ensure the map is visible
-    // This is especially important before the game loop starts
-    if (!game.gameStarted) {
+    // Always redraw on mouse move if a tower is selected or game hasn't started
+    // This ensures the tower placement preview is always visible
+    if (game.selectedTowerType || !game.gameStarted) {
       game.draw();
     }
   });
