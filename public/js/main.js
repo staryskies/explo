@@ -44,6 +44,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // Update available towers based on unlocked status
   updateAvailableTowers(game);
 
+  // Add event listeners to tower buttons
+  document.querySelectorAll('.tower-btn').forEach(button => {
+    button.addEventListener('click', () => {
+      const towerType = button.dataset.type;
+      console.log(`Tower button clicked: ${towerType}`);
+      game.selectTowerType(towerType);
+    });
+  });
+
   // Initialize infinite mode
   game.initializeInfiniteMode();
 

@@ -683,11 +683,37 @@ class Tower {
       ctx.stroke();
     }
 
-    // Draw tower base
-    ctx.fillStyle = '#555';
+    // Draw tower base with gradient and shadow
+    const baseGradient = ctx.createRadialGradient(
+      this.x, this.y, 5,
+      this.x, this.y, 20
+    );
+    baseGradient.addColorStop(0, '#777');
+    baseGradient.addColorStop(1, '#333');
+
+    // Add shadow
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+
+    ctx.fillStyle = baseGradient;
     ctx.beginPath();
     ctx.arc(this.x, this.y, 20, 0, Math.PI * 2);
     ctx.fill();
+
+    // Reset shadow
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+
+    // Add metallic rim
+    ctx.strokeStyle = '#999';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, 20, 0, Math.PI * 2);
+    ctx.stroke();
 
     // Draw tower body based on type and upgrades
     ctx.save();
@@ -743,22 +769,77 @@ class Tower {
         break;
 
       case 'freeze':
-        // Base tower body
-        ctx.fillStyle = this.color;
-        ctx.fillRect(-8, -25, 16, 25);
+        // Create a cool ice-themed tower with glowing effects
 
-        // Path A: Deep Freeze - Blue with ice crystals
+        // Base tower body with gradient
+        const freezeGradient = ctx.createLinearGradient(-8, -25, 8, 0);
+        freezeGradient.addColorStop(0, '#81D4FA'); // Light blue
+        freezeGradient.addColorStop(1, '#0288D1'); // Darker blue
+
+        ctx.fillStyle = freezeGradient;
+
+        // Draw a more interesting hexagonal shape for the freeze tower
+        ctx.beginPath();
+        ctx.moveTo(-10, -25); // Top left
+        ctx.lineTo(10, -25);  // Top right
+        ctx.lineTo(15, -10);  // Middle right
+        ctx.lineTo(10, 5);    // Bottom right
+        ctx.lineTo(-10, 5);   // Bottom left
+        ctx.lineTo(-15, -10); // Middle left
+        ctx.closePath();
+        ctx.fill();
+
+        // Add frost patterns
+        ctx.strokeStyle = '#E1F5FE';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(-8, -20);
+        ctx.lineTo(8, -20);
+        ctx.moveTo(-10, -15);
+        ctx.lineTo(10, -15);
+        ctx.moveTo(-12, -10);
+        ctx.lineTo(12, -10);
+        ctx.moveTo(-10, -5);
+        ctx.lineTo(10, -5);
+        ctx.moveTo(-8, 0);
+        ctx.lineTo(8, 0);
+        ctx.stroke();
+
+        // Path A: Deep Freeze - Blue with ice crystals and glow
         if (hasPathAUpgrades) {
-          // Darker blue for deep freeze
-          ctx.fillStyle = '#0288D1';
-          ctx.fillRect(-8, -25, 16, 25);
+          // Add glow effect
+          ctx.shadowColor = '#29B6F6';
+          ctx.shadowBlur = 10 + this.pathALevel * 2;
+
+          // Darker blue for deep freeze with gradient
+          const deepFreezeGradient = ctx.createLinearGradient(-10, -25, 10, 5);
+          deepFreezeGradient.addColorStop(0, '#0288D1'); // Darker blue
+          deepFreezeGradient.addColorStop(1, '#01579B'); // Even darker blue
+
+          ctx.fillStyle = deepFreezeGradient;
+
+          // Draw hexagonal shape
+          ctx.beginPath();
+          ctx.moveTo(-10, -25); // Top left
+          ctx.lineTo(10, -25);  // Top right
+          ctx.lineTo(15, -10);  // Middle right
+          ctx.lineTo(10, 5);    // Bottom right
+          ctx.lineTo(-10, 5);   // Bottom left
+          ctx.lineTo(-15, -10); // Middle left
+          ctx.closePath();
+          ctx.fill();
+
+          // Reset shadow
+          ctx.shadowColor = 'transparent';
+          ctx.shadowBlur = 0;
 
           // Add ice crystals based on upgrade level
           ctx.fillStyle = '#B3E5FC';
-          for (let i = 0; i < this.pathALevel; i++) {
-            const angle = Math.PI * 2 * (i / 4);
-            const length = 5 + this.pathALevel * 2;
+          for (let i = 0; i < this.pathALevel + 2; i++) {
+            const angle = Math.PI * 2 * (i / (this.pathALevel + 2));
+            const length = 8 + this.pathALevel * 3;
 
+            // Draw crystal
             ctx.beginPath();
             ctx.moveTo(0, -25);
             ctx.lineTo(
@@ -771,68 +852,293 @@ class Tower {
             );
             ctx.closePath();
             ctx.fill();
+
+            // Add crystal glow
+            ctx.strokeStyle = '#E1F5FE';
+            ctx.lineWidth = 1;
+            ctx.stroke();
           }
         }
 
-        // Path B: Ice Shards - White with sharp edges
+        // Path B: Ice Shards - White with sharp edges and particles
         if (hasPathBUpgrades) {
-          // Light blue for ice shards
-          ctx.fillStyle = '#4FC3F7';
-          ctx.fillRect(-8, -25, 16, 25);
+          // Add glow effect
+          ctx.shadowColor = '#4FC3F7';
+          ctx.shadowBlur = 8 + this.pathBLevel * 2;
+
+          // Light blue for ice shards with gradient
+          const iceShardGradient = ctx.createLinearGradient(-10, -25, 10, 5);
+          iceShardGradient.addColorStop(0, '#4FC3F7'); // Light blue
+          iceShardGradient.addColorStop(1, '#29B6F6'); // Medium blue
+
+          ctx.fillStyle = iceShardGradient;
+
+          // Draw hexagonal shape
+          ctx.beginPath();
+          ctx.moveTo(-10, -25); // Top left
+          ctx.lineTo(10, -25);  // Top right
+          ctx.lineTo(15, -10);  // Middle right
+          ctx.lineTo(10, 5);    // Bottom right
+          ctx.lineTo(-10, 5);   // Bottom left
+          ctx.lineTo(-15, -10); // Middle left
+          ctx.closePath();
+          ctx.fill();
+
+          // Reset shadow
+          ctx.shadowColor = 'transparent';
+          ctx.shadowBlur = 0;
 
           // Add ice shards based on upgrade level
           ctx.fillStyle = '#E1F5FE';
-          for (let i = 0; i < this.pathBLevel * 2; i++) {
-            const angle = Math.PI * 2 * (i / (this.pathBLevel * 2));
+          for (let i = 0; i < this.pathBLevel * 3; i++) {
+            const angle = Math.PI * 2 * (i / (this.pathBLevel * 3));
+            const radius = 12 + Math.random() * 8;
+
+            // Draw shard
             ctx.beginPath();
             ctx.moveTo(-8 + Math.cos(angle) * 8, -15 + Math.sin(angle) * 10);
-            ctx.lineTo(-8 + Math.cos(angle) * 16, -15 + Math.sin(angle) * 20);
-            ctx.lineTo(-8 + Math.cos(angle + 0.3) * 12, -15 + Math.sin(angle + 0.3) * 15);
+            ctx.lineTo(-8 + Math.cos(angle) * radius, -15 + Math.sin(angle) * (radius * 1.2));
+            ctx.lineTo(-8 + Math.cos(angle + 0.3) * (radius - 5), -15 + Math.sin(angle + 0.3) * (radius - 5));
             ctx.closePath();
+            ctx.fill();
+
+            // Add shard outline
+            ctx.strokeStyle = '#B3E5FC';
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+
+          // Add small floating ice particles
+          ctx.fillStyle = 'rgba(225, 245, 254, 0.7)';
+          for (let i = 0; i < this.pathBLevel * 5; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 5 + Math.random() * 20;
+            const size = 1 + Math.random() * 2;
+
+            ctx.beginPath();
+            ctx.arc(
+              Math.cos(angle) * dist,
+              -15 + Math.sin(angle) * dist,
+              size,
+              0,
+              Math.PI * 2
+            );
             ctx.fill();
           }
         }
         break;
 
       case 'archer':
-        // Base tower body
-        ctx.fillStyle = this.color;
-        ctx.fillRect(-8, -25, 16, 25);
+        // Create a cool archer tower with bow design
 
-        // Path A: Multi-shot - Multiple arrow tips
+        // Base tower body with gradient
+        const archerGradient = ctx.createLinearGradient(-8, -25, 8, 0);
+        archerGradient.addColorStop(0, '#8BC34A'); // Light green
+        archerGradient.addColorStop(1, '#558B2F'); // Darker green
+
+        ctx.fillStyle = archerGradient;
+
+        // Draw a more interesting shape for the archer tower
+        ctx.beginPath();
+        ctx.moveTo(-8, -25); // Top left
+        ctx.lineTo(8, -25);  // Top right
+        ctx.lineTo(10, -10); // Middle right
+        ctx.lineTo(8, 5);    // Bottom right
+        ctx.lineTo(-8, 5);   // Bottom left
+        ctx.lineTo(-10, -10); // Middle left
+        ctx.closePath();
+        ctx.fill();
+
+        // Draw bow
+        ctx.strokeStyle = '#795548'; // Brown
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, -15, 12, Math.PI * 0.25, Math.PI * 0.75, false);
+        ctx.stroke();
+
+        // Draw bowstring
+        ctx.strokeStyle = '#E0E0E0';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(-8.5, -22);
+        ctx.lineTo(8.5, -22);
+        ctx.stroke();
+
+        // Draw arrow
+        ctx.strokeStyle = '#795548';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(-10, -15);
+        ctx.lineTo(10, -15);
+        ctx.stroke();
+
+        // Arrow tip
+        ctx.fillStyle = '#9E9E9E';
+        ctx.beginPath();
+        ctx.moveTo(10, -15);
+        ctx.lineTo(15, -13);
+        ctx.lineTo(15, -17);
+        ctx.closePath();
+        ctx.fill();
+
+        // Arrow fletching
+        ctx.fillStyle = '#F44336';
+        ctx.beginPath();
+        ctx.moveTo(-10, -15);
+        ctx.lineTo(-15, -12);
+        ctx.lineTo(-13, -15);
+        ctx.lineTo(-15, -18);
+        ctx.closePath();
+        ctx.fill();
+
+        // Path A: Multi-shot - Multiple arrow tips and glowing effect
         if (hasPathAUpgrades) {
-          ctx.fillStyle = '#689F38';
-          ctx.fillRect(-8, -25, 16, 25);
+          // Add glow effect
+          ctx.shadowColor = '#AED581';
+          ctx.shadowBlur = 8 + this.pathALevel * 2;
+
+          // Green gradient for multi-shot
+          const multiShotGradient = ctx.createLinearGradient(-8, -25, 8, 5);
+          multiShotGradient.addColorStop(0, '#689F38'); // Medium green
+          multiShotGradient.addColorStop(1, '#33691E'); // Dark green
+
+          ctx.fillStyle = multiShotGradient;
+
+          // Draw tower body
+          ctx.beginPath();
+          ctx.moveTo(-8, -25); // Top left
+          ctx.lineTo(8, -25);  // Top right
+          ctx.lineTo(10, -10); // Middle right
+          ctx.lineTo(8, 5);    // Bottom right
+          ctx.lineTo(-8, 5);   // Bottom left
+          ctx.lineTo(-10, -10); // Middle left
+          ctx.closePath();
+          ctx.fill();
+
+          // Reset shadow
+          ctx.shadowColor = 'transparent';
+          ctx.shadowBlur = 0;
+
+          // Draw enhanced bow
+          ctx.strokeStyle = '#5D4037'; // Darker brown
+          ctx.lineWidth = 2 + this.pathALevel * 0.5;
+          ctx.beginPath();
+          ctx.arc(0, -15, 12, Math.PI * 0.2, Math.PI * 0.8, false);
+          ctx.stroke();
+
+          // Draw multiple bowstrings
+          ctx.strokeStyle = '#E0E0E0';
+          ctx.lineWidth = 1;
+          for (let i = 0; i < this.pathALevel; i++) {
+            const offset = i * 2;
+            ctx.beginPath();
+            ctx.moveTo(-8.5, -22 + offset);
+            ctx.lineTo(8.5, -22 + offset);
+            ctx.stroke();
+          }
 
           // Draw multiple arrow tips
           ctx.fillStyle = '#DCEDC8';
-          const arrowSpread = this.pathALevel * 5;
+          const spread = this.pathALevel * 3;
           for (let i = -this.pathALevel; i <= this.pathALevel; i++) {
             if (i === 0) continue; // Skip center arrow
 
+            // Arrow shaft
+            ctx.strokeStyle = '#795548';
+            ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.moveTo(i * 3, -30);
-            ctx.lineTo(i * 3 + 2, -35);
-            ctx.lineTo(i * 3 - 2, -35);
+            ctx.moveTo(0, -15);
+            ctx.lineTo(i * spread, -30);
+            ctx.stroke();
+
+            // Arrow tip
+            ctx.fillStyle = '#9E9E9E';
+            ctx.beginPath();
+            ctx.moveTo(i * spread, -30);
+            ctx.lineTo(i * spread + 2, -35);
+            ctx.lineTo(i * spread - 2, -35);
             ctx.closePath();
             ctx.fill();
+
+            // Add glow to tips
+            ctx.strokeStyle = '#F0F4C3';
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
           }
         }
 
-        // Path B: Piercing - Sharp, pointed design
+        // Path B: Piercing - Sharp, pointed design with metallic effect
         if (hasPathBUpgrades) {
-          ctx.fillStyle = '#33691E';
-          ctx.fillRect(-8, -25, 16, 25);
+          // Add glow effect
+          ctx.shadowColor = '#558B2F';
+          ctx.shadowBlur = 8 + this.pathBLevel * 2;
 
-          // Draw piercing arrow
-          ctx.fillStyle = '#F1F8E9';
+          // Dark green gradient for piercing
+          const piercingGradient = ctx.createLinearGradient(-8, -25, 8, 5);
+          piercingGradient.addColorStop(0, '#33691E'); // Dark green
+          piercingGradient.addColorStop(1, '#1B5E20'); // Even darker green
+
+          ctx.fillStyle = piercingGradient;
+
+          // Draw tower body
           ctx.beginPath();
-          ctx.moveTo(0, -35);
-          ctx.lineTo(4, -25);
-          ctx.lineTo(0, -20);
-          ctx.lineTo(-4, -25);
+          ctx.moveTo(-8, -25); // Top left
+          ctx.lineTo(8, -25);  // Top right
+          ctx.lineTo(10, -10); // Middle right
+          ctx.lineTo(8, 5);    // Bottom right
+          ctx.lineTo(-8, 5);   // Bottom left
+          ctx.lineTo(-10, -10); // Middle left
           ctx.closePath();
           ctx.fill();
+
+          // Reset shadow
+          ctx.shadowColor = 'transparent';
+          ctx.shadowBlur = 0;
+
+          // Draw reinforced bow
+          ctx.strokeStyle = '#3E2723'; // Very dark brown
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(0, -15, 14, Math.PI * 0.2, Math.PI * 0.8, false);
+          ctx.stroke();
+
+          // Add metal reinforcements
+          ctx.fillStyle = '#9E9E9E';
+          ctx.beginPath();
+          ctx.arc(0, -15, 5, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Draw piercing arrow with metallic effect
+          // Arrow shaft
+          const arrowGradient = ctx.createLinearGradient(0, -15, 0, -40);
+          arrowGradient.addColorStop(0, '#795548');
+          arrowGradient.addColorStop(1, '#5D4037');
+
+          ctx.strokeStyle = arrowGradient;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(0, -15);
+          ctx.lineTo(0, -40);
+          ctx.stroke();
+
+          // Piercing arrowhead
+          const arrowheadGradient = ctx.createLinearGradient(0, -40, 0, -25);
+          arrowheadGradient.addColorStop(0, '#E0E0E0'); // Light gray
+          arrowheadGradient.addColorStop(1, '#9E9E9E'); // Darker gray
+
+          ctx.fillStyle = arrowheadGradient;
+          ctx.beginPath();
+          ctx.moveTo(0, -45 - this.pathBLevel * 2);
+          ctx.lineTo(5 + this.pathBLevel, -35);
+          ctx.lineTo(0, -30);
+          ctx.lineTo(-5 - this.pathBLevel, -35);
+          ctx.closePath();
+          ctx.fill();
+
+          // Add metallic shine
+          ctx.strokeStyle = '#F5F5F5';
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
         }
         break;
 
