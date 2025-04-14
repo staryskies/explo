@@ -469,10 +469,12 @@ class Game {
       enemy.draw(this.ctx);
     });
 
-    // Draw towers
-    this.towers.forEach(tower => {
-      tower.draw(this.ctx, this.showTowerRanges);
-    });
+    // Draw towers - always draw towers regardless of selection state
+    if (this.towers && this.towers.length > 0) {
+      this.towers.forEach(tower => {
+        tower.draw(this.ctx, this.showTowerRanges);
+      });
+    }
 
     // Draw projectiles
     this.projectiles.forEach(projectile => {

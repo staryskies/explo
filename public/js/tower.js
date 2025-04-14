@@ -519,34 +519,253 @@ class Tower {
     ctx.arc(this.x, this.y, 20, 0, Math.PI * 2);
     ctx.fill();
 
-    // Draw tower body
+    // Draw tower body based on type and upgrades
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
 
-    // Tower body
-    ctx.fillStyle = this.color;
-    ctx.fillRect(-8, -25, 16, 25);
+    // Determine if tower has upgrades
+    const hasPathAUpgrades = this.pathALevel > 0;
+    const hasPathBUpgrades = this.pathBLevel > 0;
 
-    // Tower head
+    // Draw tower based on type and upgrades
+    switch (this.type) {
+      case 'freeze':
+        // Base tower body
+        ctx.fillStyle = this.color;
+        ctx.fillRect(-8, -25, 16, 25);
+
+        // Path A: Deep Freeze - Blue with ice crystals
+        if (hasPathAUpgrades) {
+          // Darker blue for deep freeze
+          ctx.fillStyle = '#0288D1';
+          ctx.fillRect(-8, -25, 16, 25);
+
+          // Add ice crystals based on upgrade level
+          ctx.fillStyle = '#B3E5FC';
+          for (let i = 0; i < this.pathALevel; i++) {
+            const angle = Math.PI * 2 * (i / 4);
+            const length = 5 + this.pathALevel * 2;
+
+            ctx.beginPath();
+            ctx.moveTo(0, -25);
+            ctx.lineTo(
+              Math.cos(angle) * length,
+              -25 + Math.sin(angle) * length
+            );
+            ctx.lineTo(
+              Math.cos(angle + 0.2) * (length - 3),
+              -25 + Math.sin(angle + 0.2) * (length - 3)
+            );
+            ctx.closePath();
+            ctx.fill();
+          }
+        }
+
+        // Path B: Ice Shards - White with sharp edges
+        if (hasPathBUpgrades) {
+          // Light blue for ice shards
+          ctx.fillStyle = '#4FC3F7';
+          ctx.fillRect(-8, -25, 16, 25);
+
+          // Add ice shards based on upgrade level
+          ctx.fillStyle = '#E1F5FE';
+          for (let i = 0; i < this.pathBLevel * 2; i++) {
+            const angle = Math.PI * 2 * (i / (this.pathBLevel * 2));
+            ctx.beginPath();
+            ctx.moveTo(-8 + Math.cos(angle) * 8, -15 + Math.sin(angle) * 10);
+            ctx.lineTo(-8 + Math.cos(angle) * 16, -15 + Math.sin(angle) * 20);
+            ctx.lineTo(-8 + Math.cos(angle + 0.3) * 12, -15 + Math.sin(angle + 0.3) * 15);
+            ctx.closePath();
+            ctx.fill();
+          }
+        }
+        break;
+
+      case 'archer':
+        // Base tower body
+        ctx.fillStyle = this.color;
+        ctx.fillRect(-8, -25, 16, 25);
+
+        // Path A: Multi-shot - Multiple arrow tips
+        if (hasPathAUpgrades) {
+          ctx.fillStyle = '#689F38';
+          ctx.fillRect(-8, -25, 16, 25);
+
+          // Draw multiple arrow tips
+          ctx.fillStyle = '#DCEDC8';
+          const arrowSpread = this.pathALevel * 5;
+          for (let i = -this.pathALevel; i <= this.pathALevel; i++) {
+            if (i === 0) continue; // Skip center arrow
+
+            ctx.beginPath();
+            ctx.moveTo(i * 3, -30);
+            ctx.lineTo(i * 3 + 2, -35);
+            ctx.lineTo(i * 3 - 2, -35);
+            ctx.closePath();
+            ctx.fill();
+          }
+        }
+
+        // Path B: Piercing - Sharp, pointed design
+        if (hasPathBUpgrades) {
+          ctx.fillStyle = '#33691E';
+          ctx.fillRect(-8, -25, 16, 25);
+
+          // Draw piercing arrow
+          ctx.fillStyle = '#F1F8E9';
+          ctx.beginPath();
+          ctx.moveTo(0, -35);
+          ctx.lineTo(4, -25);
+          ctx.lineTo(0, -20);
+          ctx.lineTo(-4, -25);
+          ctx.closePath();
+          ctx.fill();
+        }
+        break;
+
+      case 'cannon':
+        // Base tower body
+        ctx.fillStyle = this.color;
+        ctx.fillRect(-10, -25, 20, 25);
+
+        // Path A: Blast Radius - Wider cannon
+        if (hasPathAUpgrades) {
+          ctx.fillStyle = '#5D4037';
+          const width = 10 + this.pathALevel * 2;
+          ctx.fillRect(-width, -25, width * 2, 25);
+
+          // Draw wider cannon opening
+          ctx.fillStyle = '#3E2723';
+          ctx.beginPath();
+          ctx.arc(0, -25, 6 + this.pathALevel, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Path B: Heavy Impact - Reinforced cannon
+        if (hasPathBUpgrades) {
+          ctx.fillStyle = '#8D6E63';
+          ctx.fillRect(-10, -25, 20, 25);
+
+          // Draw reinforcement bands
+          ctx.strokeStyle = '#4E342E';
+          ctx.lineWidth = 2;
+          for (let i = 0; i < this.pathBLevel; i++) {
+            ctx.beginPath();
+            ctx.moveTo(-12, -20 + i * 10);
+            ctx.lineTo(12, -20 + i * 10);
+            ctx.stroke();
+          }
+        }
+        break;
+
+      case 'sniper':
+        // Base tower body
+        ctx.fillStyle = this.color;
+        ctx.fillRect(-6, -30, 12, 30);
+
+        // Path A: Precision - Longer, thinner barrel
+        if (hasPathAUpgrades) {
+          ctx.fillStyle = '#1565C0';
+          ctx.fillRect(-4, -35 - this.pathALevel * 5, 8, 35 + this.pathALevel * 5);
+
+          // Draw scope
+          ctx.fillStyle = '#0D47A1';
+          ctx.beginPath();
+          ctx.arc(0, -15, 5, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Draw crosshairs
+          ctx.strokeStyle = '#E3F2FD';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(-4, -15);
+          ctx.lineTo(4, -15);
+          ctx.moveTo(0, -19);
+          ctx.lineTo(0, -11);
+          ctx.stroke();
+        }
+
+        // Path B: Long Range - Stabilized platform
+        if (hasPathBUpgrades) {
+          ctx.fillStyle = '#0277BD';
+          ctx.fillRect(-6, -30, 12, 30);
+
+          // Draw stabilizers
+          ctx.fillStyle = '#01579B';
+          for (let i = 0; i < this.pathBLevel; i++) {
+            const angle = Math.PI / 4 + (Math.PI / 2) * i;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(
+              Math.cos(angle) * 15,
+              Math.sin(angle) * 15
+            );
+            ctx.lineTo(
+              Math.cos(angle) * 15 + Math.cos(angle + Math.PI/2) * 5,
+              Math.sin(angle) * 15 + Math.sin(angle + Math.PI/2) * 5
+            );
+            ctx.closePath();
+            ctx.fill();
+          }
+        }
+        break;
+
+      default:
+        // Default tower body
+        ctx.fillStyle = this.color;
+        ctx.fillRect(-8, -25, 16, 25);
+
+        // Draw upgrades if any
+        if (hasPathAUpgrades || hasPathBUpgrades) {
+          // Add a glow effect for upgraded towers
+          ctx.fillStyle = hasPathAUpgrades ? '#FFA000' : '#7B1FA2';
+          ctx.globalAlpha = 0.6;
+          ctx.beginPath();
+          ctx.arc(0, -25, 10, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1.0;
+        }
+        break;
+    }
+
+    // Tower head (common for all types)
+    ctx.fillStyle = hasPathAUpgrades ? '#FFB300' : (hasPathBUpgrades ? '#9C27B0' : this.color);
     ctx.beginPath();
     ctx.arc(0, -25, 8, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
 
-    // Draw level indicators
-    for (let i = 0; i < this.level; i++) {
-      ctx.fillStyle = '#FFEB3B';
-      ctx.beginPath();
-      ctx.arc(
-        this.x + 15 * Math.cos(Math.PI * 2 * (i / 3) - Math.PI / 2),
-        this.y + 15 * Math.sin(Math.PI * 2 * (i / 3) - Math.PI / 2),
-        4,
-        0,
-        Math.PI * 2
-      );
-      ctx.fill();
+    // Draw upgrade path indicators
+    if (this.pathALevel > 0) {
+      for (let i = 0; i < this.pathALevel; i++) {
+        ctx.fillStyle = '#FFC107'; // Yellow for path A
+        ctx.beginPath();
+        ctx.arc(
+          this.x + 15 * Math.cos(Math.PI * 2 * (i / 4) - Math.PI / 4),
+          this.y + 15 * Math.sin(Math.PI * 2 * (i / 4) - Math.PI / 4),
+          4,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+      }
+    }
+
+    if (this.pathBLevel > 0) {
+      for (let i = 0; i < this.pathBLevel; i++) {
+        ctx.fillStyle = '#9C27B0'; // Purple for path B
+        ctx.beginPath();
+        ctx.arc(
+          this.x + 15 * Math.cos(Math.PI * 2 * (i / 4) + Math.PI / 4),
+          this.y + 15 * Math.sin(Math.PI * 2 * (i / 4) + Math.PI / 4),
+          4,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+      }
     }
 
     // Draw tower type indicator
