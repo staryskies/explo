@@ -468,35 +468,205 @@ class Tower {
     // Calculate angle to target
     this.angle = getAngle(this.x, this.y, this.target.x, this.target.y);
 
-    try {
-      // Create a new projectile
-      const projectile = new Projectile(
-        this.x,
-        this.y,
-        this.angle,
-        this.projectileSpeed,
-        this.damage,
-        this.type,
-        this.target,
-        this.type // Pass the tower type for damage calculations
-      );
+    // Create visual effect for shooting
+    this.createShootEffect();
 
-      // Add special properties based on tower type
-      if (this.type === 'aoe') {
-        projectile.aoeRadius = this.aoeRadius;
-      } else if (this.type === 'slow') {
-        projectile.slowFactor = this.slowFactor;
-        projectile.slowDuration = this.slowDuration;
+    try {
+      // Handle special tower abilities based on tower type
+      switch (this.type) {
+        case 'archer':
+          // Archer shoots multiple arrows based on upgrades
+          const arrowCount = 1 + (this.extraShots || 0);
+          for (let i = 0; i < arrowCount; i++) {
+            // Add slight angle variation for multiple arrows
+            const angleOffset = (i - (arrowCount - 1) / 2) * 0.1;
+            const arrowProjectile = new Projectile(
+              this.x,
+              this.y,
+              this.angle + angleOffset,
+              this.projectileSpeed,
+              this.damage,
+              this.type,
+              this.target,
+              this.type
+            );
+
+            // Add pierce property if upgraded
+            if (this.pierceCount) {
+              arrowProjectile.pierceCount = this.pierceCount;
+              arrowProjectile.pierceRemaining = this.pierceCount;
+            }
+
+            projectiles.push(arrowProjectile);
+          }
+          break;
+
+        case 'cannon':
+          // Create explosive projectile
+          const explosiveProjectile = new Projectile(
+            this.x,
+            this.y,
+            this.angle,
+            this.projectileSpeed,
+            this.damage,
+            this.type,
+            this.target,
+            this.type
+          );
+
+          // Add AOE properties
+          explosiveProjectile.aoeRadius = this.aoeRadius || 40;
+
+          // Add stun chance if upgraded
+          if (this.stunChance) {
+            explosiveProjectile.stunChance = this.stunChance;
+            explosiveProjectile.stunDuration = 1000; // 1 second stun
+          }
+
+          projectiles.push(explosiveProjectile);
+          break;
+
+        case 'freeze':
+          // Create freeze projectile
+          const freezeProjectile = new Projectile(
+            this.x,
+            this.y,
+            this.angle,
+            this.projectileSpeed,
+            this.damage,
+            this.type,
+            this.target,
+            this.type
+          );
+
+          // Add slow effect properties
+          freezeProjectile.slowFactor = this.slowFactor || 0.5;
+          freezeProjectile.slowDuration = this.slowDuration || 2000;
+
+          // Add splash radius if ice shards upgrade is active
+          if (this.splashRadius) {
+            freezeProjectile.aoeRadius = this.splashRadius;
+          }
+
+          projectiles.push(freezeProjectile);
+          break;
+
+        case 'sniper':
+          // Create high-damage projectile
+          const sniperProjectile = new Projectile(
+            this.x,
+            this.y,
+            this.angle,
+            this.projectileSpeed * 1.5, // Faster projectile
+            this.damage,
+            this.type,
+            this.target,
+            this.type
+          );
+
+          // Add critical hit chance
+          if (this.critChance && Math.random() < this.critChance) {
+            sniperProjectile.damage *= (this.critMultiplier || 2.5);
+            sniperProjectile.isCritical = true;
+          }
+
+          // Add armor piercing if available
+          if (this.armorPiercing) {
+            sniperProjectile.armorPiercing = this.armorPiercing;
+          }
+
+          projectiles.push(sniperProjectile);
+          break;
+
+        default:
+          // Default tower behavior - single projectile
+          const projectile = new Projectile(
+            this.x,
+            this.y,
+            this.angle,
+            this.projectileSpeed,
+            this.damage,
+            this.type,
+            this.target,
+            this.type
+          );
+
+          projectiles.push(projectile);
+          break;
       }
 
-      projectiles.push(projectile);
       this.lastShot = currentTime;
-
       return true;
     } catch (error) {
       console.error('Error creating projectile:', error);
       return false;
     }
+  }
+
+  // Create visual effect when tower shoots
+  createShootEffect() {
+    // Get the canvas context from the game
+    const canvas = document.getElementById('gameCanvas');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Save context state
+    ctx.save();
+
+    // Draw effect based on tower type
+    switch (this.type) {
+      case 'freeze':
+        // Ice burst effect
+        ctx.fillStyle = '#B3E5FC';
+        ctx.globalAlpha = 0.7;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y - 25, 10, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+
+      case 'cannon':
+        // Smoke effect
+        ctx.fillStyle = '#9E9E9E';
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y - 25, 8, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+
+      case 'sniper':
+        // Muzzle flash
+        ctx.fillStyle = '#FFEB3B';
+        ctx.globalAlpha = 0.8;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y - 25, 6, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+
+      case 'archer':
+        // String vibration effect
+        ctx.strokeStyle = '#8D6E63';
+        ctx.lineWidth = 1;
+        ctx.globalAlpha = 0.6;
+        ctx.beginPath();
+        ctx.moveTo(this.x - 5, this.y - 25);
+        ctx.lineTo(this.x + 5, this.y - 25);
+        ctx.stroke();
+        break;
+
+      default:
+        // Generic flash
+        ctx.fillStyle = '#FFFFFF';
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y - 25, 5, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+    }
+
+    // Restore context state
+    ctx.restore();
   }
 
   // Draw the tower
@@ -530,6 +700,48 @@ class Tower {
 
     // Draw tower based on type and upgrades
     switch (this.type) {
+      case 'basic':
+        // Basic tower - simple design
+        ctx.fillStyle = this.color;
+        ctx.fillRect(-8, -25, 16, 25);
+
+        // Tower head
+        ctx.beginPath();
+        ctx.arc(0, -25, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Path A upgrades - Enhanced power
+        if (hasPathAUpgrades) {
+          ctx.fillStyle = '#FFA000';
+          ctx.fillRect(-8, -25, 16, 25);
+
+          // Add power indicators
+          ctx.fillStyle = '#FFECB3';
+          for (let i = 0; i < this.pathALevel; i++) {
+            ctx.beginPath();
+            ctx.arc(0, -15 - i * 5, 3, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+        // Path B upgrades - Rapid fire
+        if (hasPathBUpgrades) {
+          ctx.fillStyle = '#7B1FA2';
+          ctx.fillRect(-8, -25, 16, 25);
+
+          // Add speed indicators
+          ctx.strokeStyle = '#E1BEE7';
+          ctx.lineWidth = 1;
+          for (let i = 0; i < this.pathBLevel; i++) {
+            const offset = 5 + i * 3;
+            ctx.beginPath();
+            ctx.moveTo(-offset, -15);
+            ctx.lineTo(offset, -15);
+            ctx.stroke();
+          }
+        }
+        break;
+
       case 'freeze':
         // Base tower body
         ctx.fillStyle = this.color;

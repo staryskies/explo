@@ -39,24 +39,37 @@ function isVariantUnlocked(towerType, variant) {
 
 // Create animated stars in the background
 function createStars() {
-  const container = document.getElementById('main-menu-container');
-  const starCount = 100;
+  // Use document.body as the container to make stars appear on all screens
+  const container = document.body;
+  const starCount = 150; // Increased star count
 
   for (let i = 0; i < starCount; i++) {
     const star = document.createElement('div');
-    star.className = 'star';
+
+    // Assign different sizes with different classes
+    const sizeRandom = Math.random();
+    if (sizeRandom > 0.9) {
+      star.className = 'star large';
+    } else if (sizeRandom > 0.7) {
+      star.className = 'star medium';
+    } else {
+      star.className = 'star';
+    }
 
     // Random position
     star.style.left = `${Math.random() * 100}%`;
     star.style.top = `${Math.random() * 100}%`;
 
-    // Random size (1-3px)
-    const size = 1 + Math.random() * 2;
-    star.style.width = `${size}px`;
-    star.style.height = `${size}px`;
-
-    // Random animation delay
+    // Random animation delay for twinkling
     star.style.animationDelay = `${Math.random() * 3}s`;
+
+    // Add floating animation to some stars
+    if (Math.random() > 0.7) {
+      star.style.animation = `twinkle 3s infinite, float ${5 + Math.random() * 5}s infinite`;
+    }
+
+    // Random z-index to create depth
+    star.style.zIndex = Math.floor(Math.random() * 20);
 
     container.appendChild(star);
   }

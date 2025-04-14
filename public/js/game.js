@@ -455,13 +455,13 @@ class Game {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     // Draw map - always draw the map regardless of game state
-
     this.map.draw();
 
-    // If the game hasn't started yet, we can return after drawing the map
-    // This ensures the map is visible even before the game starts
-    if (!this.gameStarted && !this.selectedTowerType) {
-      return;
+    // Always draw towers regardless of game state
+    if (this.towers && this.towers.length > 0) {
+      this.towers.forEach(tower => {
+        tower.draw(this.ctx, this.showTowerRanges);
+      });
     }
 
     // Draw enemies
@@ -469,12 +469,7 @@ class Game {
       enemy.draw(this.ctx);
     });
 
-    // Draw towers - always draw towers regardless of selection state
-    if (this.towers && this.towers.length > 0) {
-      this.towers.forEach(tower => {
-        tower.draw(this.ctx, this.showTowerRanges);
-      });
-    }
+    // Towers are already drawn above
 
     // Draw projectiles
     this.projectiles.forEach(projectile => {
