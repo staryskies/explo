@@ -49,15 +49,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Force initial draw to show the map immediately
   game.draw();
+  console.log('Initial map draw completed');
 
-  // Start the game loop immediately with a low-priority timeout
-  setTimeout(() => {
-    // Initialize the last update time to the current time
-    game.lastUpdateTime = performance.now();
+  // Start the game loop immediately
+  game.lastUpdateTime = performance.now();
+  window.requestAnimationFrame((time) => game.gameLoop(time));
+  console.log('Game loop started with delta time');
 
-    // Start the animation loop with the current time
-    window.requestAnimationFrame((time) => game.gameLoop(time));
-    console.log('Game loop started with delta time');
+  // Set an interval to ensure the map is always visible even before game starts
+  const mapDrawInterval = setInterval(() => {
+    if (!game.gameStarted) {
+      game.draw();
+    } else {
+      // Once game has started, clear the interval as the game loop will handle drawing
+      clearInterval(mapDrawInterval);
+    }
   }, 100);
 
   // Handle mouse move for tower placement preview
