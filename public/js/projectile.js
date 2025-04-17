@@ -27,31 +27,88 @@ class Projectile {
 
   // Set projectile properties based on type
   setPropertiesByType() {
+    // Smaller bullets with different colors for each tower type
     switch (this.type) {
       case 'sniper':
+        this.size = 3;
+        this.color = '#2196F3'; // Blue
+        this.trailLength = 0; // No trail
+        this.speed *= 1.5; // Faster
+        break;
+      case 'cannon':
         this.size = 4;
-        this.color = '#2196F3';
-        this.trailLength = 20;
+        this.color = '#795548'; // Brown
+        this.trailLength = 0;
+        this.speed *= 1.2;
         break;
-      case 'aoe':
-        this.size = 8;
-        this.color = '#F44336';
-        this.trailLength = 10;
+      case 'archer':
+        this.size = 2;
+        this.color = '#8BC34A'; // Green
+        this.trailLength = 0;
+        this.speed *= 1.4;
         break;
-      case 'slow':
-        this.size = 6;
-        this.color = '#00BCD4';
-        this.trailLength = 15;
+      case 'freeze':
+        this.size = 3;
+        this.color = '#00BCD4'; // Cyan
+        this.trailLength = 0;
+        this.speed *= 1.3;
+        break;
+      case 'mortar':
+        this.size = 4;
+        this.color = '#607D8B'; // Gray
+        this.trailLength = 0;
+        this.speed *= 1.1;
+        break;
+      case 'laser':
+        this.size = 2;
+        this.color = '#F44336'; // Red
+        this.trailLength = 8; // Keep trail for laser
+        this.speed *= 1.6;
+        break;
+      case 'tesla':
+        this.size = 2;
+        this.color = '#FFEB3B'; // Yellow
+        this.trailLength = 5; // Keep short trail for tesla
+        this.speed *= 1.7;
+        break;
+      case 'flame':
+        this.size = 3;
+        this.color = '#FF9800'; // Orange
+        this.trailLength = 4; // Short trail for flame
+        this.speed *= 1.3;
+        break;
+      case 'missile':
+        this.size = 3;
+        this.color = '#9E9E9E'; // Gray
+        this.trailLength = 3;
+        this.speed *= 1.4;
+        break;
+      case 'poison':
+        this.size = 2;
+        this.color = '#9C27B0'; // Purple
+        this.trailLength = 0;
+        this.speed *= 1.3;
+        break;
+      case 'vortex':
+        this.size = 3;
+        this.color = '#009688'; // Teal
+        this.trailLength = 0;
+        this.speed *= 1.2;
         break;
       case 'basic':
       default:
-        this.size = 5;
-        this.color = '#4CAF50';
-        this.trailLength = 12;
+        this.size = 2;
+        this.color = '#4CAF50'; // Green
+        this.trailLength = 0;
+        this.speed *= 1.3;
         break;
     }
 
-    // Initialize trail
+    // Recalculate velocity with new speed
+    this.vx = Math.cos(this.angle) * this.speed;
+    this.vy = Math.sin(this.angle) * this.speed;
+
+    // Initialize trail only for towers that need it
     this.trail = [];
     for (let i = 0; i < this.trailLength; i++) {
       this.trail.push({x: this.x, y: this.y});
@@ -129,33 +186,35 @@ class Projectile {
   draw(ctx) {
     if (!this.active) return;
 
-    // Draw trail
-    ctx.save();
-    for (let i = 0; i < this.trail.length; i++) {
-      const point = this.trail[i];
-      const alpha = 1 - (i / this.trail.length);
-      const size = this.size * (1 - i / this.trail.length * 0.8);
+    // Only draw trail for specific tower types (laser, tesla, flame)
+    if (this.trailLength > 0) {
+      ctx.save();
+      for (let i = 0; i < this.trail.length; i++) {
+        const point = this.trail[i];
+        const alpha = 1 - (i / this.trail.length);
+        const size = this.size * (1 - i / this.trail.length * 0.8);
 
-      ctx.globalAlpha = alpha * 0.7;
-      ctx.fillStyle = this.color;
-      ctx.beginPath();
-      ctx.arc(point.x, point.y, size, 0, Math.PI * 2);
-      ctx.fill();
+        ctx.globalAlpha = alpha * 0.7;
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
     }
-    ctx.restore();
 
-    // Draw projectile
+    // Draw projectile - smaller and cleaner
     ctx.fillStyle = this.color;
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
     ctx.fill();
 
-    // Draw glow effect
+    // Add a small glow effect for visibility
     ctx.save();
-    ctx.globalAlpha = 0.5;
-    ctx.filter = `blur(${this.size}px)`;
+    ctx.globalAlpha = 0.3;
+    ctx.filter = `blur(${this.size/2}px)`;
     ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size * 1.5, 0, Math.PI * 2);
+    ctx.arc(this.x, this.y, this.size * 1.2, 0, Math.PI * 2);
     ctx.fillStyle = this.color;
     ctx.fill();
     ctx.restore();

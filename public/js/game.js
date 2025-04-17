@@ -198,8 +198,12 @@ class Game {
       // Convert grid coordinates to pixel coordinates (center of tile)
       const pixelPos = this.map.gridToPixel(gridPos.x, gridPos.y);
 
-      // Create the tower with grid coordinates
-      const tower = new Tower(pixelPos.x, pixelPos.y, this.selectedTowerType, gridPos.x, gridPos.y);
+      // Get the selected tower button to check for variant
+      const towerButton = document.querySelector(`.tower-btn[data-type="${this.selectedTowerType}"]`);
+      const variant = towerButton?.dataset.variant;
+
+      // Create the tower with grid coordinates and variant if available
+      const tower = new Tower(pixelPos.x, pixelPos.y, this.selectedTowerType, gridPos.x, gridPos.y, variant);
       this.towers.push(tower);
 
       // Mark the tile as occupied
@@ -531,24 +535,83 @@ class Game {
     let range;
     let color;
 
+    // Check if there's a variant selected
+    const towerButton = document.querySelector(`.tower-btn[data-type="${this.selectedTowerType}"]`);
+    const variant = towerButton?.dataset.variant;
+
+    // Define variant colors
+    const variantColors = {
+      gold: '#FFD700',
+      crystal: '#88CCEE',
+      shadow: '#444444',
+      ice: '#29B6F6',
+      fire: '#F44336',
+      poison: '#4CAF50',
+      dragon: '#FF5722',
+      double: '#795548',
+      heavy: '#5D4037',
+      explosive: '#D84315',
+      rapid: '#2196F3',
+      stealth: '#37474F',
+      railgun: '#0D47A1'
+    };
+
+    // Get tower stats based on type
     switch (this.selectedTowerType) {
       case 'sniper':
         range = 300;
         color = '#2196F3';
         break;
-      case 'aoe':
-        range = 150;
-        color = '#F44336';
+      case 'cannon':
+        range = 180;
+        color = '#795548';
         break;
-      case 'slow':
+      case 'archer':
+        range = 220;
+        color = '#8BC34A';
+        break;
+      case 'freeze':
         range = 180;
         color = '#00BCD4';
+        break;
+      case 'mortar':
+        range = 250;
+        color = '#607D8B';
+        break;
+      case 'laser':
+        range = 200;
+        color = '#F44336';
+        break;
+      case 'tesla':
+        range = 180;
+        color = '#FFC107';
+        break;
+      case 'flame':
+        range = 150;
+        color = '#FF9800';
+        break;
+      case 'missile':
+        range = 250;
+        color = '#9E9E9E';
+        break;
+      case 'poison':
+        range = 170;
+        color = '#9C27B0';
+        break;
+      case 'vortex':
+        range = 190;
+        color = '#009688';
         break;
       case 'basic':
       default:
         range = 200;
         color = '#4CAF50';
         break;
+    }
+
+    // Apply variant color if available
+    if (variant && variantColors[variant]) {
+      color = variantColors[variant];
     }
 
     this.ctx.fillStyle = `${color}33`; // 20% opacity

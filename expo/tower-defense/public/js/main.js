@@ -4,10 +4,10 @@
 document.addEventListener('DOMContentLoaded', () => {
   // Get the canvas element
   const canvas = document.getElementById('gameCanvas');
-  
+
   // Create the game instance
   const game = new Game(canvas);
-  
+
   // Handle mouse move for tower placement preview
   canvas.addEventListener('mousemove', (e) => {
     // The preview is drawn in the game's draw method
@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
       game.draw();
     }
   });
-  
+
   // Handle keyboard shortcuts
   document.addEventListener('keydown', (e) => {
     switch (e.key) {
@@ -60,16 +60,10 @@ document.addEventListener('DOMContentLoaded', () => {
         break;
     }
   });
-  
-  // Connect to socket.io
-  const socket = io();
-  
-  socket.on('connect', () => {
-    console.log('Connected to server');
-  });
-  
-  // You can add more socket events for multiplayer features later
-  
+
+  // Static app - no server dependencies
+  console.log('Running in static mode');
+
   // Handle window resize
   window.addEventListener('resize', () => {
     // Resize is handled in the Game class

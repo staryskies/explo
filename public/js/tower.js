@@ -5,12 +5,13 @@
 console.log('Tower class loaded');
 
 class Tower {
-  constructor(x, y, type = 'basic', gridX, gridY) {
+  constructor(x, y, type = 'basic', gridX, gridY, variant = null) {
     this.x = x;
     this.y = y;
     this.gridX = gridX; // Store grid coordinates for tower removal
     this.gridY = gridY;
     this.type = type;
+    this.variant = variant; // Store the tower skin variant
     this.level = 1;
     this.target = null;
     this.angle = 0;
@@ -20,11 +21,21 @@ class Tower {
     this.pathALevel = 0;
     this.pathBLevel = 0;
 
+    // Animation properties
+    this.recoilAnimation = 0;
+    this.animationTime = 0;
+    this.animationFrame = 0;
+
     // Set properties based on tower type
     this.setPropertiesByType();
 
     // Initialize special properties
     this.initializeSpecialProperties();
+
+    // Apply variant-specific properties if a variant is specified
+    if (this.variant) {
+      this.applyVariantProperties();
+    }
   }
 
   // Set tower properties based on type using towerStats
@@ -118,6 +129,121 @@ class Tower {
         this.clusterDamage = 0;
         break;
     }
+  }
+
+  // Apply variant-specific properties based on the tower's variant
+  applyVariantProperties() {
+    if (!this.variant || this.variant === this.type) return;
+
+    // Define variant colors and effects
+    const variantColors = {
+      // Basic tower variants
+      gold: '#FFD700',
+      crystal: '#88CCEE',
+      shadow: '#444444',
+
+      // Archer tower variants
+      ice: '#29B6F6',
+      fire: '#F44336',
+      poison: '#4CAF50',
+      dragon: '#FF5722',
+
+      // Cannon tower variants
+      double: '#795548',
+      heavy: '#5D4037',
+      explosive: '#D84315',
+
+      // Sniper tower variants
+      rapid: '#2196F3',
+      stealth: '#37474F',
+      railgun: '#0D47A1',
+
+      // Freeze tower variants
+      cryo: '#00BCD4',
+      blizzard: '#B3E5FC',
+      temporal: '#4FC3F7',
+
+      // Other tower variants
+      magma: '#E91E63',
+      plasma: '#9C27B0',
+      quantum: '#673AB7',
+      storm: '#FFC107',
+      inferno: '#FF9800',
+      guided: '#607D8B',
+      toxic: '#8BC34A'
+    };
+
+    // Apply variant color
+    if (variantColors[this.variant]) {
+      this.variantColor = variantColors[this.variant];
+    }
+
+    // Apply variant-specific stat boosts
+    switch (this.variant) {
+      // Basic tower variants
+      case 'gold':
+        this.damage *= 1.2; // 20% more damage
+        break;
+      case 'crystal':
+        this.range *= 1.15; // 15% more range
+        break;
+      case 'shadow':
+        this.fireRate *= 1.2; // 20% faster firing
+        this.cooldown = 1000 / this.fireRate;
+        break;
+
+      // Archer tower variants
+      case 'ice':
+        this.projectileType = 'ice';
+        this.slowFactor = 0.2;
+        this.slowDuration = 1000;
+        break;
+      case 'fire':
+        this.projectileType = 'fire';
+        this.burnDamage = 5;
+        this.burnDuration = 2000;
+        break;
+      case 'poison':
+        this.projectileType = 'poison';
+        this.poisonDamage = 3;
+        this.poisonDuration = 3000;
+        break;
+      case 'dragon':
+        this.extraShots += 1; // One more arrow
+        this.projectileType = 'dragon';
+        break;
+
+      // Cannon tower variants
+      case 'double':
+        this.extraShots = 1; // Fires two cannonballs
+        break;
+      case 'heavy':
+        this.damage *= 1.5; // 50% more damage
+        this.fireRate *= 0.8; // 20% slower firing
+        this.cooldown = 1000 / this.fireRate;
+        break;
+      case 'explosive':
+        this.aoeRadius *= 1.3; // 30% larger explosion radius
+        break;
+
+      // Sniper tower variants
+      case 'rapid':
+        this.fireRate *= 1.5; // 50% faster firing
+        this.cooldown = 1000 / this.fireRate;
+        this.damage *= 0.8; // 20% less damage
+        break;
+      case 'stealth':
+        this.critChance += 0.2; // +20% crit chance
+        break;
+      case 'railgun':
+        this.damage *= 1.8; // 80% more damage
+        this.fireRate *= 0.6; // 40% slower firing
+        this.cooldown = 1000 / this.fireRate;
+        this.projectileSpeed *= 2; // Much faster projectiles
+        break;
+    }
+
+    console.log(`Applied ${this.variant} variant to ${this.type} tower`);
   }
 
   // Upgrade the tower along a specific path
@@ -618,49 +744,216 @@ class Tower {
     // Draw effect based on tower type
     switch (this.type) {
       case 'freeze':
-        // Ice burst effect
+        // Enhanced ice burst effect
+        // Main burst
         ctx.fillStyle = '#B3E5FC';
         ctx.globalAlpha = 0.7;
         ctx.beginPath();
-        ctx.arc(this.x, this.y - 25, 10, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y - 25, 12, 0, Math.PI * 2);
         ctx.fill();
+
+        // Ice crystals
+        ctx.strokeStyle = '#E1F5FE';
+        ctx.lineWidth = 1;
+        ctx.globalAlpha = 0.8;
+        for (let i = 0; i < 6; i++) {
+          const angle = Math.PI * 2 * (i / 6);
+          ctx.beginPath();
+          ctx.moveTo(this.x, this.y - 25);
+          ctx.lineTo(
+            this.x + Math.cos(angle) * 18,
+            this.y - 25 + Math.sin(angle) * 18
+          );
+          ctx.stroke();
+        }
         break;
 
       case 'cannon':
+        // Enhanced cannon firing effect
+        // Muzzle flash
+        ctx.fillStyle = '#FF9800';
+        ctx.globalAlpha = 0.9;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y - 25, 10, 0, Math.PI * 2);
+        ctx.fill();
+
         // Smoke effect
         ctx.fillStyle = '#9E9E9E';
-        ctx.globalAlpha = 0.5;
+        ctx.globalAlpha = 0.7;
+        for (let i = 0; i < 5; i++) {
+          const offset = i * 3;
+          const size = 8 - i * 1.2;
+          ctx.beginPath();
+          ctx.arc(
+            this.x + Math.cos(this.angle) * offset,
+            this.y - 25 + Math.sin(this.angle) * offset,
+            size,
+            0,
+            Math.PI * 2
+          );
+          ctx.fill();
+        }
+
+        // Recoil animation (handled in draw method)
+        this.recoilAnimation = 5; // Set recoil frames
+        break;
+
+      case 'tesla':
+        // Tesla electricity effect
+        ctx.strokeStyle = '#FFEB3B';
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = 0.8;
+
+        // Draw lightning bolts
+        for (let i = 0; i < 4; i++) {
+          const angle = this.angle + (Math.random() - 0.5) * 0.8;
+          const length = 30 + Math.random() * 20;
+
+          ctx.beginPath();
+          ctx.moveTo(this.x, this.y - 25);
+
+          // Create zigzag lightning path
+          let x = this.x;
+          let y = this.y - 25;
+          const segments = 4 + Math.floor(Math.random() * 3);
+
+          for (let j = 0; j < segments; j++) {
+            const segLength = length / segments;
+            const jitter = 8 - j * 1.5; // Less jitter toward the end
+
+            x += Math.cos(angle) * segLength + (Math.random() - 0.5) * jitter;
+            y += Math.sin(angle) * segLength + (Math.random() - 0.5) * jitter;
+
+            ctx.lineTo(x, y);
+          }
+
+          ctx.stroke();
+        }
+
+        // Glow effect
+        ctx.fillStyle = '#FFEB3B';
+        ctx.globalAlpha = 0.4;
         ctx.beginPath();
-        ctx.arc(this.x, this.y - 25, 8, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y - 25, 15, 0, Math.PI * 2);
         ctx.fill();
         break;
 
       case 'sniper':
-        // Muzzle flash
+        // Enhanced muzzle flash
         ctx.fillStyle = '#FFEB3B';
-        ctx.globalAlpha = 0.8;
+        ctx.globalAlpha = 0.9;
         ctx.beginPath();
-        ctx.arc(this.x, this.y - 25, 6, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y - 25, 8, 0, Math.PI * 2);
         ctx.fill();
+
+        // Directional flash
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y - 25);
+        ctx.lineTo(
+          this.x + Math.cos(this.angle) * 15,
+          this.y - 25 + Math.sin(this.angle) * 15
+        );
+        ctx.lineTo(
+          this.x + Math.cos(this.angle + 0.3) * 10,
+          this.y - 25 + Math.sin(this.angle + 0.3) * 10
+        );
+        ctx.lineTo(
+          this.x + Math.cos(this.angle - 0.3) * 10,
+          this.y - 25 + Math.sin(this.angle - 0.3) * 10
+        );
+        ctx.closePath();
+        ctx.fill();
+
+        // Recoil animation
+        this.recoilAnimation = 3;
         break;
 
       case 'archer':
-        // String vibration effect
+        // Enhanced string vibration effect
         ctx.strokeStyle = '#8D6E63';
         ctx.lineWidth = 1;
-        ctx.globalAlpha = 0.6;
+        ctx.globalAlpha = 0.8;
+
+        // Vibrating bowstring
+        for (let i = 0; i < 3; i++) {
+          const offset = (i - 1) * 2;
+          ctx.beginPath();
+          ctx.moveTo(this.x - 8, this.y - 25 + offset);
+          ctx.lineTo(this.x + 8, this.y - 25 - offset);
+          ctx.stroke();
+        }
+
+        // Arrow release effect
+        ctx.fillStyle = '#F5F5F5';
+        ctx.globalAlpha = 0.5;
         ctx.beginPath();
-        ctx.moveTo(this.x - 5, this.y - 25);
-        ctx.lineTo(this.x + 5, this.y - 25);
+        ctx.moveTo(this.x, this.y - 25);
+        ctx.lineTo(
+          this.x + Math.cos(this.angle) * 20,
+          this.y - 25 + Math.sin(this.angle) * 20
+        );
+        ctx.lineTo(
+          this.x + Math.cos(this.angle + 0.2) * 15,
+          this.y - 25 + Math.sin(this.angle + 0.2) * 15
+        );
+        ctx.lineTo(
+          this.x + Math.cos(this.angle - 0.2) * 15,
+          this.y - 25 + Math.sin(this.angle - 0.2) * 15
+        );
+        ctx.closePath();
+        ctx.fill();
+        break;
+
+      case 'laser':
+        // Laser beam effect
+        ctx.strokeStyle = '#F44336';
+        ctx.lineWidth = 3;
+        ctx.globalAlpha = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y - 25);
+        ctx.lineTo(
+          this.x + Math.cos(this.angle) * 50,
+          this.y - 25 + Math.sin(this.angle) * 50
+        );
+        ctx.stroke();
+
+        // Laser glow
+        ctx.strokeStyle = '#FFCDD2';
+        ctx.lineWidth = 1;
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y - 25);
+        ctx.lineTo(
+          this.x + Math.cos(this.angle) * 60,
+          this.y - 25 + Math.sin(this.angle) * 60
+        );
         ctx.stroke();
         break;
 
       default:
-        // Generic flash
+        // Generic enhanced flash
         ctx.fillStyle = '#FFFFFF';
-        ctx.globalAlpha = 0.5;
+        ctx.globalAlpha = 0.7;
         ctx.beginPath();
-        ctx.arc(this.x, this.y - 25, 5, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y - 25, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Small directional flash
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y - 25);
+        ctx.lineTo(
+          this.x + Math.cos(this.angle) * 12,
+          this.y - 25 + Math.sin(this.angle) * 12
+        );
+        ctx.lineTo(
+          this.x + Math.cos(this.angle + 0.3) * 8,
+          this.y - 25 + Math.sin(this.angle + 0.3) * 8
+        );
+        ctx.lineTo(
+          this.x + Math.cos(this.angle - 0.3) * 8,
+          this.y - 25 + Math.sin(this.angle - 0.3) * 8
+        );
+        ctx.closePath();
         ctx.fill();
         break;
     }
@@ -720,21 +1013,101 @@ class Tower {
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
 
+    // Apply recoil animation if active
+    let recoilOffset = 0;
+    if (this.recoilAnimation > 0) {
+      // Calculate recoil offset based on remaining animation frames
+      recoilOffset = Math.sin(Math.PI * (this.recoilAnimation / 5)) * 5;
+      this.recoilAnimation--;
+    }
+
     // Determine if tower has upgrades
     const hasPathAUpgrades = this.pathALevel > 0;
     const hasPathBUpgrades = this.pathBLevel > 0;
+
+    // Use variant color if available
+    const towerColor = this.variantColor || this.color;
 
     // Draw tower based on type and upgrades
     switch (this.type) {
       case 'basic':
         // Basic tower - simple design
-        ctx.fillStyle = this.color;
+        ctx.fillStyle = towerColor;
         ctx.fillRect(-8, -25, 16, 25);
 
         // Tower head
         ctx.beginPath();
         ctx.arc(0, -25, 8, 0, Math.PI * 2);
         ctx.fill();
+
+        // Add variant-specific effects if a variant is applied
+        if (this.variant && this.variant !== this.type) {
+          switch (this.variant) {
+            case 'gold':
+              // Add gold trim
+              ctx.strokeStyle = '#FFD700';
+              ctx.lineWidth = 2;
+              ctx.strokeRect(-8, -25, 16, 25);
+
+              // Add gold glow
+              ctx.fillStyle = '#FFD700';
+              ctx.globalAlpha = 0.3;
+              ctx.beginPath();
+              ctx.arc(0, -25, 10, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.globalAlpha = 1.0;
+              break;
+
+            case 'crystal':
+              // Add crystal effect
+              ctx.strokeStyle = '#88CCEE';
+              ctx.lineWidth = 1;
+
+              // Draw crystal facets
+              for (let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.moveTo(-8, -25 + i * 8);
+                ctx.lineTo(8, -25 + i * 8);
+                ctx.stroke();
+              }
+
+              // Add crystal glow
+              ctx.fillStyle = '#88CCEE';
+              ctx.globalAlpha = 0.3;
+              ctx.beginPath();
+              ctx.arc(0, -25, 10, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.globalAlpha = 1.0;
+              break;
+
+            case 'shadow':
+              // Add shadow effect
+              ctx.fillStyle = '#000000';
+              ctx.globalAlpha = 0.5;
+              ctx.beginPath();
+              ctx.arc(0, -25, 10, 0, Math.PI * 2);
+              ctx.fill();
+
+              // Add smoky particles
+              const time = Date.now() / 1000;
+              ctx.fillStyle = '#444444';
+              ctx.globalAlpha = 0.7;
+
+              for (let i = 0; i < 3; i++) {
+                const angle = time + i * Math.PI * 2 / 3;
+                const x = Math.cos(angle) * 12;
+                const y = Math.sin(angle) * 12 - 15;
+                const size = 2 + Math.sin(time * 2 + i) * 1;
+
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+              }
+
+              ctx.globalAlpha = 1.0;
+              break;
+          }
+        }
 
         // Path A upgrades - Enhanced power
         if (hasPathAUpgrades) {
@@ -1143,57 +1516,173 @@ class Tower {
         break;
 
       case 'cannon':
-        // Base tower body
-        ctx.fillStyle = this.color;
-        ctx.fillRect(-10, -25, 20, 25);
+        // Apply recoil to cannon position
+        const cannonRecoil = recoilOffset;
+
+        // Base tower body with enhanced design
+        const cannonGradient = ctx.createLinearGradient(-10, -25 + cannonRecoil, 10, 0);
+        cannonGradient.addColorStop(0, '#795548'); // Brown
+        cannonGradient.addColorStop(1, '#5D4037'); // Darker brown
+
+        ctx.fillStyle = cannonGradient;
+
+        // Draw cannon barrel with rounded edges
+        ctx.beginPath();
+        ctx.moveTo(-10, -25 + cannonRecoil); // Top left with recoil
+        ctx.lineTo(10, -25 + cannonRecoil);  // Top right with recoil
+        ctx.lineTo(12, -10); // Middle right
+        ctx.lineTo(10, 5);   // Bottom right
+        ctx.lineTo(-10, 5);  // Bottom left
+        ctx.lineTo(-12, -10); // Middle left
+        ctx.closePath();
+        ctx.fill();
+
+        // Draw cannon opening
+        ctx.fillStyle = '#3E2723';
+        ctx.beginPath();
+        ctx.arc(0, -25 + cannonRecoil, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Add metallic highlights
+        ctx.strokeStyle = '#8D6E63';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(-10, -15 + cannonRecoil);
+        ctx.lineTo(10, -15 + cannonRecoil);
+        ctx.stroke();
 
         // Path A: Blast Radius - Wider cannon
         if (hasPathAUpgrades) {
-          ctx.fillStyle = '#5D4037';
-          const width = 10 + this.pathALevel * 2;
-          ctx.fillRect(-width, -25, width * 2, 25);
+          // Enhanced cannon with wider barrel
+          const blastGradient = ctx.createLinearGradient(-12, -25 + cannonRecoil, 12, 0);
+          blastGradient.addColorStop(0, '#5D4037'); // Darker brown
+          blastGradient.addColorStop(1, '#4E342E'); // Even darker brown
 
-          // Draw wider cannon opening
+          ctx.fillStyle = blastGradient;
+
+          const width = 10 + this.pathALevel * 2;
+
+          // Draw enhanced barrel
+          ctx.beginPath();
+          ctx.moveTo(-width, -25 + cannonRecoil); // Top left with recoil
+          ctx.lineTo(width, -25 + cannonRecoil);  // Top right with recoil
+          ctx.lineTo(width + 2, -10); // Middle right
+          ctx.lineTo(width, 5);   // Bottom right
+          ctx.lineTo(-width, 5);  // Bottom left
+          ctx.lineTo(-width - 2, -10); // Middle left
+          ctx.closePath();
+          ctx.fill();
+
+          // Draw wider cannon opening with glow
           ctx.fillStyle = '#3E2723';
           ctx.beginPath();
-          ctx.arc(0, -25, 6 + this.pathALevel, 0, Math.PI * 2);
+          ctx.arc(0, -25 + cannonRecoil, 6 + this.pathALevel, 0, Math.PI * 2);
           ctx.fill();
+
+          // Add inner glow to opening
+          ctx.fillStyle = '#FF9800';
+          ctx.globalAlpha = 0.3;
+          ctx.beginPath();
+          ctx.arc(0, -25 + cannonRecoil, 4 + this.pathALevel, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1.0;
         }
 
         // Path B: Heavy Impact - Reinforced cannon
         if (hasPathBUpgrades) {
-          ctx.fillStyle = '#8D6E63';
-          ctx.fillRect(-10, -25, 20, 25);
+          // Enhanced reinforced cannon
+          const heavyGradient = ctx.createLinearGradient(-10, -25 + cannonRecoil, 10, 0);
+          heavyGradient.addColorStop(0, '#8D6E63'); // Light brown
+          heavyGradient.addColorStop(1, '#6D4C41'); // Medium brown
+
+          ctx.fillStyle = heavyGradient;
+
+          // Draw reinforced barrel
+          ctx.beginPath();
+          ctx.moveTo(-10, -25 + cannonRecoil); // Top left with recoil
+          ctx.lineTo(10, -25 + cannonRecoil);  // Top right with recoil
+          ctx.lineTo(12, -10); // Middle right
+          ctx.lineTo(10, 5);   // Bottom right
+          ctx.lineTo(-10, 5);  // Bottom left
+          ctx.lineTo(-12, -10); // Middle left
+          ctx.closePath();
+          ctx.fill();
 
           // Draw reinforcement bands
           ctx.strokeStyle = '#4E342E';
           ctx.lineWidth = 2;
           for (let i = 0; i < this.pathBLevel; i++) {
             ctx.beginPath();
-            ctx.moveTo(-12, -20 + i * 10);
-            ctx.lineTo(12, -20 + i * 10);
+            ctx.moveTo(-12, -20 + i * 10 + (i === 0 ? cannonRecoil : 0));
+            ctx.lineTo(12, -20 + i * 10 + (i === 0 ? cannonRecoil : 0));
             ctx.stroke();
+          }
+
+          // Add metal rivets
+          ctx.fillStyle = '#BDBDBD';
+          for (let i = 0; i < this.pathBLevel * 2; i++) {
+            const angle = Math.PI * 2 * (i / (this.pathBLevel * 2));
+            const x = Math.cos(angle) * 8;
+            const y = Math.sin(angle) * 8 - 10;
+
+            ctx.beginPath();
+            ctx.arc(x, y, 1.5, 0, Math.PI * 2);
+            ctx.fill();
           }
         }
         break;
 
       case 'sniper':
-        // Base tower body
-        ctx.fillStyle = this.color;
-        ctx.fillRect(-6, -30, 12, 30);
+        // Apply recoil to sniper position
+        const sniperRecoil = recoilOffset * 0.6;
+
+        // Base tower body with enhanced design
+        const sniperGradient = ctx.createLinearGradient(-6, -30 + sniperRecoil, 6, 0);
+        sniperGradient.addColorStop(0, '#2196F3'); // Blue
+        sniperGradient.addColorStop(1, '#1976D2'); // Darker blue
+
+        ctx.fillStyle = sniperGradient;
+
+        // Draw sniper barrel with better shape
+        ctx.beginPath();
+        ctx.moveTo(-6, -30 + sniperRecoil); // Top left with recoil
+        ctx.lineTo(6, -30 + sniperRecoil);  // Top right with recoil
+        ctx.lineTo(8, -15); // Middle right
+        ctx.lineTo(6, 5);   // Bottom right
+        ctx.lineTo(-6, 5);  // Bottom left
+        ctx.lineTo(-8, -15); // Middle left
+        ctx.closePath();
+        ctx.fill();
+
+        // Add barrel details
+        ctx.strokeStyle = '#0D47A1';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(-6, -20 + sniperRecoil);
+        ctx.lineTo(6, -20 + sniperRecoil);
+        ctx.stroke();
 
         // Path A: Precision - Longer, thinner barrel
         if (hasPathAUpgrades) {
-          ctx.fillStyle = '#1565C0';
-          ctx.fillRect(-4, -35 - this.pathALevel * 5, 8, 35 + this.pathALevel * 5);
+          // Enhanced precision barrel
+          const precisionGradient = ctx.createLinearGradient(-4, -35 - this.pathALevel * 5 + sniperRecoil, 4, 0);
+          precisionGradient.addColorStop(0, '#1565C0'); // Medium blue
+          precisionGradient.addColorStop(1, '#0D47A1'); // Dark blue
 
-          // Draw scope
-          ctx.fillStyle = '#0D47A1';
+          ctx.fillStyle = precisionGradient;
+          ctx.fillRect(-4, -35 - this.pathALevel * 5 + sniperRecoil, 8, 35 + this.pathALevel * 5);
+
+          // Draw enhanced scope
+          const scopeGradient = ctx.createRadialGradient(0, -15, 1, 0, -15, 5);
+          scopeGradient.addColorStop(0, '#0D47A1'); // Dark blue
+          scopeGradient.addColorStop(1, '#01579B'); // Very dark blue
+
+          ctx.fillStyle = scopeGradient;
           ctx.beginPath();
           ctx.arc(0, -15, 5, 0, Math.PI * 2);
           ctx.fill();
 
-          // Draw crosshairs
+          // Draw enhanced crosshairs
           ctx.strokeStyle = '#E3F2FD';
           ctx.lineWidth = 1;
           ctx.beginPath();
@@ -1202,15 +1691,33 @@ class Tower {
           ctx.moveTo(0, -19);
           ctx.lineTo(0, -11);
           ctx.stroke();
+
+          // Add scope lens reflection
+          ctx.fillStyle = '#FFFFFF';
+          ctx.globalAlpha = 0.4;
+          ctx.beginPath();
+          ctx.arc(-1, -16, 2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1.0;
         }
 
         // Path B: Long Range - Stabilized platform
         if (hasPathBUpgrades) {
-          ctx.fillStyle = '#0277BD';
-          ctx.fillRect(-6, -30, 12, 30);
+          // Enhanced stabilized platform
+          const stabilizedGradient = ctx.createLinearGradient(-6, -30 + sniperRecoil, 6, 0);
+          stabilizedGradient.addColorStop(0, '#0277BD'); // Medium blue
+          stabilizedGradient.addColorStop(1, '#01579B'); // Dark blue
 
-          // Draw stabilizers
-          ctx.fillStyle = '#01579B';
+          ctx.fillStyle = stabilizedGradient;
+          ctx.fillRect(-6, -30 + sniperRecoil, 12, 30);
+
+          // Draw enhanced stabilizers
+          const stabilizerGradient = ctx.createRadialGradient(0, 0, 5, 0, 0, 15);
+          stabilizerGradient.addColorStop(0, '#01579B'); // Dark blue
+          stabilizerGradient.addColorStop(1, '#0D47A1'); // Darker blue
+
+          ctx.fillStyle = stabilizerGradient;
+
           for (let i = 0; i < this.pathBLevel; i++) {
             const angle = Math.PI / 4 + (Math.PI / 2) * i;
             ctx.beginPath();
@@ -1224,6 +1731,217 @@ class Tower {
               Math.sin(angle) * 15 + Math.sin(angle + Math.PI/2) * 5
             );
             ctx.closePath();
+            ctx.fill();
+
+            // Add metallic highlights
+            ctx.strokeStyle = '#64B5F6';
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+
+          // Add targeting computer
+          if (this.pathBLevel >= 2) {
+            ctx.fillStyle = '#E3F2FD';
+            ctx.fillRect(-3, -10, 6, 5);
+
+            // Add blinking light
+            const blinkState = Math.floor(Date.now() / 500) % 2 === 0;
+            ctx.fillStyle = blinkState ? '#F44336' : '#4CAF50';
+            ctx.beginPath();
+            ctx.arc(0, -7, 1, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        break;
+
+      case 'tesla':
+        // Tesla tower with electricity effects
+        // Base tower body with enhanced design
+        const teslaGradient = ctx.createLinearGradient(-8, -25, 8, 0);
+        teslaGradient.addColorStop(0, '#FFC107'); // Yellow
+        teslaGradient.addColorStop(1, '#FFA000'); // Amber
+
+        ctx.fillStyle = teslaGradient;
+
+        // Draw tesla coil base
+        ctx.beginPath();
+        ctx.moveTo(-10, -5);
+        ctx.lineTo(-8, -25);
+        ctx.lineTo(8, -25);
+        ctx.lineTo(10, -5);
+        ctx.closePath();
+        ctx.fill();
+
+        // Draw tesla coil top
+        ctx.fillStyle = '#F57F17';
+        ctx.beginPath();
+        ctx.arc(0, -25, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw metal bands
+        ctx.strokeStyle = '#BDBDBD';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 3; i++) {
+          ctx.beginPath();
+          ctx.moveTo(-10 + i * 2, -5 - i * 6);
+          ctx.lineTo(10 - i * 2, -5 - i * 6);
+          ctx.stroke();
+        }
+
+        // Add electricity effects - animated based on time
+        if (this.recoilAnimation > 0 || Math.random() < 0.1) {
+          ctx.strokeStyle = '#FFEB3B';
+          ctx.lineWidth = 1;
+          ctx.globalAlpha = 0.7;
+
+          const time = Date.now() / 1000;
+          const boltCount = this.recoilAnimation > 0 ? 4 : 1;
+
+          for (let i = 0; i < boltCount; i++) {
+            const angle = (time * 5 + i * Math.PI/2) % (Math.PI * 2);
+            const length = 8 + Math.sin(time * 3) * 4;
+
+            ctx.beginPath();
+            ctx.moveTo(0, -25);
+
+            // Create zigzag lightning path
+            let x = 0;
+            let y = -25;
+            const segments = 3;
+
+            for (let j = 0; j < segments; j++) {
+              const segLength = length / segments;
+              const jitter = 3 - j * 0.5;
+
+              x += Math.cos(angle + j * 0.5) * segLength + (Math.sin(time * 10 + i) - 0.5) * jitter;
+              y += Math.sin(angle + j * 0.5) * segLength + (Math.cos(time * 10 + i) - 0.5) * jitter;
+
+              ctx.lineTo(x, y);
+            }
+
+            ctx.stroke();
+          }
+
+          ctx.globalAlpha = 1.0;
+        }
+
+        // Path A: Chain Lightning
+        if (hasPathAUpgrades) {
+          // Enhanced tesla coil with more electricity
+          const chainGradient = ctx.createLinearGradient(-8, -25, 8, 0);
+          chainGradient.addColorStop(0, '#FFEB3B'); // Yellow
+          chainGradient.addColorStop(1, '#FFC107'); // Amber
+
+          ctx.fillStyle = chainGradient;
+
+          // Draw enhanced tesla coil base
+          ctx.beginPath();
+          ctx.moveTo(-10, -5);
+          ctx.lineTo(-8, -25);
+          ctx.lineTo(8, -25);
+          ctx.lineTo(10, -5);
+          ctx.closePath();
+          ctx.fill();
+
+          // Draw enhanced tesla coil top
+          ctx.fillStyle = '#F57F17';
+          ctx.beginPath();
+          ctx.arc(0, -25, 6, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Add glow effect
+          ctx.fillStyle = '#FFEB3B';
+          ctx.globalAlpha = 0.3;
+          ctx.beginPath();
+          ctx.arc(0, -25, 10, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1.0;
+
+          // Add chain lightning indicators
+          ctx.strokeStyle = '#FFEB3B';
+          ctx.lineWidth = 1;
+
+          for (let i = 0; i < this.pathALevel; i++) {
+            const angle = Math.PI * 2 * (i / this.pathALevel);
+            const time = Date.now() / 1000;
+
+            ctx.beginPath();
+            ctx.moveTo(0, -25);
+
+            // Create zigzag lightning path
+            let x = 0;
+            let y = -25;
+            const segments = 3;
+            const length = 12 + this.pathALevel * 2;
+
+            for (let j = 0; j < segments; j++) {
+              const segLength = length / segments;
+              const jitter = 3 - j * 0.5;
+
+              x += Math.cos(angle + time % 1) * segLength + (Math.sin(time * 5 + i) - 0.5) * jitter;
+              y += Math.sin(angle + time % 1) * segLength + (Math.cos(time * 5 + i) - 0.5) * jitter;
+
+              ctx.lineTo(x, y);
+            }
+
+            ctx.stroke();
+          }
+        }
+
+        // Path B: Overcharge
+        if (hasPathBUpgrades) {
+          // Enhanced overcharged tesla coil
+          const overchargeGradient = ctx.createLinearGradient(-8, -25, 8, 0);
+          overchargeGradient.addColorStop(0, '#FFC107'); // Amber
+          overchargeGradient.addColorStop(1, '#FF9800'); // Orange
+
+          ctx.fillStyle = overchargeGradient;
+
+          // Draw enhanced tesla coil base
+          ctx.beginPath();
+          ctx.moveTo(-12, -5);
+          ctx.lineTo(-10, -25);
+          ctx.lineTo(10, -25);
+          ctx.lineTo(12, -5);
+          ctx.closePath();
+          ctx.fill();
+
+          // Draw enhanced tesla coil top
+          const coilGradient = ctx.createRadialGradient(0, -25, 2, 0, -25, 8);
+          coilGradient.addColorStop(0, '#FFEB3B'); // Yellow
+          coilGradient.addColorStop(1, '#F57F17'); // Dark amber
+
+          ctx.fillStyle = coilGradient;
+          ctx.beginPath();
+          ctx.arc(0, -25, 8, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Add pulsing glow effect based on time
+          const time = Date.now() / 1000;
+          const pulseSize = 8 + Math.sin(time * 4) * 3;
+
+          ctx.fillStyle = '#FFEB3B';
+          ctx.globalAlpha = 0.3 + Math.sin(time * 4) * 0.2;
+          ctx.beginPath();
+          ctx.arc(0, -25, pulseSize, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1.0;
+
+          // Add capacitor banks based on upgrade level
+          for (let i = 0; i < this.pathBLevel; i++) {
+            const angle = Math.PI / 2 + Math.PI * (i / this.pathBLevel);
+            const x = Math.cos(angle) * 12;
+            const y = Math.sin(angle) * 12 - 5;
+
+            // Draw capacitor
+            ctx.fillStyle = '#BDBDBD';
+            ctx.fillRect(x - 2, y - 4, 4, 8);
+
+            // Add blinking light
+            const blinkState = Math.floor((time * 3 + i) % 2);
+            ctx.fillStyle = blinkState ? '#4CAF50' : '#FFEB3B';
+            ctx.beginPath();
+            ctx.arc(x, y - 4, 1, 0, Math.PI * 2);
             ctx.fill();
           }
         }

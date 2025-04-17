@@ -131,8 +131,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // No Socket.IO - single player only
-  console.log('Running in single-player mode');
+  // Static app - no server dependencies
+  console.log('Running in static mode');
 
   // Handle window resize
   window.addEventListener('resize', () => {
@@ -187,7 +187,42 @@ function updateAvailableTowers(game) {
         // Update button text to show variant
         const variantName = selectedVariant.charAt(0).toUpperCase() + selectedVariant.slice(1);
         button.innerHTML = `${variantName}<br>${button.textContent.split('<')[0]}<span class="tower-cost">${button.querySelector('.tower-cost').textContent}</span>`;
+
+        // Store the variant in the button's dataset for use when placing towers
+        button.dataset.variant = selectedVariant;
       }
     }
   });
+
+  // Add event listener to game to apply skin when placing tower
+  if (game && !game.skinHandlerAdded) {
+    // Original placeTower method
+    const originalPlaceTower = game.placeTower;
+
+    // Override placeTower to apply skin
+    game.placeTower = function(x, y) {
+      if (!this.selectedTowerType) return false;
+
+      // Get the selected tower button
+      const towerButton = document.querySelector(`.tower-btn[data-type="${this.selectedTowerType}"]`);
+      const variant = towerButton?.dataset.variant;
+
+      // Call original method to place the tower
+      const result = originalPlaceTower.call(this, x, y);
+
+      // If tower was placed successfully and has a variant, apply it
+      if (result && variant) {
+        // Get the last placed tower (the one we just added)
+        const placedTower = this.towers[this.towers.length - 1];
+        if (placedTower) {
+          placedTower.variant = variant;
+          console.log(`Applied ${variant} skin to ${placedTower.type} tower`);
+        }
+      }
+
+      return result;
+    };
+
+    game.skinHandlerAdded = true;
+  }
 }
