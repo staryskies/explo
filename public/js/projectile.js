@@ -123,6 +123,54 @@ class Projectile {
     this.trail.pop();
     this.trail.unshift({x: this.x, y: this.y});
 
+    // Check if target is still valid
+    if (!this.target || !this.target.alive) {
+      this.active = false;
+      return;
+    }
+
+    // Calculate distance to target
+    const dist = distance(this.x, this.y, this.target.x, this.target.y);
+
+    // If very close to target, guarantee a hit
+    if (dist < this.target.size * 2) {
+      this.x = this.target.x;
+      this.y = this.target.y;
+      this.hit = true;
+      this.active = false;
+      return;
+    }
+
+    // Home in on the target with slight tracking
+    // This ensures projectiles hit even at high game speeds
+    const targetAngle = Math.atan2(this.target.y - this.y, this.target.x - this.x);
+    const currentAngle = Math.atan2(this.vy, this.vx);
+
+    // Calculate angle difference and adjust
+    let angleDiff = targetAngle - currentAngle;
+
+    // Normalize angle difference to [-PI, PI]
+    while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+    while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+
+    // Apply tracking based on projectile type
+    let trackingStrength = 0.1; // Default tracking
+
+    // Increase tracking for certain projectile types
+    if (this.type === 'missile') {
+      trackingStrength = 0.3;
+    } else if (this.type === 'laser') {
+      trackingStrength = 0.5; // Lasers track perfectly
+    }
+
+    // Apply tracking adjustment
+    const newAngle = currentAngle + angleDiff * trackingStrength;
+
+    // Update velocity with tracking
+    const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+    this.vx = Math.cos(newAngle) * speed;
+    this.vy = Math.sin(newAngle) * speed;
+
     // Move projectile
     this.x += this.vx;
     this.y += this.vy;
@@ -135,14 +183,9 @@ class Projectile {
     }
 
     // Check for collision with target
-    if (this.target && this.target.alive) {
-      const dist = distance(this.x, this.y, this.target.x, this.target.y);
-      if (dist < this.target.size + this.size) {
-        this.hit = true;
-        this.active = false;
-      }
-    } else {
-      // Target is no longer valid
+    const newDist = distance(this.x, this.y, this.target.x, this.target.y);
+    if (newDist < this.target.size + this.size) {
+      this.hit = true;
       this.active = false;
     }
   }

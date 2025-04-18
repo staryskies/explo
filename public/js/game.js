@@ -208,8 +208,9 @@ class Game {
     // Check if we're clicking on an existing tower for upgrade
     const clickedTower = this.getTowerAtPosition(x, y);
     if (clickedTower) {
-      // Just log the tower info instead of opening the upgrade menu
+      // Open the upgrade menu for the clicked tower
       console.log(`Clicked on tower: ${clickedTower.type} at (${clickedTower.gridX}, ${clickedTower.gridY})`);
+      this.selectTowerForUpgrade(clickedTower);
       return false;
     }
 

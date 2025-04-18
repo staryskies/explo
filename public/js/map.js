@@ -20,10 +20,14 @@ class GameMap {
       description: "A simple path from left to right",
       difficulty: "Easy",
       pathType: "single",
-      terrainFeatures: "basic"
+      terrainFeatures: "basic",
+      backgroundColor: "#4CAF50", // Green grass
+      pathColor: "#795548",       // Brown path
+      decorationColors: ["#8BC34A", "#689F38", "#33691E"] // Various green shades for decoration
     };
 
     console.log('Creating map with canvas dimensions:', canvas.width, 'x', canvas.height);
+    console.log('Map template:', this.mapTemplate.name);
 
     this.tileSize = 64;
     this.gridWidth = Math.max(1, Math.floor(canvas.width / this.tileSize));
@@ -42,14 +46,17 @@ class GameMap {
       WALL: 4
     };
 
-    // Colors for different tile types
+    // Set colors based on map template
     this.tileColors = {
-      [this.TILE_TYPES.GRASS]: '#4CAF50',
-      [this.TILE_TYPES.PATH]: '#795548',
+      [this.TILE_TYPES.GRASS]: this.mapTemplate.backgroundColor || '#4CAF50',
+      [this.TILE_TYPES.PATH]: this.mapTemplate.pathColor || '#795548',
       [this.TILE_TYPES.WATER]: '#2196F3',
       [this.TILE_TYPES.OCCUPIED]: '#9E9E9E',
       [this.TILE_TYPES.WALL]: '#424242'
     };
+
+    // Store decoration colors for use in draw method
+    this.decorationColors = this.mapTemplate.decorationColors || ["#8BC34A", "#689F38", "#33691E"];
 
     console.log('Map grid dimensions:', this.gridWidth, 'x', this.gridHeight);
 
@@ -523,6 +530,14 @@ class GameMap {
 
     // Draw all tiles
     try {
+      // First, draw the base background color across the entire canvas
+      this.ctx.fillStyle = this.tileColors[this.TILE_TYPES.GRASS];
+      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+      // Add decorative elements based on map type
+      this.drawMapDecorations();
+
+      // Draw the actual grid tiles
       for (let y = 0; y < this.gridHeight; y++) {
         for (let x = 0; x < this.gridWidth; x++) {
           // Safety check for grid access
@@ -532,19 +547,169 @@ class GameMap {
           }
 
           const tileType = this.grid[y][x];
-          this.ctx.fillStyle = this.tileColors[tileType] || '#4CAF50'; // Default to green if color not found
-          this.ctx.fillRect(x * this.tileSize, y * this.tileSize, this.tileSize, this.tileSize);
 
-          // Draw grid lines
-          this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+          // Only draw non-grass tiles (since we already filled the background)
+          if (tileType !== this.TILE_TYPES.GRASS) {
+            this.ctx.fillStyle = this.tileColors[tileType] || '#4CAF50';
+            this.ctx.fillRect(x * this.tileSize, y * this.tileSize, this.tileSize, this.tileSize);
+          }
+
+          // Draw subtle grid lines
+          this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)';
           this.ctx.strokeRect(x * this.tileSize, y * this.tileSize, this.tileSize, this.tileSize);
         }
       }
+
+      // Draw path highlights or special effects based on map type
+      this.drawPathEffects();
+
     } catch (error) {
       console.error('Error drawing map:', error);
       // Draw a fallback green background
       this.ctx.fillStyle = '#4CAF50';
       this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+  }
+
+  // Draw decorative elements based on map type
+  drawMapDecorations() {
+    const mapType = this.mapTemplate.id;
+    const decorColors = this.decorationColors;
+
+    // Add random decorative elements based on map type
+    const numDecorations = Math.floor(this.gridWidth * this.gridHeight * 0.05); // 5% of tiles get decorations
+
+    for (let i = 0; i < numDecorations; i++) {
+      const x = Math.floor(Math.random() * this.canvas.width);
+      const y = Math.floor(Math.random() * this.canvas.height);
+      const size = Math.random() * 10 + 5;
+      const colorIndex = Math.floor(Math.random() * decorColors.length);
+
+      // Don't place decorations on the path
+      const gridX = Math.floor(x / this.tileSize);
+      const gridY = Math.floor(y / this.tileSize);
+
+      if (gridX >= 0 && gridX < this.gridWidth && gridY >= 0 && gridY < this.gridHeight) {
+        if (this.grid[gridY][gridX] !== this.TILE_TYPES.PATH) {
+          this.ctx.fillStyle = decorColors[colorIndex];
+
+          switch (mapType) {
+            case 'desert':
+              // Draw cacti or rocks
+              if (Math.random() > 0.7) {
+                // Draw cactus
+                this.ctx.fillRect(x, y, size/2, size*2);
+                this.ctx.fillRect(x - size/3, y + size/2, size, size/2);
+              } else {
+                // Draw rock
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, size, 0, Math.PI * 2);
+                this.ctx.fill();
+              }
+              break;
+
+            case 'snow':
+              // Draw snowflakes
+              this.ctx.beginPath();
+              this.ctx.arc(x, y, size/2, 0, Math.PI * 2);
+              this.ctx.fill();
+              break;
+
+            case 'volcano':
+              // Draw lava bubbles or rocks
+              if (Math.random() > 0.5) {
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, size, 0, Math.PI * 2);
+                this.ctx.fill();
+              }
+              break;
+
+            case 'maze':
+              // Draw hedge decorations
+              this.ctx.fillRect(x, y, size, size);
+              break;
+
+            case 'classic':
+            default:
+              // Draw grass tufts or flowers
+              if (Math.random() > 0.7) {
+                // Flower
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, size/2, 0, Math.PI * 2);
+                this.ctx.fill();
+              } else {
+                // Grass tuft
+                this.ctx.fillRect(x, y, size/4, size);
+                this.ctx.fillRect(x + size/3, y, size/4, size*0.8);
+                this.ctx.fillRect(x - size/3, y, size/4, size*0.9);
+              }
+              break;
+          }
+        }
+      }
+    }
+  }
+
+  // Draw special effects on the path based on map type
+  drawPathEffects() {
+    const mapType = this.mapTemplate.id;
+
+    // Add effects to the path based on map type
+    for (let i = 0; i < this.pathCoordinates.length; i++) {
+      const point = this.pathCoordinates[i];
+
+      switch (mapType) {
+        case 'desert':
+          // Add sand ripple effects
+          if (i % 5 === 0) {
+            this.ctx.strokeStyle = 'rgba(255, 248, 225, 0.3)';
+            this.ctx.beginPath();
+            this.ctx.arc(point.x, point.y, this.tileSize/4, 0, Math.PI * 2);
+            this.ctx.stroke();
+          }
+          break;
+
+        case 'snow':
+          // Add snow sparkle effects
+          if (i % 4 === 0) {
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            this.ctx.beginPath();
+            this.ctx.arc(point.x, point.y, this.tileSize/8, 0, Math.PI * 2);
+            this.ctx.fill();
+          }
+          break;
+
+        case 'volcano':
+          // Add lava glow effects
+          if (i % 3 === 0) {
+            this.ctx.fillStyle = 'rgba(255, 87, 34, 0.3)';
+            this.ctx.beginPath();
+            this.ctx.arc(point.x, point.y, this.tileSize/3, 0, Math.PI * 2);
+            this.ctx.fill();
+          }
+          break;
+
+        case 'maze':
+          // Add stone texture effects
+          if (i % 6 === 0) {
+            this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            this.ctx.beginPath();
+            this.ctx.rect(point.x - this.tileSize/4, point.y - this.tileSize/4, this.tileSize/2, this.tileSize/2);
+            this.ctx.stroke();
+          }
+          break;
+
+        case 'classic':
+        default:
+          // Add footprint effects
+          if (i % 8 === 0) {
+            this.ctx.fillStyle = 'rgba(121, 85, 72, 0.6)';
+            this.ctx.beginPath();
+            this.ctx.ellipse(point.x, point.y, this.tileSize/6, this.tileSize/4, 0, 0, Math.PI * 2);
+            this.ctx.fill();
+          }
+          break;
+      }
     }
   }
 
