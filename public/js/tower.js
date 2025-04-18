@@ -513,8 +513,12 @@ class Tower {
       return null;
     }
 
-    // Check if cooldown has passed
-    if (this.lastShot > 0 && currentTime - this.lastShot < this.cooldown) {
+    // Get the game speed multiplier from the game instance
+    const gameSpeedMultiplier = window.game ? window.game.speedMultiplier : 1;
+
+    // Check if cooldown has passed, adjusting for game speed
+    const adjustedCooldown = this.cooldown / gameSpeedMultiplier;
+    if (this.lastShot > 0 && currentTime - this.lastShot < adjustedCooldown) {
       // Keep the current target if it's still valid
       if (this.target && this.target.alive) {
         const dist = distance(this.x, this.y, this.target.x, this.target.y);
@@ -594,6 +598,9 @@ class Tower {
     // Calculate angle to target
     this.angle = getAngle(this.x, this.y, this.target.x, this.target.y);
 
+    // Get the game speed multiplier from the game instance
+    const gameSpeedMultiplier = window.game ? window.game.speedMultiplier : 1;
+
     // Create visual effect for shooting
     this.createShootEffect();
 
@@ -606,12 +613,15 @@ class Tower {
           for (let i = 0; i < arrowCount; i++) {
             // Add slight angle variation for multiple arrows
             const angleOffset = (i - (arrowCount - 1) / 2) * 0.1;
+            // Scale damage with game speed
+            const scaledDamage = gameSpeedMultiplier > 1 ? this.damage * Math.sqrt(gameSpeedMultiplier) : this.damage;
+
             const arrowProjectile = new Projectile(
               this.x,
               this.y,
               this.angle + angleOffset,
               this.projectileSpeed,
-              this.damage,
+              scaledDamage,
               this.type,
               this.target,
               this.type
@@ -629,12 +639,15 @@ class Tower {
 
         case 'cannon':
           // Create explosive projectile
+          // Scale damage with game speed
+          const scaledDamage = gameSpeedMultiplier > 1 ? this.damage * Math.sqrt(gameSpeedMultiplier) : this.damage;
+
           const explosiveProjectile = new Projectile(
             this.x,
             this.y,
             this.angle,
             this.projectileSpeed,
-            this.damage,
+            scaledDamage,
             this.type,
             this.target,
             this.type
@@ -654,12 +667,15 @@ class Tower {
 
         case 'freeze':
           // Create freeze projectile
+          // Scale damage with game speed
+          const scaledDamage = gameSpeedMultiplier > 1 ? this.damage * Math.sqrt(gameSpeedMultiplier) : this.damage;
+
           const freezeProjectile = new Projectile(
             this.x,
             this.y,
             this.angle,
             this.projectileSpeed,
-            this.damage,
+            scaledDamage,
             this.type,
             this.target,
             this.type
@@ -679,12 +695,15 @@ class Tower {
 
         case 'sniper':
           // Create high-damage projectile
+          // Scale damage with game speed
+          const scaledDamage = gameSpeedMultiplier > 1 ? this.damage * Math.sqrt(gameSpeedMultiplier) : this.damage;
+
           const sniperProjectile = new Projectile(
             this.x,
             this.y,
             this.angle,
             this.projectileSpeed * 1.5, // Faster projectile
-            this.damage,
+            scaledDamage,
             this.type,
             this.target,
             this.type
@@ -706,12 +725,15 @@ class Tower {
 
         default:
           // Default tower behavior - single projectile
+          // Scale damage with game speed
+          const scaledDamage = gameSpeedMultiplier > 1 ? this.damage * Math.sqrt(gameSpeedMultiplier) : this.damage;
+
           const projectile = new Projectile(
             this.x,
             this.y,
             this.angle,
             this.projectileSpeed,
-            this.damage,
+            scaledDamage,
             this.type,
             this.target,
             this.type

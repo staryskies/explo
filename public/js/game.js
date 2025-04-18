@@ -12,6 +12,9 @@ class Game {
     this.paused = false;
     this.speedMultiplier = 1;
 
+    // Make the game instance globally accessible
+    window.game = this;
+
     // Initialize empty arrays for game objects
     this.towers = [];
     this.enemies = [];
@@ -71,15 +74,27 @@ class Game {
 
   // Initialize event listeners
   initEventListeners() {
-    // Canvas click for tower placement
+    // Canvas click for tower placement or upgrade
     this.canvas.addEventListener('click', (e) => {
-      if (this.gameOver || !this.selectedTowerType) return;
+      if (this.gameOver) return; // Only check for game over, not for selected tower type
 
       const rect = this.canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
 
-      this.placeTower(x, y);
+      // Check if we're clicking on an existing tower for upgrade
+      const clickedTower = this.getTowerAtPosition(x, y);
+      if (clickedTower) {
+        // Open the upgrade menu for the clicked tower
+        console.log(`Clicked on tower: ${clickedTower.type} at (${clickedTower.gridX}, ${clickedTower.gridY})`);
+        this.selectTowerForUpgrade(clickedTower);
+        return;
+      }
+
+      // If no tower was clicked and a tower type is selected, try to place a new tower
+      if (this.selectedTowerType) {
+        this.placeTower(x, y);
+      }
     });
 
     // Track mouse movement for tower placement preview
@@ -197,20 +212,11 @@ class Game {
     return towerStats[type]?.persistentCost || 50;
   }
 
-  // Place a tower at the given coordinates or select a tower for upgrade
+  // Place a tower at the given coordinates
   placeTower(x, y) {
     // Make sure the map is fully loaded before allowing tower placement
     if (!this.map || !this.map.grid || this.map.grid.length === 0) {
       console.log('Cannot place tower - map not fully loaded yet');
-      return false;
-    }
-
-    // Check if we're clicking on an existing tower for upgrade
-    const clickedTower = this.getTowerAtPosition(x, y);
-    if (clickedTower) {
-      // Open the upgrade menu for the clicked tower
-      console.log(`Clicked on tower: ${clickedTower.type} at (${clickedTower.gridX}, ${clickedTower.gridY})`);
-      this.selectTowerForUpgrade(clickedTower);
       return false;
     }
 
