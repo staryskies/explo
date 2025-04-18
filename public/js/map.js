@@ -6,6 +6,12 @@ console.log('GameMap class loaded');
 
 class GameMap {
   constructor(canvas, ctx, mapTemplate = null) {
+    // Ensure canvas and context are valid
+    if (!canvas || !ctx) {
+      console.error('Invalid canvas or context in GameMap constructor');
+      return;
+    }
+
     this.canvas = canvas;
     this.ctx = ctx;
     this.mapTemplate = mapTemplate || {
@@ -17,9 +23,11 @@ class GameMap {
       terrainFeatures: "basic"
     };
 
+    console.log('Creating map with canvas dimensions:', canvas.width, 'x', canvas.height);
+
     this.tileSize = 64;
-    this.gridWidth = Math.floor(canvas.width / this.tileSize);
-    this.gridHeight = Math.floor(canvas.height / this.tileSize);
+    this.gridWidth = Math.max(1, Math.floor(canvas.width / this.tileSize));
+    this.gridHeight = Math.max(1, Math.floor(canvas.height / this.tileSize));
     this.grid = [];
     this.path = [];
     this.pathCoordinates = [];
@@ -43,6 +51,8 @@ class GameMap {
       [this.TILE_TYPES.WALL]: '#424242'
     };
 
+    console.log('Map grid dimensions:', this.gridWidth, 'x', this.gridHeight);
+
     // Initialize the grid
     this.initializeGrid();
 
@@ -51,6 +61,8 @@ class GameMap {
 
     // Find buildable tiles
     this.findBuildableTiles();
+
+    console.log('Map initialization complete');
   }
 
   // Initialize the grid with grass
@@ -486,8 +498,6 @@ class GameMap {
 
   // Draw the map
   draw() {
-
-
     // Check if canvas and context are valid
     if (!this.canvas || !this.ctx) {
       console.error('Canvas or context is null in map.draw()');
@@ -502,20 +512,40 @@ class GameMap {
       this.findBuildableTiles();
     }
 
-    // Draw all tiles
-    for (let y = 0; y < this.gridHeight; y++) {
-      for (let x = 0; x < this.gridWidth; x++) {
-        const tileType = this.grid[y][x];
-        this.ctx.fillStyle = this.tileColors[tileType];
-        this.ctx.fillRect(x * this.tileSize, y * this.tileSize, this.tileSize, this.tileSize);
-
-        // Draw grid lines
-        this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
-        this.ctx.strokeRect(x * this.tileSize, y * this.tileSize, this.tileSize, this.tileSize);
-      }
+    // Safety check for grid dimensions
+    if (this.gridHeight <= 0 || this.gridWidth <= 0) {
+      console.error('Invalid grid dimensions:', this.gridWidth, 'x', this.gridHeight);
+      // Draw a fallback green background
+      this.ctx.fillStyle = '#4CAF50';
+      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+      return;
     }
 
-    // Buildable tiles are no longer highlighted with yellow dots
+    // Draw all tiles
+    try {
+      for (let y = 0; y < this.gridHeight; y++) {
+        for (let x = 0; x < this.gridWidth; x++) {
+          // Safety check for grid access
+          if (!this.grid[y] || typeof this.grid[y][x] === 'undefined') {
+            console.error(`Invalid grid access at [${y}][${x}]`);
+            continue;
+          }
+
+          const tileType = this.grid[y][x];
+          this.ctx.fillStyle = this.tileColors[tileType] || '#4CAF50'; // Default to green if color not found
+          this.ctx.fillRect(x * this.tileSize, y * this.tileSize, this.tileSize, this.tileSize);
+
+          // Draw grid lines
+          this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+          this.ctx.strokeRect(x * this.tileSize, y * this.tileSize, this.tileSize, this.tileSize);
+        }
+      }
+    } catch (error) {
+      console.error('Error drawing map:', error);
+      // Draw a fallback green background
+      this.ctx.fillStyle = '#4CAF50';
+      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
   }
 
   // Resize the map when the canvas size changes

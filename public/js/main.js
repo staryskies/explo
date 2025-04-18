@@ -12,28 +12,38 @@ window.onerror = function(message, source, lineno, colno, error) {
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log('DOM loaded, initializing game...');
-  // Get the canvas element
-  const canvas = document.getElementById('gameCanvas');
+  try {
+    // Get the canvas element
+    const canvas = document.getElementById('gameCanvas');
+    if (!canvas) {
+      console.error('Canvas element not found');
+      return;
+    }
 
-  // Get selected map from session storage
-  const selectedMapId = sessionStorage.getItem('selectedMap') || 'classic';
-  console.log(`Selected map: ${selectedMapId}`);
+    // Set initial canvas size to ensure it's not zero
+    canvas.width = window.innerWidth - 250; // Subtract sidebar width
+    canvas.height = window.innerHeight;
+    console.log(`Initial canvas size set to ${canvas.width}x${canvas.height}`);
 
-  // Find the map template
-  const selectedMapTemplate = mapTemplates.find(map => map.id === selectedMapId) || mapTemplates[0];
+    // Get selected map from session storage
+    const selectedMapId = sessionStorage.getItem('selectedMap') || 'classic';
+    console.log(`Selected map: ${selectedMapId}`);
 
-  // Create the game instance with the selected map
-  const game = new Game(canvas, selectedMapTemplate);
+    // Find the map template
+    const selectedMapTemplate = mapTemplates.find(map => map.id === selectedMapId) || mapTemplates[0];
 
-  // Force canvas resize to ensure proper dimensions
-  game.resizeCanvas();
+    // Create the game instance with the selected map
+    const game = new Game(canvas, selectedMapTemplate);
 
-  // Force map initialization
-  if (game.map) {
-    game.map.initializeGrid();
-    game.map.generatePath();
-    game.map.findBuildableTiles();
-    console.log('Map forcefully initialized');
+    // Force a redraw after a short delay to ensure everything is initialized
+    setTimeout(() => {
+      if (game.map) {
+        console.log('Forcing map redraw after delay');
+        game.draw();
+      }
+    }, 100);
+  } catch (error) {
+    console.error('Error initializing game:', error);
   }
 
   // Load player data to get unlocked towers

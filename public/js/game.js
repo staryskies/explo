@@ -6,17 +6,13 @@ class Game {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
 
-    // Set canvas size
-    this.resizeCanvas();
-
     // Game state
     this.gameStarted = false;
     this.gameOver = false;
     this.paused = false;
     this.speedMultiplier = 1;
 
-    // Game objects
-    this.map = new GameMap(canvas, this.ctx, mapTemplate);
+    // Initialize empty arrays for game objects
     this.towers = [];
     this.enemies = [];
     this.projectiles = [];
@@ -50,6 +46,13 @@ class Game {
 
     // Time tracking
     this.lastUpdateTime = 0;
+
+    // Set canvas size before creating the map
+    this.resizeCanvas(false); // Pass false to avoid calling draw() before map is created
+
+    // Create the map after canvas is sized
+    this.map = new GameMap(canvas, this.ctx, mapTemplate);
+    console.log('Map created with dimensions:', this.map.gridWidth, 'x', this.map.gridHeight);
 
     // Initialize event listeners
     this.initEventListeners();
@@ -478,7 +481,14 @@ class Game {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     // Draw map - always draw the map regardless of game state
-    this.map.draw();
+    if (this.map) {
+      this.map.draw();
+    } else {
+      console.error('Map is not initialized in draw()');
+      // Draw a placeholder background
+      this.ctx.fillStyle = '#4CAF50';
+      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
 
     // Always draw towers regardless of game state
     if (this.towers && this.towers.length > 0) {
@@ -670,7 +680,7 @@ class Game {
   }
 
   // Resize canvas to fit the screen
-  resizeCanvas() {
+  resizeCanvas(shouldDraw = true) {
     const container = this.canvas.parentElement;
     const sidebarWidth = 250; // Match the sidebar width
 
@@ -683,8 +693,10 @@ class Game {
       this.map.resize();
     }
 
-    // Force a redraw
-    this.draw();
+    // Force a redraw only if requested
+    if (shouldDraw && this.map) {
+      this.draw();
+    }
 
     console.log(`Canvas resized to ${this.canvas.width}x${this.canvas.height}`);
   }
