@@ -268,18 +268,55 @@ class Enemy {
       ctx.fill();
     }
 
-    // Draw enemy body
-    ctx.fillStyle = this.color;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-    ctx.fill();
+    // Save context for rotation
+    ctx.save();
+    ctx.translate(this.x, this.y);
 
-    // Draw border
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    // Calculate rotation based on direction
+    if (this.dirX !== 0 || this.dirY !== 0) {
+      const angle = Math.atan2(this.dirY, this.dirX);
+      ctx.rotate(angle);
+    }
 
-    // Draw health bar
+    // Draw enemy based on type
+    switch(this.type) {
+      case 'fast':
+        this.drawFastEnemy(ctx);
+        break;
+      case 'tank':
+        this.drawTankEnemy(ctx);
+        break;
+      case 'flying':
+        this.drawFlyingEnemy(ctx);
+        break;
+      case 'healing':
+        this.drawHealingEnemy(ctx);
+        break;
+      case 'spawner':
+        this.drawSpawnerEnemy(ctx);
+        break;
+      case 'armored':
+        this.drawArmoredEnemy(ctx);
+        break;
+      case 'invisible':
+        this.drawInvisibleEnemy(ctx);
+        break;
+      case 'explosive':
+        this.drawExplosiveEnemy(ctx);
+        break;
+      case 'boss':
+        this.drawBossEnemy(ctx);
+        break;
+      case 'normal':
+      default:
+        this.drawNormalEnemy(ctx);
+        break;
+    }
+
+    // Restore context
+    ctx.restore();
+
+    // Draw health bar (after restoring context)
     const healthBarWidth = this.size * 2;
     const healthBarHeight = 6;
     const healthPercentage = this.health / this.maxHealth;
@@ -338,124 +375,6 @@ class Enemy {
       ctx.fill();
     }
 
-    // Draw enemy type indicators
-    if (this.flying) {
-      // Draw wings for flying enemies
-      ctx.fillStyle = '#E1BEE7';
-      ctx.beginPath();
-      ctx.ellipse(
-        this.x - this.size / 2,
-        this.y - this.size / 3,
-        this.size / 2,
-        this.size / 4,
-        Math.PI / 4,
-        0,
-        Math.PI * 2
-      );
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.ellipse(
-        this.x + this.size / 2,
-        this.y - this.size / 3,
-        this.size / 2,
-        this.size / 4,
-        -Math.PI / 4,
-        0,
-        Math.PI * 2
-      );
-      ctx.fill();
-    }
-
-    // Draw special indicators based on enemy type
-    switch (this.type) {
-      case 'healing':
-        // Draw healing aura
-        ctx.fillStyle = 'rgba(76, 175, 80, 0.2)';
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.healRadius || 100, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Draw cross symbol
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(this.x, this.y - this.size / 2);
-        ctx.lineTo(this.x, this.y + this.size / 2);
-        ctx.moveTo(this.x - this.size / 2, this.y);
-        ctx.lineTo(this.x + this.size / 2, this.y);
-        ctx.stroke();
-        break;
-
-      case 'spawner':
-        // Draw spawner indicator
-        ctx.fillStyle = '#FFFFFF';
-        ctx.beginPath();
-        for (let i = 0; i < 8; i++) {
-          const angle = (Math.PI / 4) * i;
-          const x1 = this.x + Math.cos(angle) * (this.size - 5);
-          const y1 = this.y + Math.sin(angle) * (this.size - 5);
-          const x2 = this.x + Math.cos(angle) * (this.size + 5);
-          const y2 = this.y + Math.sin(angle) * (this.size + 5);
-
-          ctx.moveTo(x1, y1);
-          ctx.lineTo(x2, y2);
-        }
-        ctx.stroke();
-        break;
-
-      case 'armored':
-        // Draw armor plates
-        ctx.fillStyle = '#455A64';
-        for (let i = 0; i < 4; i++) {
-          const angle = (Math.PI / 2) * i;
-          ctx.beginPath();
-          ctx.arc(
-            this.x + Math.cos(angle) * (this.size / 2),
-            this.y + Math.sin(angle) * (this.size / 2),
-            this.size / 3,
-            0,
-            Math.PI * 2
-          );
-          ctx.fill();
-        }
-        break;
-
-      case 'explosive':
-        // Draw explosive indicator
-        ctx.fillStyle = '#FFEB3B';
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Draw explosion radius
-        ctx.strokeStyle = 'rgba(244, 67, 54, 0.3)';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([5, 5]);
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.explosionRadius || 100, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        break;
-    }
-
-    // Draw boss crown
-    if (this.isBoss) {
-      ctx.fillStyle = '#FFEB3B';
-      ctx.beginPath();
-      ctx.moveTo(this.x, this.y - this.size - 15);
-      ctx.lineTo(this.x - 15, this.y - this.size);
-      ctx.lineTo(this.x + 15, this.y - this.size);
-      ctx.closePath();
-      ctx.fill();
-
-      // Draw boss name
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = 'bold 14px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText(this.name || 'Boss', this.x, this.y - this.size - 20);
-    }
-
     // Reset alpha if it was changed
     if (this.type === 'invisible') {
       ctx.globalAlpha = 1.0;
@@ -468,6 +387,489 @@ class Enemy {
     if (slowFactor < this.slowEffect) {
       this.slowEffect = slowFactor;
       this.slowDuration = duration;
+    }
+  }
+
+  // Draw methods for different enemy types
+  drawNormalEnemy(ctx) {
+    // Draw enemy body
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw border
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Draw eyes
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(-this.size/3, -this.size/3, this.size/4, 0, Math.PI * 2);
+    ctx.arc(this.size/3, -this.size/3, this.size/4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw pupils
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(-this.size/3, -this.size/3, this.size/8, 0, Math.PI * 2);
+    ctx.arc(this.size/3, -this.size/3, this.size/8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw mouth
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, this.size/4, this.size/3, 0.1 * Math.PI, 0.9 * Math.PI);
+    ctx.stroke();
+  }
+
+  drawFastEnemy(ctx) {
+    // Draw streamlined body
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.moveTo(this.size, 0);
+    ctx.lineTo(-this.size, this.size/2);
+    ctx.lineTo(-this.size, -this.size/2);
+    ctx.closePath();
+    ctx.fill();
+
+    // Draw border
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Draw speed lines
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1;
+    for (let i = 1; i <= 3; i++) {
+      ctx.beginPath();
+      ctx.moveTo(-this.size - i * 5, 0);
+      ctx.lineTo(-this.size - i * 5 - 10, this.size/3);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(-this.size - i * 5, 0);
+      ctx.lineTo(-this.size - i * 5 - 10, -this.size/3);
+      ctx.stroke();
+    }
+
+    // Draw eye
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(this.size/2, 0, this.size/4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(this.size/2, 0, this.size/8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  drawTankEnemy(ctx) {
+    // Draw tank body
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.rect(-this.size, -this.size/1.5, this.size*2, this.size*1.2);
+    ctx.fill();
+
+    // Draw tank treads
+    ctx.fillStyle = '#333';
+    ctx.beginPath();
+    ctx.rect(-this.size, -this.size/1.5, this.size*2, this.size/4);
+    ctx.rect(-this.size, this.size/2, this.size*2, this.size/4);
+    ctx.fill();
+
+    // Draw tank turret
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size/2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw cannon
+    ctx.fillStyle = '#333';
+    ctx.beginPath();
+    ctx.rect(0, -this.size/6, this.size, this.size/3);
+    ctx.fill();
+
+    // Draw border
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.rect(-this.size, -this.size/1.5, this.size*2, this.size*1.2);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size/2, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  drawFlyingEnemy(ctx) {
+    // Draw body
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, this.size, this.size/2, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw wings
+    const wingOffset = Math.sin(Date.now() / 200) * 5; // Wing flapping animation
+
+    ctx.fillStyle = '#E1BEE7';
+    ctx.beginPath();
+    ctx.ellipse(-this.size/2, -wingOffset, this.size/1.5, this.size/3, Math.PI/4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.ellipse(this.size/2, -wingOffset, this.size/1.5, this.size/3, -Math.PI/4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw border
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, this.size, this.size/2, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Draw eyes
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(-this.size/3, -this.size/6, this.size/5, 0, Math.PI * 2);
+    ctx.arc(this.size/3, -this.size/6, this.size/5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(-this.size/3, -this.size/6, this.size/10, 0, Math.PI * 2);
+    ctx.arc(this.size/3, -this.size/6, this.size/10, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  drawHealingEnemy(ctx) {
+    // Draw body
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw border
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Draw healing cross
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(0, -this.size/2);
+    ctx.lineTo(0, this.size/2);
+    ctx.moveTo(-this.size/2, 0);
+    ctx.lineTo(this.size/2, 0);
+    ctx.stroke();
+
+    // Draw healing aura
+    const pulseSize = Math.sin(Date.now() / 500) * 5;
+    ctx.fillStyle = 'rgba(76, 175, 80, 0.2)';
+    ctx.beginPath();
+    ctx.arc(0, 0, this.healRadius/2 + pulseSize, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw eyes
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(-this.size/3, -this.size/3, this.size/5, 0, Math.PI * 2);
+    ctx.arc(this.size/3, -this.size/3, this.size/5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(-this.size/3, -this.size/3, this.size/10, 0, Math.PI * 2);
+    ctx.arc(this.size/3, -this.size/3, this.size/10, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  drawSpawnerEnemy(ctx) {
+    // Draw body
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw border
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Draw spawner indicators
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+
+    const time = Date.now() / 1000;
+    for (let i = 0; i < 8; i++) {
+      const angle = (Math.PI / 4) * i + time % (Math.PI * 2);
+      const innerRadius = this.size - 5;
+      const outerRadius = this.size + 5;
+
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(angle) * innerRadius, Math.sin(angle) * innerRadius);
+      ctx.lineTo(Math.cos(angle) * outerRadius, Math.sin(angle) * outerRadius);
+      ctx.stroke();
+    }
+
+    // Draw inner circle
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size/2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw eyes
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(-this.size/5, -this.size/5, this.size/10, 0, Math.PI * 2);
+    ctx.arc(this.size/5, -this.size/5, this.size/10, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw mouth
+    ctx.beginPath();
+    ctx.arc(0, this.size/6, this.size/6, 0, Math.PI);
+    ctx.stroke();
+  }
+
+  drawArmoredEnemy(ctx) {
+    // Draw body
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size * 0.8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw armor plates
+    ctx.fillStyle = '#455A64';
+    for (let i = 0; i < 6; i++) {
+      const angle = (Math.PI / 3) * i;
+      ctx.beginPath();
+      ctx.arc(Math.cos(angle) * (this.size * 0.6), Math.sin(angle) * (this.size * 0.6), this.size/3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Draw rivets
+      ctx.fillStyle = '#78909C';
+      ctx.beginPath();
+      ctx.arc(Math.cos(angle) * (this.size * 0.6), Math.sin(angle) * (this.size * 0.6), this.size/10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#455A64';
+    }
+
+    // Draw border
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Draw eyes
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(-this.size/4, -this.size/4, this.size/6, 0, Math.PI * 2);
+    ctx.arc(this.size/4, -this.size/4, this.size/6, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(-this.size/4, -this.size/4, this.size/12, 0, Math.PI * 2);
+    ctx.arc(this.size/4, -this.size/4, this.size/12, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  drawInvisibleEnemy(ctx) {
+    // Draw ghostly body
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.beginPath();
+
+    // Wavy bottom
+    ctx.moveTo(-this.size, this.size/2);
+
+    for (let i = 0; i < 5; i++) {
+      const waveHeight = this.size/4;
+      const waveWidth = this.size/2;
+      ctx.quadraticCurveTo(
+        -this.size + waveWidth/2 + i*waveWidth,
+        this.size/2 + waveHeight,
+        -this.size + waveWidth + i*waveWidth,
+        this.size/2
+      );
+    }
+
+    ctx.lineTo(this.size, -this.size/2);
+    ctx.lineTo(-this.size, -this.size/2);
+    ctx.closePath();
+    ctx.fill();
+
+    // Draw border
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Draw eyes
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.beginPath();
+    ctx.arc(-this.size/3, -this.size/4, this.size/6, 0, Math.PI * 2);
+    ctx.arc(this.size/3, -this.size/4, this.size/6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  drawExplosiveEnemy(ctx) {
+    // Draw body
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw border
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Draw bomb fuse
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, -this.size);
+
+    // Wavy fuse
+    for (let i = 0; i < 3; i++) {
+      ctx.quadraticCurveTo(
+        5, -this.size - 5 - i*5,
+        0, -this.size - 10 - i*5
+      );
+      ctx.quadraticCurveTo(
+        -5, -this.size - 15 - i*5,
+        0, -this.size - 20 - i*5
+      );
+    }
+    ctx.stroke();
+
+    // Draw fuse spark
+    const sparkSize = Math.sin(Date.now() / 200) * 2 + 4;
+    ctx.fillStyle = '#FFEB3B';
+    ctx.beginPath();
+    ctx.arc(0, -this.size - 20 - 3*5, sparkSize, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw explosive core
+    ctx.fillStyle = '#FFEB3B';
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size/2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw explosion radius indicator
+    ctx.strokeStyle = 'rgba(244, 67, 54, 0.3)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.arc(0, 0, this.explosionRadius/2, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Draw angry eyes
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(-this.size/3, -this.size/4, this.size/6, 0, Math.PI * 2);
+    ctx.arc(this.size/3, -this.size/4, this.size/6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw angry eyebrows
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-this.size/2, -this.size/2);
+    ctx.lineTo(-this.size/6, -this.size/3);
+    ctx.moveTo(this.size/6, -this.size/3);
+    ctx.lineTo(this.size/2, -this.size/2);
+    ctx.stroke();
+
+    // Draw angry mouth
+    ctx.beginPath();
+    ctx.arc(0, this.size/4, this.size/3, 0, Math.PI, true);
+    ctx.stroke();
+  }
+
+  drawBossEnemy(ctx) {
+    // Draw body
+    const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size);
+    gradient.addColorStop(0, '#F44336');
+    gradient.addColorStop(0.5, '#D32F2F');
+    gradient.addColorStop(1, '#B71C1C');
+
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw spikes
+    ctx.fillStyle = '#B71C1C';
+    for (let i = 0; i < 12; i++) {
+      const angle = (Math.PI / 6) * i;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(angle) * (this.size + 10), Math.sin(angle) * (this.size + 10));
+      ctx.lineTo(Math.cos(angle + 0.2) * this.size, Math.sin(angle + 0.2) * this.size);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Draw border
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Draw crown
+    ctx.fillStyle = '#FFEB3B';
+    ctx.beginPath();
+    ctx.moveTo(0, -this.size - 5);
+    ctx.lineTo(-this.size/2, -this.size + 5);
+    ctx.lineTo(-this.size/4, -this.size - 10);
+    ctx.lineTo(0, -this.size + 5);
+    ctx.lineTo(this.size/4, -this.size - 10);
+    ctx.lineTo(this.size/2, -this.size + 5);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = '#FFC107';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Draw eyes
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(-this.size/3, -this.size/4, this.size/5, 0, Math.PI * 2);
+    ctx.arc(this.size/3, -this.size/4, this.size/5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw glowing pupils
+    const glowIntensity = 0.5 + Math.sin(Date.now() / 500) * 0.5;
+    ctx.fillStyle = `rgba(255, 0, 0, ${glowIntensity})`;
+    ctx.beginPath();
+    ctx.arc(-this.size/3, -this.size/4, this.size/10, 0, Math.PI * 2);
+    ctx.arc(this.size/3, -this.size/4, this.size/10, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw mouth
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(0, this.size/4, this.size/3, 0, Math.PI);
+    ctx.fill();
+
+    // Draw teeth
+    ctx.fillStyle = '#fff';
+    const teethCount = 6;
+    const teethWidth = (this.size/3 * 2) / teethCount;
+
+    for (let i = 0; i < teethCount; i++) {
+      ctx.beginPath();
+      ctx.moveTo(-this.size/3 + i * teethWidth, this.size/4);
+      ctx.lineTo(-this.size/3 + (i+0.5) * teethWidth, this.size/4 + this.size/6);
+      ctx.lineTo(-this.size/3 + (i+1) * teethWidth, this.size/4);
+      ctx.fill();
     }
   }
 

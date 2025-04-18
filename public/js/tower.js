@@ -1086,8 +1086,8 @@ class Tower {
 
     // Add a pulsing glow effect for upgraded towers
     if (hasPathAUpgrades || hasPathBUpgrades) {
-      const time = Date.now() / 1000;
-      const pulseIntensity = 0.4 + Math.sin(time * 3) * 0.2;
+      const timeInSec = currentTime / 1000;
+      const pulseIntensity = 0.4 + Math.sin(timeInSec * 3) * 0.2;
       ctx.fillStyle = hasPathAUpgrades ? '#FFA000' : '#9C27B0';
       ctx.globalAlpha = pulseIntensity;
       ctx.beginPath();
@@ -1891,7 +1891,7 @@ class Tower {
             ctx.fillRect(-3, -10, 6, 5);
 
             // Add blinking light
-            const blinkState = Math.floor(Date.now() / 500) % 2 === 0;
+            const blinkState = Math.floor(currentTime / 500) % 2 === 0;
             ctx.fillStyle = blinkState ? '#F44336' : '#4CAF50';
             ctx.beginPath();
             ctx.arc(0, -7, 1, 0, Math.PI * 2);
@@ -1940,12 +1940,12 @@ class Tower {
           ctx.lineWidth = 1;
           ctx.globalAlpha = 0.7;
 
-          const time = Date.now() / 1000;
+          const timeInSec = currentTime / 1000;
           const boltCount = this.recoilAnimation > 0 ? 4 : 1;
 
           for (let i = 0; i < boltCount; i++) {
-            const angle = (time * 5 + i * Math.PI/2) % (Math.PI * 2);
-            const length = 8 + Math.sin(time * 3) * 4;
+            const angle = (timeInSec * 5 + i * Math.PI/2) % (Math.PI * 2);
+            const length = 8 + Math.sin(timeInSec * 3) * 4;
 
             ctx.beginPath();
             ctx.moveTo(0, -25);
@@ -1959,8 +1959,8 @@ class Tower {
               const segLength = length / segments;
               const jitter = 3 - j * 0.5;
 
-              x += Math.cos(angle + j * 0.5) * segLength + (Math.sin(time * 10 + i) - 0.5) * jitter;
-              y += Math.sin(angle + j * 0.5) * segLength + (Math.cos(time * 10 + i) - 0.5) * jitter;
+              x += Math.cos(angle + j * 0.5) * segLength + (Math.sin(timeInSec * 10 + i) - 0.5) * jitter;
+              y += Math.sin(angle + j * 0.5) * segLength + (Math.cos(timeInSec * 10 + i) - 0.5) * jitter;
 
               ctx.lineTo(x, y);
             }
@@ -2009,7 +2009,7 @@ class Tower {
 
           for (let i = 0; i < this.pathALevel; i++) {
             const angle = Math.PI * 2 * (i / this.pathALevel);
-            const time = Date.now() / 1000;
+            const timeInSec = currentTime / 1000;
 
             ctx.beginPath();
             ctx.moveTo(0, -25);
@@ -2024,8 +2024,8 @@ class Tower {
               const segLength = length / segments;
               const jitter = 3 - j * 0.5;
 
-              x += Math.cos(angle + time % 1) * segLength + (Math.sin(time * 5 + i) - 0.5) * jitter;
-              y += Math.sin(angle + time % 1) * segLength + (Math.cos(time * 5 + i) - 0.5) * jitter;
+              x += Math.cos(angle + timeInSec % 1) * segLength + (Math.sin(timeInSec * 5 + i) - 0.5) * jitter;
+              y += Math.sin(angle + timeInSec % 1) * segLength + (Math.cos(timeInSec * 5 + i) - 0.5) * jitter;
 
               ctx.lineTo(x, y);
             }
@@ -2063,11 +2063,11 @@ class Tower {
           ctx.fill();
 
           // Add pulsing glow effect based on time
-          const time = Date.now() / 1000;
-          const pulseSize = 8 + Math.sin(time * 4) * 3;
+          const timeInSec = currentTime / 1000;
+          const pulseSize = 8 + Math.sin(timeInSec * 4) * 3;
 
           ctx.fillStyle = '#FFEB3B';
-          ctx.globalAlpha = 0.3 + Math.sin(time * 4) * 0.2;
+          ctx.globalAlpha = 0.3 + Math.sin(timeInSec * 4) * 0.2;
           ctx.beginPath();
           ctx.arc(0, -25, pulseSize, 0, Math.PI * 2);
           ctx.fill();
@@ -2084,7 +2084,7 @@ class Tower {
             ctx.fillRect(x - 2, y - 4, 4, 8);
 
             // Add blinking light
-            const blinkState = Math.floor((time * 3 + i) % 2);
+            const blinkState = Math.floor((timeInSec * 3 + i) % 2);
             ctx.fillStyle = blinkState ? '#4CAF50' : '#FFEB3B';
             ctx.beginPath();
             ctx.arc(x, y - 4, 1, 0, Math.PI * 2);

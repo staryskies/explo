@@ -711,7 +711,8 @@ class Game {
 
     // Ensure the map is updated with the new canvas size
     if (this.map) {
-      this.map.resize();
+      // Pass the gameStarted flag to prevent regenerating the map after game has started
+      this.map.resize(this.gameStarted);
     }
 
     // Force a redraw only if requested

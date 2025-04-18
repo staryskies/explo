@@ -549,10 +549,10 @@ class GameMap {
   }
 
   // Resize the map when the canvas size changes
-  resize() {
+  resize(gameStarted = false) {
     // Calculate new grid dimensions
-    this.gridWidth = Math.floor(this.canvas.width / this.tileSize);
-    this.gridHeight = Math.floor(this.canvas.height / this.tileSize);
+    const newGridWidth = Math.floor(this.canvas.width / this.tileSize);
+    const newGridHeight = Math.floor(this.canvas.height / this.tileSize);
 
     // Store the old grid for reference
     const oldGrid = this.grid;
@@ -571,19 +571,35 @@ class GameMap {
       }
     }
 
-    // Always regenerate the map to ensure proper sizing
-    console.log(`Regenerating map with dimensions: ${this.gridWidth}x${this.gridHeight}`);
-    this.initializeGrid();
-    this.generatePath();
+    if (!gameStarted) {
+      // Only regenerate the map if the game hasn't started yet
+      console.log(`Regenerating map with dimensions: ${newGridWidth}x${newGridHeight}`);
+      this.gridWidth = newGridWidth;
+      this.gridHeight = newGridHeight;
+      this.initializeGrid();
+      this.generatePath();
 
-    // Restore occupied tiles if they're still within bounds and not on the path
-    occupiedTiles.forEach(tile => {
-      if (tile.x < this.gridWidth && tile.y < this.gridHeight &&
-          this.grid[tile.y][tile.x] === this.TILE_TYPES.GRASS) {
-        this.grid[tile.y][tile.x] = this.TILE_TYPES.OCCUPIED;
-      }
-    });
+      // Restore occupied tiles if they're still within bounds and not on the path
+      occupiedTiles.forEach(tile => {
+        if (tile.x < this.gridWidth && tile.y < this.gridHeight &&
+            this.grid[tile.y][tile.x] === this.TILE_TYPES.GRASS) {
+          this.grid[tile.y][tile.x] = this.TILE_TYPES.OCCUPIED;
+        }
+      });
 
-    this.findBuildableTiles();
+      this.findBuildableTiles();
+    } else {
+      // If game has started, just update the tile size to scale the map
+      console.log(`Game already started - scaling map without regenerating`);
+      // Only update grid dimensions if they're larger than before
+      if (newGridWidth > this.gridWidth) this.gridWidth = newGridWidth;
+      if (newGridHeight > this.gridHeight) this.gridHeight = newGridHeight;
+
+      // Update path coordinates with new tile size
+      this.pathCoordinates = this.path.map(point => ({
+        x: point.x * this.tileSize + this.tileSize / 2,
+        y: point.y * this.tileSize + this.tileSize / 2
+      }));
+    }
   }
 }
