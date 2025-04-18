@@ -15,7 +15,7 @@ const playerData = {
   wavesCompleted: 0,
   enemiesKilled: 0,
 
-  // Unlocked towers (basic tower is unlocked by default)
+  // Unlocked towers (all towers unlocked for testing)
   unlockedTowers: ['basic'],
 
   // Tower variants unlocked

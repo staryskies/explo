@@ -11,7 +11,7 @@ window.onerror = function(message, source, lineno, colno, error) {
 };
 
 // Create a global game variable to be accessible throughout the file
-let game;
+window.game = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log('DOM loaded, initializing game...');
@@ -36,8 +36,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const mapTemplates = window.mapTemplates || [];
     const selectedMapTemplate = mapTemplates.find(map => map.id === selectedMapId) || mapTemplates[0];
 
-    // Create the game instance with the selected map
-    game = new Game(canvas, selectedMapTemplate);
+    // Create the game instance with the selected map and assign to window.game
+    window.game = new Game(canvas, selectedMapTemplate);
+
+    // Create a local reference for convenience
+    const game = window.game;
 
     // Force a redraw after a short delay to ensure everything is initialized
     setTimeout(() => {
@@ -54,6 +57,15 @@ document.addEventListener('DOMContentLoaded', () => {
   if (typeof loadPlayerData === 'function') {
     loadPlayerData();
   }
+
+  // Make sure game is initialized before proceeding
+  if (!window.game) {
+    console.error('Game not initialized properly');
+    return;
+  }
+
+  // Create a local reference for convenience
+  const game = window.game;
 
   // Update available towers based on unlocked status
   updateAvailableTowers(game);
@@ -74,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Set an interval to ensure the map is always visible even before game starts
   const mapDrawInterval = setInterval(() => {
-    if (!game.gameStarted) {
+    if (game && !game.gameStarted) {
       game.draw();
     } else {
       // Once game has started, clear the interval as the game loop will handle drawing
@@ -83,16 +95,25 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 100);
 
   // Ensure tower placement preview is always visible
-  canvas.addEventListener('mousemove', () => {
-    // Always redraw on mouse move if a tower is selected or game hasn't started
-    // This ensures the tower placement preview is always visible
-    if (game.selectedTowerType || !game.gameStarted) {
-      game.draw();
-    }
-  });
+  const canvas = document.getElementById('gameCanvas');
+  if (canvas) {
+    canvas.addEventListener('mousemove', () => {
+      // Always redraw on mouse move if a tower is selected or game hasn't started
+      // This ensures the tower placement preview is always visible
+      if (game && (game.selectedTowerType || !game.gameStarted)) {
+        game.draw();
+      }
+    });
+  }
 
   // Handle keyboard shortcuts
   document.addEventListener('keydown', (e) => {
+    // Make sure game is initialized
+    if (!window.game) return;
+
+    // Use the global game reference
+    const game = window.game;
+
     switch (e.key) {
       case '1':
         // Select basic tower
@@ -146,8 +167,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Set a new timeout to resize after 100ms of no resize events
     resizeTimeout = setTimeout(() => {
+      // Make sure game is initialized
+      if (!window.game) return;
+
       // Resize the canvas and redraw
-      game.resizeCanvas();
+      window.game.resizeCanvas();
       // No need to call draw() as it's already called in resizeCanvas()
       console.log('Window resized, canvas updated');
     }, 100);

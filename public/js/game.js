@@ -273,6 +273,12 @@ class Game {
 
   // Start a new wave
   startWave() {
+    // Make sure the map is fully loaded before starting a wave
+    if (!this.map || !this.map.grid || this.map.grid.length === 0) {
+      console.log('Cannot start wave - map not fully loaded yet');
+      return;
+    }
+
     if (this.waveInProgress) return;
 
     this.waveInProgress = true;
@@ -297,6 +303,8 @@ class Game {
     // Force spawn the first enemy immediately
     this.timeSinceLastSpawn = this.spawnInterval;
     this.spawnEnemy();
+
+    console.log(`Started wave ${this.wave} with ${this.totalEnemiesInWave} enemies`);
   }
 
   // Spawn an enemy
