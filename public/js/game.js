@@ -219,32 +219,39 @@ class Game {
       // Check if player has enough gold
       if (this.gold < towerCost) {
         console.log(`Not enough gold to place tower. Need ${towerCost}, have ${this.gold}`);
-        return;
+        return false;
       }
 
-      // Convert grid coordinates to pixel coordinates (center of tile)
-      const pixelPos = this.map.gridToPixel(gridPos.x, gridPos.y);
+      try {
+        // Convert grid coordinates to pixel coordinates (center of tile)
+        const pixelPos = this.map.gridToPixel(gridPos.x, gridPos.y);
 
-      // Get the selected tower button to check for variant
-      const towerButton = document.querySelector(`.tower-btn[data-type="${this.selectedTowerType}"]`);
-      const variant = towerButton?.dataset.variant;
+        // Get the selected tower button to check for variant
+        const towerButton = document.querySelector(`.tower-btn[data-type="${this.selectedTowerType}"]`);
+        const variant = towerButton?.dataset.variant;
 
-      // Create the tower with grid coordinates and variant if available
-      const tower = new Tower(pixelPos.x, pixelPos.y, this.selectedTowerType, gridPos.x, gridPos.y, variant);
-      this.towers.push(tower);
+        // Create the tower with grid coordinates and variant if available
+        const tower = new Tower(pixelPos.x, pixelPos.y, this.selectedTowerType, gridPos.x, gridPos.y, variant);
+        this.towers.push(tower);
 
-      // Mark the tile as occupied
-      this.map.placeTower(gridPos.x, gridPos.y);
+        // Mark the tile as occupied
+        this.map.placeTower(gridPos.x, gridPos.y);
 
-      // Deduct gold
-      this.gold -= towerCost;
+        // Deduct gold
+        this.gold -= towerCost;
 
-      // Update UI
-      this.updateUI();
+        // Update UI
+        this.updateUI();
 
-      console.log(`Placed ${this.selectedTowerType} tower at (${gridPos.x}, ${gridPos.y})`);
+        console.log(`Placed ${this.selectedTowerType} tower at (${gridPos.x}, ${gridPos.y})`);
+        return true;
+      } catch (error) {
+        console.error('Error placing tower:', error);
+        return false;
+      }
     } else {
       console.log('Cannot place tower here');
+      return false;
     }
   }
 
