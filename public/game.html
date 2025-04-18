@@ -33,6 +33,7 @@
         </div>
 
         <button id="openMapSelector">Change Map</button>
+        <button id="showTutorial">Show Tutorial</button>
         <button id="backToMenu">Back to Menu</button>
       </div>
 
@@ -156,6 +157,109 @@
         </div>
       </div>
     </div>
+
+    <!-- Tutorial Overlay -->
+    <div id="tutorial-overlay">
+      <div class="tutorial-content">
+        <div class="tutorial-close" id="tutorial-close">&times;</div>
+
+        <div class="tutorial-header">
+          <h2>Tower Defense Tutorial</h2>
+        </div>
+
+        <div class="tutorial-body">
+          <!-- Step 1: Introduction -->
+          <div class="tutorial-step active" data-step="1">
+            <h3>Welcome to Tower Defense!</h3>
+            <p>This tutorial will guide you through the basics of playing the game. You can skip this tutorial at any time by clicking the X button in the top-right corner.</p>
+            <p>Tower Defense is a strategy game where you build defensive towers to stop enemies from reaching the end of the path.</p>
+          </div>
+
+          <!-- Step 2: Game Interface -->
+          <div class="tutorial-step" data-step="2">
+            <h3>Game Interface</h3>
+            <p>The game screen consists of:</p>
+            <ul>
+              <li>The <span class="tutorial-highlight">map</span> where enemies travel along a path</li>
+              <li>The <span class="tutorial-highlight">sidebar</span> on the right with tower options and controls</li>
+              <li>The <span class="tutorial-highlight">stats display</span> at the top showing your lives, gold, wave, and score</li>
+            </ul>
+          </div>
+
+          <!-- Step 3: Building Towers -->
+          <div class="tutorial-step" data-step="3">
+            <h3>Building Towers</h3>
+            <p>To build a tower:</p>
+            <ol>
+              <li>Click on a tower type in the sidebar</li>
+              <li>Click on an empty grass tile on the map</li>
+            </ol>
+            <p>Each tower costs gold to build. You can see the cost below each tower's name.</p>
+            <p>Different towers have different abilities, ranges, and attack speeds.</p>
+          </div>
+
+          <!-- Step 4: Tower Types -->
+          <div class="tutorial-step" data-step="4">
+            <h3>Tower Types</h3>
+            <p>Here are some basic tower types:</p>
+            <ul>
+              <li><span class="tutorial-highlight">Basic Tower</span>: Balanced damage and range</li>
+              <li><span class="tutorial-highlight">Archer Tower</span>: Fast firing rate</li>
+              <li><span class="tutorial-highlight">Cannon Tower</span>: Area damage</li>
+              <li><span class="tutorial-highlight">Freeze Tower</span>: Slows down enemies</li>
+            </ul>
+            <p>Experiment with different towers to find effective strategies!</p>
+          </div>
+
+          <!-- Step 5: Waves and Enemies -->
+          <div class="tutorial-step" data-step="5">
+            <h3>Waves and Enemies</h3>
+            <p>Enemies come in waves. Click the <span class="tutorial-highlight">Start Wave</span> button to begin.</p>
+            <p>Different enemy types have different properties:</p>
+            <ul>
+              <li><span class="tutorial-highlight">Normal</span>: Basic enemies</li>
+              <li><span class="tutorial-highlight">Fast</span>: Move quickly</li>
+              <li><span class="tutorial-highlight">Tank</span>: High health</li>
+              <li><span class="tutorial-highlight">Flying</span>: Can fly over obstacles</li>
+            </ul>
+            <p>If enemies reach the end of the path, you lose lives!</p>
+          </div>
+
+          <!-- Step 6: Resources -->
+          <div class="tutorial-step" data-step="6">
+            <h3>Resources</h3>
+            <p>You have two main resources:</p>
+            <ul>
+              <li><span class="tutorial-highlight">Gold</span>: Used to build and upgrade towers. Earned by defeating enemies.</li>
+              <li><span class="tutorial-highlight">Lives</span>: You start with 10 lives. If it reaches 0, the game is over.</li>
+            </ul>
+            <p>You also earn <span class="tutorial-highlight">Silver</span> for completing waves, which can be used for permanent upgrades.</p>
+          </div>
+
+          <!-- Step 7: Game Controls -->
+          <div class="tutorial-step" data-step="7">
+            <h3>Game Controls</h3>
+            <p>Additional controls:</p>
+            <ul>
+              <li><span class="tutorial-highlight">Speed Up</span>: Increases game speed</li>
+              <li><span class="tutorial-highlight">Show Tower Range</span>: Displays the attack range of towers</li>
+              <li><span class="tutorial-highlight">Change Map</span>: Select a different map</li>
+            </ul>
+            <p>You're now ready to play! Good luck defending against the waves of enemies!</p>
+          </div>
+        </div>
+
+        <div class="tutorial-progress" id="tutorial-progress">
+          <!-- Progress dots will be added dynamically -->
+        </div>
+
+        <div class="tutorial-footer">
+          <button class="tutorial-btn tutorial-prev" id="tutorial-prev">Previous</button>
+          <button class="tutorial-btn tutorial-skip" id="tutorial-skip">Skip Tutorial</button>
+          <button class="tutorial-btn tutorial-next" id="tutorial-next">Next</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Load game scripts -->
@@ -170,6 +274,7 @@
   <script src="js/projectile.js"></script>
   <script src="js/game.js"></script>
   <script src="js/gameUpgrades.js"></script>
+  <script src="js/tutorial.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

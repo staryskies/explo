@@ -126,6 +126,14 @@ class Game {
       window.location.href = 'index.html';
     });
 
+    // Show tutorial button
+    document.getElementById('showTutorial').addEventListener('click', () => {
+      if (window.tutorialSystem) {
+        this.paused = true;
+        window.tutorialSystem.showTutorialAgain();
+      }
+    });
+
     // Window resize
     window.addEventListener('resize', () => {
       this.resizeCanvas();
@@ -270,7 +278,7 @@ class Game {
   // Toggle game speed
   toggleSpeed() {
     if (this.speedMultiplier === 1) {
-      this.speedMultiplier = 2;
+      this.speedMultiplier = 5;
       document.getElementById('speedUp').textContent = 'Normal Speed';
     } else {
       this.speedMultiplier = 1;

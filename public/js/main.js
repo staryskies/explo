@@ -191,6 +191,13 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('return-to-menu').addEventListener('click', () => {
     window.location.href = 'index.html';
   });
+
+  // Add show tutorial button event listener
+  document.getElementById('showTutorial').addEventListener('click', () => {
+    if (window.tutorialSystem) {
+      window.tutorialSystem.showTutorialAgain();
+    }
+  });
 });
 
 // Update available towers based on player's unlocked towers

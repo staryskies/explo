@@ -33,74 +33,74 @@ class Projectile {
         this.size = 2; // Smaller
         this.color = '#3498db'; // Lighter blue
         this.trailLength = 0; // No trail
-        this.speed *= 2.5; // Faster
+        this.speed *= 4.5; // Faster
         break;
       case 'cannon':
         this.size = 3; // Smaller
         this.color = '#e67e22'; // Orange
         this.trailLength = 0;
-        this.speed *= 1.2;
+        this.speed *= 4.2;
         break;
       case 'archer':
         this.size = 2;
         this.color = '#2ecc71'; // Brighter green
         this.trailLength = 0;
-        this.speed *= 1.4;
+        this.speed *= 4.4;
         break;
       case 'freeze':
         this.size = 2;
         this.color = '#00BCD4'; // Cyan
         this.trailLength = 0;
-        this.speed *= 1.3;
+        this.speed *= 4.3;
         break;
       case 'mortar':
         this.size = 3;
         this.color = '#95a5a6'; // Light gray
         this.trailLength = 0;
-        this.speed *= 1.1;
+        this.speed *= 3.1;
         break;
       case 'laser':
         this.size = 2;
         this.color = '#e74c3c'; // Bright red
         this.trailLength = 8; // Keep trail ONLY for laser
-        this.speed *= 1.6;
+        this.speed *= 4.6;
         break;
       case 'tesla':
         this.size = 2;
         this.color = '#f1c40f'; // Bright yellow
         this.trailLength = 0; // No trail
-        this.speed *= 1.7;
+        this.speed *= 3.7;
         break;
       case 'flame':
         this.size = 2;
         this.color = '#e67e22'; // Orange
         this.trailLength = 0; // No trail
-        this.speed *= 1.3;
+        this.speed *= 2.3;
         break;
       case 'missile':
         this.size = 2;
         this.color = '#7f8c8d'; // Gray
         this.trailLength = 0; // No trail
-        this.speed *= 1.4;
+        this.speed *= 2.4;
         break;
       case 'poison':
         this.size = 2;
         this.color = '#9b59b6'; // Purple
         this.trailLength = 0;
-        this.speed *= 1.3;
+        this.speed *= 2.3;
         break;
       case 'vortex':
         this.size = 2;
         this.color = '#1abc9c'; // Teal
         this.trailLength = 0;
-        this.speed *= 1.2;
+        this.speed *= 4.2;
         break;
       case 'basic':
       default:
         this.size = 2;
         this.color = '#2ecc71'; // Brighter green
         this.trailLength = 0;
-        this.speed *= 1.3;
+        this.speed *= 2.3;
         break;
     }
 
