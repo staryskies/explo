@@ -573,6 +573,9 @@ class GameMap {
 
   // Draw decorative elements based on map type
   drawMapDecorations() {
+    // Disabled decorations to remove particles
+    // Uncomment the code below to re-enable decorations if desired
+    /*
     const mapType = this.mapTemplate.id;
     const decorColors = this.decorationColors;
 
@@ -648,10 +651,14 @@ class GameMap {
         }
       }
     }
+    */
   }
 
   // Draw special effects on the path based on map type
   drawPathEffects() {
+    // Disabled path effects to remove particles
+    // Uncomment the code below to re-enable path effects if desired
+    /*
     const mapType = this.mapTemplate.id;
 
     // Add effects to the path based on map type
@@ -711,6 +718,7 @@ class GameMap {
           break;
       }
     }
+    */
   }
 
   // Resize the map when the canvas size changes

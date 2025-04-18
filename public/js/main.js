@@ -227,40 +227,9 @@ function updateAvailableTowers(game) {
     }
   });
 
-  // Add event listener to game to apply skin when placing tower
+  // We don't need to override placeTower anymore since it's handled in the click event
+  // Just mark as handled to avoid future attempts
   if (game && !game.skinHandlerAdded) {
-    // Original placeTower method
-    const originalPlaceTower = game.placeTower;
-
-    // Override placeTower to apply skin without creating multiple screens
-    game.placeTower = function(x, y) {
-      if (!this.selectedTowerType) return false;
-
-      try {
-        // Get the selected tower button
-        const towerButton = document.querySelector(`.tower-btn[data-type="${this.selectedTowerType}"]`);
-        const variant = towerButton?.dataset.variant;
-
-        // Call original method to place the tower
-        const result = originalPlaceTower.call(this, x, y);
-
-        // If tower was placed successfully and has a variant, apply it
-        if (result && variant) {
-          // Get the last placed tower (the one we just added)
-          const placedTower = this.towers[this.towers.length - 1];
-          if (placedTower) {
-            placedTower.variant = variant;
-            console.log(`Applied ${variant} skin to ${placedTower.type} tower`);
-          }
-        }
-
-        return result;
-      } catch (error) {
-        console.error('Error in placeTower override:', error);
-        return false;
-      }
-    };
-
     game.skinHandlerAdded = true;
   }
 }

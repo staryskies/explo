@@ -82,6 +82,12 @@ class Game {
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
 
+      // Make sure the map is fully loaded
+      if (!this.map || !this.map.grid || this.map.grid.length === 0) {
+        console.log('Cannot interact with map - not fully loaded yet');
+        return;
+      }
+
       // Check if we're clicking on an existing tower for upgrade
       const clickedTower = this.getTowerAtPosition(x, y);
       if (clickedTower) {
@@ -93,7 +99,53 @@ class Game {
 
       // If no tower was clicked and a tower type is selected, try to place a new tower
       if (this.selectedTowerType) {
-        this.placeTower(x, y);
+        // Convert pixel coordinates to grid coordinates
+        const gridPos = this.map.pixelToGrid(x, y);
+
+        // Check if tower can be placed here
+        if (this.map.canPlaceTower(gridPos.x, gridPos.y)) {
+          // Get tower cost
+          const towerCost = this.getTowerCost(this.selectedTowerType);
+
+          // Check if player has enough gold
+          if (this.gold < towerCost) {
+            console.log(`Not enough gold to place tower. Need ${towerCost}, have ${this.gold}`);
+            return;
+          }
+
+          try {
+            // Convert grid coordinates to pixel coordinates (center of tile)
+            const pixelPos = this.map.gridToPixel(gridPos.x, gridPos.y);
+
+            // Get the selected tower button to check for variant
+            const towerButton = document.querySelector(`.tower-btn[data-type="${this.selectedTowerType}"]`);
+            const variant = towerButton?.dataset.variant;
+
+            // Create the tower with grid coordinates and variant if available
+            // Make sure Tower class is available
+            if (typeof Tower === 'undefined') {
+              console.error('Tower class is not defined');
+              return;
+            }
+            const tower = new Tower(pixelPos.x, pixelPos.y, this.selectedTowerType, gridPos.x, gridPos.y, variant);
+            this.towers.push(tower);
+
+            // Mark the tile as occupied
+            this.map.placeTower(gridPos.x, gridPos.y);
+
+            // Deduct gold
+            this.gold -= towerCost;
+
+            // Update UI
+            this.updateUI();
+
+            console.log(`Placed ${this.selectedTowerType} tower at (${gridPos.x}, ${gridPos.y})`);
+          } catch (error) {
+            console.error('Error placing tower:', error);
+          }
+        } else {
+          console.log('Cannot place tower here');
+        }
       }
     });
 
@@ -212,63 +264,7 @@ class Game {
     return towerStats[type]?.persistentCost || 50;
   }
 
-  // Place a tower at the given coordinates
-  placeTower(x, y) {
-    // Make sure the map is fully loaded before allowing tower placement
-    if (!this.map || !this.map.grid || this.map.grid.length === 0) {
-      console.log('Cannot place tower - map not fully loaded yet');
-      return false;
-    }
-
-    // If no tower type is selected, do nothing
-    if (!this.selectedTowerType) return false;
-
-    // Convert pixel coordinates to grid coordinates
-    const gridPos = this.map.pixelToGrid(x, y);
-
-    // Check if tower can be placed here
-    if (this.map.canPlaceTower(gridPos.x, gridPos.y)) {
-      // Get tower cost
-      const towerCost = this.getTowerCost(this.selectedTowerType);
-
-      // Check if player has enough gold
-      if (this.gold < towerCost) {
-        console.log(`Not enough gold to place tower. Need ${towerCost}, have ${this.gold}`);
-        return false;
-      }
-
-      try {
-        // Convert grid coordinates to pixel coordinates (center of tile)
-        const pixelPos = this.map.gridToPixel(gridPos.x, gridPos.y);
-
-        // Get the selected tower button to check for variant
-        const towerButton = document.querySelector(`.tower-btn[data-type="${this.selectedTowerType}"]`);
-        const variant = towerButton?.dataset.variant;
-
-        // Create the tower with grid coordinates and variant if available
-        const tower = new Tower(pixelPos.x, pixelPos.y, this.selectedTowerType, gridPos.x, gridPos.y, variant);
-        this.towers.push(tower);
-
-        // Mark the tile as occupied
-        this.map.placeTower(gridPos.x, gridPos.y);
-
-        // Deduct gold
-        this.gold -= towerCost;
-
-        // Update UI
-        this.updateUI();
-
-        console.log(`Placed ${this.selectedTowerType} tower at (${gridPos.x}, ${gridPos.y})`);
-        return true;
-      } catch (error) {
-        console.error('Error placing tower:', error);
-        return false;
-      }
-    } else {
-      console.log('Cannot place tower here');
-      return false;
-    }
-  }
+  // This method has been moved to the canvas click event handler
 
   // Get a tower at the given position
   getTowerAtPosition(x, y) {
