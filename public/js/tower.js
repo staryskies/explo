@@ -605,6 +605,9 @@ class Tower {
     this.createShootEffect();
 
     try {
+      // Calculate scaled damage once to avoid duplicate declarations
+      const scaledDamage = gameSpeedMultiplier > 1 ? this.damage * Math.sqrt(gameSpeedMultiplier) : this.damage;
+
       // Handle special tower abilities based on tower type
       switch (this.type) {
         case 'archer':
@@ -613,8 +616,6 @@ class Tower {
           for (let i = 0; i < arrowCount; i++) {
             // Add slight angle variation for multiple arrows
             const angleOffset = (i - (arrowCount - 1) / 2) * 0.1;
-            // Scale damage with game speed
-            const scaledDamage = gameSpeedMultiplier > 1 ? this.damage * Math.sqrt(gameSpeedMultiplier) : this.damage;
 
             const arrowProjectile = new Projectile(
               this.x,
@@ -639,9 +640,6 @@ class Tower {
 
         case 'cannon':
           // Create explosive projectile
-          // Scale damage with game speed
-          const scaledDamage = gameSpeedMultiplier > 1 ? this.damage * Math.sqrt(gameSpeedMultiplier) : this.damage;
-
           const explosiveProjectile = new Projectile(
             this.x,
             this.y,
@@ -667,9 +665,6 @@ class Tower {
 
         case 'freeze':
           // Create freeze projectile
-          // Scale damage with game speed
-          const scaledDamage = gameSpeedMultiplier > 1 ? this.damage * Math.sqrt(gameSpeedMultiplier) : this.damage;
-
           const freezeProjectile = new Projectile(
             this.x,
             this.y,
@@ -695,9 +690,6 @@ class Tower {
 
         case 'sniper':
           // Create high-damage projectile
-          // Scale damage with game speed
-          const scaledDamage = gameSpeedMultiplier > 1 ? this.damage * Math.sqrt(gameSpeedMultiplier) : this.damage;
-
           const sniperProjectile = new Projectile(
             this.x,
             this.y,
@@ -725,9 +717,6 @@ class Tower {
 
         default:
           // Default tower behavior - single projectile
-          // Scale damage with game speed
-          const scaledDamage = gameSpeedMultiplier > 1 ? this.damage * Math.sqrt(gameSpeedMultiplier) : this.damage;
-
           const projectile = new Projectile(
             this.x,
             this.y,

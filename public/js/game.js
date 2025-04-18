@@ -122,24 +122,23 @@ class Game {
             const variant = towerButton?.dataset.variant;
 
             // Create the tower with grid coordinates and variant if available
-            // Make sure Tower class is available
-            if (typeof Tower === 'undefined') {
-              console.error('Tower class is not defined');
-              return;
+            try {
+              const tower = new Tower(pixelPos.x, pixelPos.y, this.selectedTowerType, gridPos.x, gridPos.y, variant);
+              this.towers.push(tower);
+
+              // Mark the tile as occupied
+              this.map.placeTower(gridPos.x, gridPos.y);
+
+              // Deduct gold
+              this.gold -= towerCost;
+
+              // Update UI
+              this.updateUI();
+
+              console.log(`Placed ${this.selectedTowerType} tower at (${gridPos.x}, ${gridPos.y})`);
+            } catch (error) {
+              console.error('Error creating tower:', error);
             }
-            const tower = new Tower(pixelPos.x, pixelPos.y, this.selectedTowerType, gridPos.x, gridPos.y, variant);
-            this.towers.push(tower);
-
-            // Mark the tile as occupied
-            this.map.placeTower(gridPos.x, gridPos.y);
-
-            // Deduct gold
-            this.gold -= towerCost;
-
-            // Update UI
-            this.updateUI();
-
-            console.log(`Placed ${this.selectedTowerType} tower at (${gridPos.x}, ${gridPos.y})`);
           } catch (error) {
             console.error('Error placing tower:', error);
           }
