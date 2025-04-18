@@ -191,8 +191,8 @@ class Game {
     // Check if we're clicking on an existing tower for upgrade
     const clickedTower = this.getTowerAtPosition(x, y);
     if (clickedTower) {
-      // Select the tower for upgrade
-      this.selectTowerForUpgrade(clickedTower);
+      // Just log the tower info instead of opening the upgrade menu
+      console.log(`Clicked on tower: ${clickedTower.type} at (${clickedTower.gridX}, ${clickedTower.gridY})`);
       return;
     }
 
@@ -675,8 +675,16 @@ class Game {
     const sidebarWidth = 250; // Match the sidebar width
 
     // Set canvas size to fit the container minus the sidebar width
-    this.canvas.width = Math.max(800, container.clientWidth - sidebarWidth);
-    this.canvas.height = Math.max(600, container.clientHeight);
+    this.canvas.width = container.clientWidth - sidebarWidth;
+    this.canvas.height = container.clientHeight;
+
+    // Ensure the map is updated with the new canvas size
+    if (this.map) {
+      this.map.resize();
+    }
+
+    // Force a redraw
+    this.draw();
 
     console.log(`Canvas resized to ${this.canvas.width}x${this.canvas.height}`);
   }

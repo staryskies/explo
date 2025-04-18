@@ -124,12 +124,19 @@ document.addEventListener('DOMContentLoaded', () => {
   // Static app - no server dependencies
   console.log('Running in static mode');
 
-  // Handle window resize
+  // Handle window resize with debounce to prevent excessive resizing
+  let resizeTimeout;
   window.addEventListener('resize', () => {
-    // Resize the canvas and redraw
-    game.resizeCanvas();
-    game.draw();
-    console.log('Window resized, canvas updated');
+    // Clear the previous timeout
+    clearTimeout(resizeTimeout);
+
+    // Set a new timeout to resize after 100ms of no resize events
+    resizeTimeout = setTimeout(() => {
+      // Resize the canvas and redraw
+      game.resizeCanvas();
+      // No need to call draw() as it's already called in resizeCanvas()
+      console.log('Window resized, canvas updated');
+    }, 100);
   });
 
   // Canvas click for tower placement is already handled in game.initEventListeners()

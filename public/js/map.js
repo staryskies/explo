@@ -520,69 +520,40 @@ class GameMap {
 
   // Resize the map when the canvas size changes
   resize() {
+    // Calculate new grid dimensions
+    this.gridWidth = Math.floor(this.canvas.width / this.tileSize);
+    this.gridHeight = Math.floor(this.canvas.height / this.tileSize);
+
     // Store the old grid for reference
     const oldGrid = this.grid;
-    const oldGridWidth = this.gridWidth;
-    const oldGridHeight = this.gridHeight;
+    const oldGridWidth = oldGrid ? oldGrid.length > 0 ? oldGrid[0].length : 0 : 0;
+    const oldGridHeight = oldGrid ? oldGrid.length : 0;
 
     // Store occupied tiles before resize
     const occupiedTiles = [];
     if (oldGrid) {
       for (let y = 0; y < oldGridHeight; y++) {
         for (let x = 0; x < oldGridWidth; x++) {
-          if (oldGrid[y][x] === this.TILE_TYPES.OCCUPIED) {
+          if (y < oldGrid.length && x < oldGrid[y].length && oldGrid[y][x] === this.TILE_TYPES.OCCUPIED) {
             occupiedTiles.push({x, y});
           }
         }
       }
     }
 
-    // Calculate new grid dimensions
-    this.gridWidth = Math.floor(this.canvas.width / this.tileSize);
-    this.gridHeight = Math.floor(this.canvas.height / this.tileSize);
+    // Always regenerate the map to ensure proper sizing
+    console.log(`Regenerating map with dimensions: ${this.gridWidth}x${this.gridHeight}`);
+    this.initializeGrid();
+    this.generatePath();
 
-    // If this is the first resize or dimensions changed significantly, regenerate the map
-    if (!oldGrid || oldGridWidth === 0 || oldGridHeight === 0 ||
-        Math.abs(this.gridWidth - oldGridWidth) > 5 ||
-        Math.abs(this.gridHeight - oldGridHeight) > 5) {
-      console.log('Map dimensions changed significantly, regenerating map');
-      this.initializeGrid();
-      this.generatePath();
-
-      // Restore occupied tiles if they're still within bounds and not on the path
-      occupiedTiles.forEach(tile => {
-        if (tile.x < this.gridWidth && tile.y < this.gridHeight &&
-            this.grid[tile.y][tile.x] === this.TILE_TYPES.GRASS) {
-          this.grid[tile.y][tile.x] = this.TILE_TYPES.OCCUPIED;
-        }
-      });
-
-      this.findBuildableTiles();
-      return;
-    }
-
-    // Otherwise, preserve the existing map but adjust for new dimensions
-    console.log('Preserving existing map during resize');
-
-    // Create a new grid with the new dimensions
-    const newGrid = [];
-    for (let y = 0; y < this.gridHeight; y++) {
-      newGrid[y] = [];
-      for (let x = 0; x < this.gridWidth; x++) {
-        // If within bounds of old grid, copy the tile type
-        if (y < oldGridHeight && x < oldGridWidth) {
-          newGrid[y][x] = oldGrid[y][x];
-        } else {
-          // Otherwise, set as grass
-          newGrid[y][x] = this.TILE_TYPES.GRASS;
-        }
+    // Restore occupied tiles if they're still within bounds and not on the path
+    occupiedTiles.forEach(tile => {
+      if (tile.x < this.gridWidth && tile.y < this.gridHeight &&
+          this.grid[tile.y][tile.x] === this.TILE_TYPES.GRASS) {
+        this.grid[tile.y][tile.x] = this.TILE_TYPES.OCCUPIED;
       }
-    }
+    });
 
-    // Update the grid
-    this.grid = newGrid;
-
-    // Update buildable tiles
     this.findBuildableTiles();
   }
 }

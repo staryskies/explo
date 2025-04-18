@@ -17,7 +17,7 @@ body {
   height: 100vh;
   overflow: hidden;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-  background: #000;
+  background: #4CAF50; /* Green background to match the game theme */
   display: flex;
   flex-direction: row;
 }
@@ -25,10 +25,10 @@ body {
 #gameCanvas {
   display: block;
   width: calc(100% - 250px);
-  height: 100%;
+  height: 100vh;
   margin-left: 0; /* Remove margin since we're using flexbox */
   flex: 1; /* Allow canvas to take remaining space */
-  object-fit: contain; /* Maintain aspect ratio */
+  object-fit: fill; /* Fill available space */
 }
 
 #stats {
