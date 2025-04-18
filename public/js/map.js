@@ -525,6 +525,18 @@ class GameMap {
     const oldGridWidth = this.gridWidth;
     const oldGridHeight = this.gridHeight;
 
+    // Store occupied tiles before resize
+    const occupiedTiles = [];
+    if (oldGrid) {
+      for (let y = 0; y < oldGridHeight; y++) {
+        for (let x = 0; x < oldGridWidth; x++) {
+          if (oldGrid[y][x] === this.TILE_TYPES.OCCUPIED) {
+            occupiedTiles.push({x, y});
+          }
+        }
+      }
+    }
+
     // Calculate new grid dimensions
     this.gridWidth = Math.floor(this.canvas.width / this.tileSize);
     this.gridHeight = Math.floor(this.canvas.height / this.tileSize);
@@ -536,6 +548,15 @@ class GameMap {
       console.log('Map dimensions changed significantly, regenerating map');
       this.initializeGrid();
       this.generatePath();
+
+      // Restore occupied tiles if they're still within bounds and not on the path
+      occupiedTiles.forEach(tile => {
+        if (tile.x < this.gridWidth && tile.y < this.gridHeight &&
+            this.grid[tile.y][tile.x] === this.TILE_TYPES.GRASS) {
+          this.grid[tile.y][tile.x] = this.TILE_TYPES.OCCUPIED;
+        }
+      });
+
       this.findBuildableTiles();
       return;
     }

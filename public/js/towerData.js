@@ -6,10 +6,10 @@ console.log('Tower data loaded');
 
 // Tower stats and costs
 const towerStats = {
-  basic: { 
+  basic: {
     name: "Basic Tower",
     description: "A simple tower with balanced stats",
-    persistentCost: 50, 
+    persistentCost: 50,
     ability: "Basic shot",
     range: 200,
     damage: 25,
@@ -18,10 +18,10 @@ const towerStats = {
     canTargetFlying: false,
     color: '#4CAF50'
   },
-  archer: { 
+  archer: {
     name: "Archer Tower",
     description: "Fires two arrows in quick succession",
-    persistentCost: 225, 
+    persistentCost: 225,
     ability: "Double shot",
     range: 220,
     damage: 20,
@@ -30,10 +30,10 @@ const towerStats = {
     canTargetFlying: true,
     color: '#8BC34A'
   },
-  cannon: { 
+  cannon: {
     name: "Cannon Tower",
     description: "Deals splash damage to enemies",
-    persistentCost: 300, 
+    persistentCost: 300,
     ability: "Splash damage",
     range: 180,
     damage: 35,
@@ -43,10 +43,10 @@ const towerStats = {
     aoeRadius: 40,
     color: '#795548'
   },
-  sniper: { 
+  sniper: {
     name: "Sniper Tower",
     description: "Long range with chance for critical hits",
-    persistentCost: 350, 
+    persistentCost: 350,
     ability: "Critical hit",
     range: 300,
     damage: 50,
@@ -57,10 +57,10 @@ const towerStats = {
     critMultiplier: 2.5,
     color: '#2196F3'
   },
-  freeze: { 
+  freeze: {
     name: "Freeze Tower",
     description: "Slows down enemies in its range",
-    persistentCost: 400, 
+    persistentCost: 400,
     ability: "Slows enemies",
     range: 180,
     damage: 10,
@@ -71,10 +71,10 @@ const towerStats = {
     slowDuration: 2000,
     color: '#00BCD4'
   },
-  mortar: { 
+  mortar: {
     name: "Mortar Tower",
     description: "Deals heavy splash damage in a large area",
-    persistentCost: 450, 
+    persistentCost: 450,
     ability: "Large splash",
     range: 250,
     damage: 60,
@@ -84,10 +84,10 @@ const towerStats = {
     aoeRadius: 70,
     color: '#607D8B'
   },
-  laser: { 
+  laser: {
     name: "Laser Tower",
     description: "Fires a continuous beam at enemies",
-    persistentCost: 500, 
+    persistentCost: 500,
     ability: "Continuous beam",
     range: 200,
     damage: 5,
@@ -96,10 +96,10 @@ const towerStats = {
     canTargetFlying: true,
     color: '#E91E63'
   },
-  tesla: { 
+  tesla: {
     name: "Tesla Tower",
     description: "Electricity jumps between nearby enemies",
-    persistentCost: 550, 
+    persistentCost: 550,
     ability: "Chain lightning",
     range: 160,
     damage: 30,
@@ -110,10 +110,10 @@ const towerStats = {
     chainRange: 80,
     color: '#673AB7'
   },
-  flamethrower: { 
-    name: "Flamethrower Tower",
+  flame: {
+    name: "Flame Tower",
     description: "Sets enemies on fire, dealing damage over time",
-    persistentCost: 600, 
+    persistentCost: 350,
     ability: "Burning damage",
     range: 150,
     damage: 15,
@@ -124,10 +124,10 @@ const towerStats = {
     burnDamage: 5,
     color: '#FF5722'
   },
-  missile: { 
+  missile: {
     name: "Missile Tower",
     description: "Fires powerful missiles with splash damage",
-    persistentCost: 650, 
+    persistentCost: 650,
     ability: "High damage",
     range: 220,
     damage: 80,
@@ -137,10 +137,10 @@ const towerStats = {
     aoeRadius: 50,
     color: '#F44336'
   },
-  poison: { 
+  poison: {
     name: "Poison Tower",
     description: "Poisons enemies, reducing their health over time",
-    persistentCost: 700, 
+    persistentCost: 700,
     ability: "Poison splash",
     range: 170,
     damage: 10,
@@ -152,10 +152,10 @@ const towerStats = {
     aoeRadius: 45,
     color: '#9C27B0'
   },
-  vortex: { 
+  vortex: {
     name: "Vortex Tower",
     description: "Creates a vortex that pulls enemies closer",
-    persistentCost: 750, 
+    persistentCost: 750,
     ability: "Pulls enemies",
     range: 190,
     damage: 20,
@@ -195,7 +195,7 @@ const towerUpgrades = {
       ]
     }
   },
-  
+
   archer: {
     // Path A: Multi-shot
     pathA: {
@@ -220,7 +220,7 @@ const towerUpgrades = {
       ]
     }
   },
-  
+
   cannon: {
     // Path A: Bigger explosions
     pathA: {
@@ -245,7 +245,7 @@ const towerUpgrades = {
       ]
     }
   },
-  
+
   sniper: {
     // Path A: Critical hits
     pathA: {
@@ -270,7 +270,7 @@ const towerUpgrades = {
       ]
     }
   },
-  
+
   freeze: {
     // Path A: Deep freeze
     pathA: {
@@ -295,7 +295,7 @@ const towerUpgrades = {
       ]
     }
   },
-  
+
   mortar: {
     // Path A: Artillery
     pathA: {
@@ -320,7 +320,7 @@ const towerUpgrades = {
       ]
     }
   },
-  
+
   laser: {
     // Path A: Focused beam
     pathA: {
@@ -345,7 +345,7 @@ const towerUpgrades = {
       ]
     }
   },
-  
+
   tesla: {
     // Path A: Chain lightning
     pathA: {
@@ -370,8 +370,8 @@ const towerUpgrades = {
       ]
     }
   },
-  
-  flamethrower: {
+
+  flame: {
     // Path A: Inferno
     pathA: {
       name: "Inferno",
@@ -395,7 +395,7 @@ const towerUpgrades = {
       ]
     }
   },
-  
+
   missile: {
     // Path A: Heavy ordnance
     pathA: {
@@ -420,7 +420,7 @@ const towerUpgrades = {
       ]
     }
   },
-  
+
   poison: {
     // Path A: Toxic cloud
     pathA: {
@@ -445,7 +445,7 @@ const towerUpgrades = {
       ]
     }
   },
-  
+
   vortex: {
     // Path A: Gravity well
     pathA: {

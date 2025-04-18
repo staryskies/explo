@@ -44,14 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Update available towers based on unlocked status
   updateAvailableTowers(game);
 
-  // Add event listeners to tower buttons
-  document.querySelectorAll('.tower-btn').forEach(button => {
-    button.addEventListener('click', () => {
-      const towerType = button.dataset.type;
-      console.log(`Tower button clicked: ${towerType}`);
-      game.selectTowerType(towerType);
-    });
-  });
+  // Tower buttons are already handled in game.initEventListeners()
 
   // Initialize infinite mode
   game.initializeInfiniteMode();
@@ -75,11 +68,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }, 100);
 
-  // Handle mouse move for tower placement preview
-  canvas.addEventListener('mousemove', (e) => {
-    // Track mouse position
-    game.trackMouseMovement(e);
-
+  // Ensure tower placement preview is always visible
+  canvas.addEventListener('mousemove', () => {
     // Always redraw on mouse move if a tower is selected or game hasn't started
     // This ensures the tower placement preview is always visible
     if (game.selectedTowerType || !game.gameStarted) {
@@ -142,16 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Window resized, canvas updated');
   });
 
-  // Handle canvas click for tower placement
-  canvas.addEventListener('click', (e) => {
-    // Track mouse position first to ensure coordinates are up to date
-    game.trackMouseMovement(e);
-
-    // Then place tower at current mouse position
-    if (game.selectedTowerType) {
-      game.placeTower(game.mouseX, game.mouseY);
-    }
-  });
+  // Canvas click for tower placement is already handled in game.initEventListeners()
 
   // Log that initialization is complete
   console.log('Game initialized successfully');

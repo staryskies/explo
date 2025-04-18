@@ -44,6 +44,10 @@ class Game {
     this.selectedTowerType = null;
     this.showTowerRanges = false;
 
+    // Mouse position tracking
+    this.mouseX = 0;
+    this.mouseY = 0;
+
     // Time tracking
     this.lastUpdateTime = 0;
 
@@ -75,10 +79,17 @@ class Game {
       this.placeTower(x, y);
     });
 
+    // Track mouse movement for tower placement preview
+    this.canvas.addEventListener('mousemove', (e) => {
+      this.trackMouseMovement(e);
+    });
+
     // Tower selection buttons
     document.querySelectorAll('.tower-btn').forEach(button => {
       button.addEventListener('click', (e) => {
-        const towerType = e.target.dataset.type;
+        // Get the tower type from the button's data attribute
+        // Use the button itself rather than the event target (which could be a child element)
+        const towerType = button.dataset.type;
         if (towerType) {
           this.selectTowerType(towerType);
         }
@@ -159,7 +170,14 @@ class Game {
 
     // Select the tower
     this.selectedTowerType = type;
-    document.getElementById(`${type}Tower`).classList.add('selected');
+
+    // Find the button and add the selected class
+    const towerButton = document.querySelector(`.tower-btn[data-type="${type}"]`);
+    if (towerButton) {
+      towerButton.classList.add('selected');
+    } else {
+      console.error(`Tower button for type ${type} not found`);
+    }
   }
 
   // Get tower cost based on type
@@ -174,7 +192,9 @@ class Game {
     const clickedTower = this.getTowerAtPosition(x, y);
     if (clickedTower) {
       // Select the tower for upgrade
-      this.selectTowerForUpgrade(clickedTower);
+      // This would normally call this.selectTowerForUpgrade(clickedTower)
+      // but for now we'll just log it
+      console.log(`Clicked on tower: ${clickedTower.type} at (${clickedTower.gridX}, ${clickedTower.gridY})`);
       return;
     }
 
@@ -369,7 +389,8 @@ class Game {
       // Handle enemy death
       if (!enemy.alive && !enemy.reachedEnd && !enemy.deathHandled) {
         enemy.deathHandled = true;
-        this.handleEnemyDeath(enemy);
+        // Add any special death effects here if needed
+        // For now, just mark as handled
       }
 
       return !shouldRemove;
@@ -493,9 +514,7 @@ class Game {
     }
   }
 
-  // Store mouse position
-  mouseX = 0;
-  mouseY = 0;
+  // Track mouse movement method
 
   // Track mouse movement
   trackMouseMovement(event) {
@@ -507,7 +526,7 @@ class Game {
 
   // Draw tower placement preview
   drawTowerPlacementPreview() {
-    if (!this.selectedTowerType) return; // Don't draw if no tower is selected
+    if (!this.selectedTowerType || !towerStats[this.selectedTowerType]) return; // Don't draw if no tower is selected or if tower type is invalid
 
     // Use stored mouse position
     const mouseX = this.mouseX;
@@ -724,6 +743,12 @@ class Game {
     setTimeout(() => {
       notification.style.opacity = '0';
     }, 3000);
+  }
+
+  // Initialize infinite mode
+  initializeInfiniteMode() {
+    // This is a placeholder for future infinite mode implementation
+    console.log('Infinite mode initialized');
   }
 
   // Restart the game
