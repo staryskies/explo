@@ -392,46 +392,19 @@ class Enemy {
 
   // Draw methods for different enemy types
   drawNormalEnemy(ctx) {
-    // Draw enemy body
+    // Draw enemy body - hexagonal shape for futuristic look
     ctx.fillStyle = this.color;
     ctx.beginPath();
-    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Draw border
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // Draw eyes
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.arc(-this.size/3, -this.size/3, this.size/4, 0, Math.PI * 2);
-    ctx.arc(this.size/3, -this.size/3, this.size/4, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Draw pupils
-    ctx.fillStyle = '#000';
-    ctx.beginPath();
-    ctx.arc(-this.size/3, -this.size/3, this.size/8, 0, Math.PI * 2);
-    ctx.arc(this.size/3, -this.size/3, this.size/8, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Draw mouth
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(0, this.size/4, this.size/3, 0.1 * Math.PI, 0.9 * Math.PI);
-    ctx.stroke();
-  }
-
-  drawFastEnemy(ctx) {
-    // Draw streamlined body
-    ctx.fillStyle = this.color;
-    ctx.beginPath();
-    ctx.moveTo(this.size, 0);
-    ctx.lineTo(-this.size, this.size/2);
-    ctx.lineTo(-this.size, -this.size/2);
+    for (let i = 0; i < 6; i++) {
+      const angle = (Math.PI / 3) * i;
+      const x = Math.cos(angle) * this.size;
+      const y = Math.sin(angle) * this.size;
+      if (i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
     ctx.closePath();
     ctx.fill();
 
@@ -440,287 +413,522 @@ class Enemy {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Draw speed lines
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 1;
-    for (let i = 1; i <= 3; i++) {
-      ctx.beginPath();
-      ctx.moveTo(-this.size - i * 5, 0);
-      ctx.lineTo(-this.size - i * 5 - 10, this.size/3);
-      ctx.stroke();
+    // Draw tech pattern - central core
+    ctx.fillStyle = '#4FC3F7';
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size/2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw sensor lights
+    ctx.fillStyle = '#fff';
+    for (let i = 0; i < 3; i++) {
+      const angle = (Math.PI * 2 / 3) * i + Math.PI/6;
+      const x = Math.cos(angle) * (this.size/1.8);
+      const y = Math.sin(angle) * (this.size/1.8);
 
       ctx.beginPath();
-      ctx.moveTo(-this.size - i * 5, 0);
-      ctx.lineTo(-this.size - i * 5 - 10, -this.size/3);
-      ctx.stroke();
+      ctx.arc(x, y, this.size/6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Sensor glow
+      ctx.fillStyle = '#4FC3F7';
+      ctx.globalAlpha = 0.5;
+      ctx.beginPath();
+      ctx.arc(x, y, this.size/4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1.0;
+      ctx.fillStyle = '#fff';
     }
 
-    // Draw eye
-    ctx.fillStyle = '#fff';
+    // Draw tech lines
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 3; i++) {
+      const angle = (Math.PI * 2 / 3) * i + Math.PI/6;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(angle) * (this.size * 0.9), Math.sin(angle) * (this.size * 0.9));
+      ctx.stroke();
+    }
+  }
+
+  drawFastEnemy(ctx) {
+    // Draw aerodynamic body - sleek teardrop shape
+    ctx.fillStyle = this.color;
     ctx.beginPath();
-    ctx.arc(this.size/2, 0, this.size/4, 0, Math.PI * 2);
+    ctx.moveTo(this.size * 1.5, 0);
+
+    // Create curved teardrop shape
+    ctx.quadraticCurveTo(
+      this.size/2, this.size,
+      -this.size, 0
+    );
+    ctx.quadraticCurveTo(
+      this.size/2, -this.size,
+      this.size * 1.5, 0
+    );
+
+    ctx.closePath();
     ctx.fill();
 
-    ctx.fillStyle = '#000';
+    // Draw border
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Draw tech fins
+    ctx.fillStyle = '#455A64';
     ctx.beginPath();
-    ctx.arc(this.size/2, 0, this.size/8, 0, Math.PI * 2);
+    ctx.moveTo(-this.size/2, 0);
+    ctx.lineTo(-this.size, -this.size);
+    ctx.lineTo(0, -this.size/3);
+    ctx.closePath();
     ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(-this.size/2, 0);
+    ctx.lineTo(-this.size, this.size);
+    ctx.lineTo(0, this.size/3);
+    ctx.closePath();
+    ctx.fill();
+
+    // Draw speed lines/energy trail
+    ctx.strokeStyle = '#4FC3F7';
+    ctx.lineWidth = 1;
+    for (let i = 1; i <= 5; i++) {
+      const offset = i * 4;
+      const alpha = 1 - (i / 6);
+      ctx.globalAlpha = alpha;
+
+      ctx.beginPath();
+      ctx.moveTo(-this.size - offset, 0);
+      ctx.lineTo(-this.size - offset - 10, this.size/3);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(-this.size - offset, 0);
+      ctx.lineTo(-this.size - offset - 10, -this.size/3);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1.0;
+
+    // Draw tech sensor/scanner
+    ctx.fillStyle = '#E91E63';
+    ctx.beginPath();
+    ctx.arc(this.size/2, 0, this.size/3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Scanner lines
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(this.size/2 - this.size/4, -this.size/4);
+    ctx.lineTo(this.size/2 + this.size/4, this.size/4);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(this.size/2 - this.size/4, this.size/4);
+    ctx.lineTo(this.size/2 + this.size/4, -this.size/4);
+    ctx.stroke();
   }
 
   drawTankEnemy(ctx) {
-    // Draw tank body
+    // Draw futuristic tank body - angular armored shape
     ctx.fillStyle = this.color;
+
+    // Main body - octagonal shape
     ctx.beginPath();
-    ctx.rect(-this.size, -this.size/1.5, this.size*2, this.size*1.2);
-    ctx.fill();
+    const bodyWidth = this.size * 2.2;
+    const bodyHeight = this.size * 1.4;
+    const cornerSize = this.size * 0.3;
 
-    // Draw tank treads
-    ctx.fillStyle = '#333';
-    ctx.beginPath();
-    ctx.rect(-this.size, -this.size/1.5, this.size*2, this.size/4);
-    ctx.rect(-this.size, this.size/2, this.size*2, this.size/4);
-    ctx.fill();
+    // Top left corner
+    ctx.moveTo(-bodyWidth/2 + cornerSize, -bodyHeight/2);
+    // Top edge
+    ctx.lineTo(bodyWidth/2 - cornerSize, -bodyHeight/2);
+    // Top right corner
+    ctx.lineTo(bodyWidth/2, -bodyHeight/2 + cornerSize);
+    // Right edge
+    ctx.lineTo(bodyWidth/2, bodyHeight/2 - cornerSize);
+    // Bottom right corner
+    ctx.lineTo(bodyWidth/2 - cornerSize, bodyHeight/2);
+    // Bottom edge
+    ctx.lineTo(-bodyWidth/2 + cornerSize, bodyHeight/2);
+    // Bottom left corner
+    ctx.lineTo(-bodyWidth/2, bodyHeight/2 - cornerSize);
+    // Left edge
+    ctx.lineTo(-bodyWidth/2, -bodyHeight/2 + cornerSize);
 
-    // Draw tank turret
-    ctx.fillStyle = this.color;
-    ctx.beginPath();
-    ctx.arc(0, 0, this.size/2, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Draw cannon
-    ctx.fillStyle = '#333';
-    ctx.beginPath();
-    ctx.rect(0, -this.size/6, this.size, this.size/3);
-    ctx.fill();
-
-    // Draw border
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.rect(-this.size, -this.size/1.5, this.size*2, this.size*1.2);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.arc(0, 0, this.size/2, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-
-  drawFlyingEnemy(ctx) {
-    // Draw body
-    ctx.fillStyle = this.color;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, this.size, this.size/2, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Draw wings
-    const wingOffset = Math.sin(Date.now() / 200) * 5; // Wing flapping animation
-
-    ctx.fillStyle = '#E1BEE7';
-    ctx.beginPath();
-    ctx.ellipse(-this.size/2, -wingOffset, this.size/1.5, this.size/3, Math.PI/4, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.ellipse(this.size/2, -wingOffset, this.size/1.5, this.size/3, -Math.PI/4, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Draw border
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, this.size, this.size/2, 0, 0, Math.PI * 2);
-    ctx.stroke();
-
-    // Draw eyes
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.arc(-this.size/3, -this.size/6, this.size/5, 0, Math.PI * 2);
-    ctx.arc(this.size/3, -this.size/6, this.size/5, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#000';
-    ctx.beginPath();
-    ctx.arc(-this.size/3, -this.size/6, this.size/10, 0, Math.PI * 2);
-    ctx.arc(this.size/3, -this.size/6, this.size/10, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  drawHealingEnemy(ctx) {
-    // Draw body
-    ctx.fillStyle = this.color;
-    ctx.beginPath();
-    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Draw border
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // Draw healing cross
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(0, -this.size/2);
-    ctx.lineTo(0, this.size/2);
-    ctx.moveTo(-this.size/2, 0);
-    ctx.lineTo(this.size/2, 0);
-    ctx.stroke();
-
-    // Draw healing aura
-    const pulseSize = Math.sin(Date.now() / 500) * 5;
-    ctx.fillStyle = 'rgba(76, 175, 80, 0.2)';
-    ctx.beginPath();
-    ctx.arc(0, 0, this.healRadius/2 + pulseSize, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Draw eyes
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.arc(-this.size/3, -this.size/3, this.size/5, 0, Math.PI * 2);
-    ctx.arc(this.size/3, -this.size/3, this.size/5, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#000';
-    ctx.beginPath();
-    ctx.arc(-this.size/3, -this.size/3, this.size/10, 0, Math.PI * 2);
-    ctx.arc(this.size/3, -this.size/3, this.size/10, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  drawSpawnerEnemy(ctx) {
-    // Draw body
-    ctx.fillStyle = this.color;
-    ctx.beginPath();
-    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Draw border
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // Draw spawner indicators
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 2;
-
-    const time = Date.now() / 1000;
-    for (let i = 0; i < 8; i++) {
-      const angle = (Math.PI / 4) * i + time % (Math.PI * 2);
-      const innerRadius = this.size - 5;
-      const outerRadius = this.size + 5;
-
-      ctx.beginPath();
-      ctx.moveTo(Math.cos(angle) * innerRadius, Math.sin(angle) * innerRadius);
-      ctx.lineTo(Math.cos(angle) * outerRadius, Math.sin(angle) * outerRadius);
-      ctx.stroke();
-    }
-
-    // Draw inner circle
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.arc(0, 0, this.size/2, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Draw eyes
-    ctx.fillStyle = '#000';
-    ctx.beginPath();
-    ctx.arc(-this.size/5, -this.size/5, this.size/10, 0, Math.PI * 2);
-    ctx.arc(this.size/5, -this.size/5, this.size/10, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Draw mouth
-    ctx.beginPath();
-    ctx.arc(0, this.size/6, this.size/6, 0, Math.PI);
-    ctx.stroke();
-  }
-
-  drawArmoredEnemy(ctx) {
-    // Draw body
-    ctx.fillStyle = this.color;
-    ctx.beginPath();
-    ctx.arc(0, 0, this.size * 0.8, 0, Math.PI * 2);
+    ctx.closePath();
     ctx.fill();
 
     // Draw armor plates
     ctx.fillStyle = '#455A64';
-    for (let i = 0; i < 6; i++) {
-      const angle = (Math.PI / 3) * i;
+
+    // Front armor plate
+    ctx.beginPath();
+    ctx.moveTo(-bodyWidth/2 + cornerSize, -bodyHeight/2 + this.size*0.2);
+    ctx.lineTo(bodyWidth/2 - cornerSize, -bodyHeight/2 + this.size*0.2);
+    ctx.lineTo(bodyWidth/2 - cornerSize - this.size*0.2, -bodyHeight/2 + this.size*0.5);
+    ctx.lineTo(-bodyWidth/2 + cornerSize + this.size*0.2, -bodyHeight/2 + this.size*0.5);
+    ctx.closePath();
+    ctx.fill();
+
+    // Rear armor plate
+    ctx.beginPath();
+    ctx.moveTo(-bodyWidth/2 + cornerSize, bodyHeight/2 - this.size*0.2);
+    ctx.lineTo(bodyWidth/2 - cornerSize, bodyHeight/2 - this.size*0.2);
+    ctx.lineTo(bodyWidth/2 - cornerSize - this.size*0.2, bodyHeight/2 - this.size*0.5);
+    ctx.lineTo(-bodyWidth/2 + cornerSize + this.size*0.2, bodyHeight/2 - this.size*0.5);
+    ctx.closePath();
+    ctx.fill();
+
+    // Draw hover jets
+    ctx.fillStyle = '#03A9F4';
+    for (let i = -2; i <= 2; i++) {
+      const x = i * (this.size * 0.4);
+
+      // Top hover jet
       ctx.beginPath();
-      ctx.arc(Math.cos(angle) * (this.size * 0.6), Math.sin(angle) * (this.size * 0.6), this.size/3, 0, Math.PI * 2);
+      ctx.rect(x - this.size*0.15, -bodyHeight/2 - this.size*0.2, this.size*0.3, this.size*0.2);
       ctx.fill();
 
-      // Draw rivets
-      ctx.fillStyle = '#78909C';
+      // Bottom hover jet
       ctx.beginPath();
-      ctx.arc(Math.cos(angle) * (this.size * 0.6), Math.sin(angle) * (this.size * 0.6), this.size/10, 0, Math.PI * 2);
+      ctx.rect(x - this.size*0.15, bodyHeight/2, this.size*0.3, this.size*0.2);
       ctx.fill();
-      ctx.fillStyle = '#455A64';
+
+      // Jet glow
+      const glowGradient = ctx.createLinearGradient(
+        x, bodyHeight/2 + this.size*0.2,
+        x, bodyHeight/2 + this.size*0.4
+      );
+      glowGradient.addColorStop(0, '#03A9F4');
+      glowGradient.addColorStop(1, 'rgba(3, 169, 244, 0)');
+
+      ctx.fillStyle = glowGradient;
+      ctx.globalAlpha = 0.7;
+      ctx.beginPath();
+      ctx.rect(x - this.size*0.15, bodyHeight/2 + this.size*0.2, this.size*0.3, this.size*0.2);
+      ctx.fill();
+      ctx.globalAlpha = 1.0;
+      ctx.fillStyle = '#03A9F4';
     }
+
+    // Draw turret - hexagonal
+    ctx.fillStyle = '#546E7A';
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const angle = (Math.PI / 3) * i - Math.PI/6;
+      const x = Math.cos(angle) * (this.size * 0.6);
+      const y = Math.sin(angle) * (this.size * 0.6);
+      if (i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    // Draw cannon
+    ctx.fillStyle = '#37474F';
+    ctx.beginPath();
+    ctx.rect(0, -this.size/6, this.size*1.2, this.size/3);
+    ctx.fill();
+
+    // Draw tech details - sensor array
+    ctx.fillStyle = '#F44336';
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size/4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Scanner lines
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size/3, 0, Math.PI * 2);
+    ctx.stroke();
 
     // Draw border
     ctx.strokeStyle = '#000';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+
+    // Top left corner
+    ctx.moveTo(-bodyWidth/2 + cornerSize, -bodyHeight/2);
+    // Top edge
+    ctx.lineTo(bodyWidth/2 - cornerSize, -bodyHeight/2);
+    // Top right corner
+    ctx.lineTo(bodyWidth/2, -bodyHeight/2 + cornerSize);
+    // Right edge
+    ctx.lineTo(bodyWidth/2, bodyHeight/2 - cornerSize);
+    // Bottom right corner
+    ctx.lineTo(bodyWidth/2 - cornerSize, bodyHeight/2);
+    // Bottom edge
+    ctx.lineTo(-bodyWidth/2 + cornerSize, bodyHeight/2);
+    // Bottom left corner
+    ctx.lineTo(-bodyWidth/2, bodyHeight/2 - cornerSize);
+    // Left edge
+    ctx.lineTo(-bodyWidth/2, -bodyHeight/2 + cornerSize);
+
+    ctx.closePath();
     ctx.stroke();
-
-    // Draw eyes
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.arc(-this.size/4, -this.size/4, this.size/6, 0, Math.PI * 2);
-    ctx.arc(this.size/4, -this.size/4, this.size/6, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#000';
-    ctx.beginPath();
-    ctx.arc(-this.size/4, -this.size/4, this.size/12, 0, Math.PI * 2);
-    ctx.arc(this.size/4, -this.size/4, this.size/12, 0, Math.PI * 2);
-    ctx.fill();
   }
 
-  drawInvisibleEnemy(ctx) {
-    // Draw ghostly body
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+  drawFlyingEnemy(ctx) {
+    // Draw futuristic drone/UFO body
+    ctx.fillStyle = this.color;
+
+    // Main body - saucer shape
     ctx.beginPath();
+    ctx.ellipse(0, 0, this.size * 1.2, this.size * 0.4, 0, 0, Math.PI * 2);
+    ctx.fill();
 
-    // Wavy bottom
-    ctx.moveTo(-this.size, this.size/2);
+    // Draw dome
+    const domeGradient = ctx.createRadialGradient(
+      0, -this.size * 0.1, 0,
+      0, -this.size * 0.1, this.size * 0.8
+    );
+    domeGradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+    domeGradient.addColorStop(0.7, 'rgba(200, 230, 255, 0.7)');
+    domeGradient.addColorStop(1, 'rgba(100, 181, 246, 0.5)');
 
-    for (let i = 0; i < 5; i++) {
-      const waveHeight = this.size/4;
-      const waveWidth = this.size/2;
-      ctx.quadraticCurveTo(
-        -this.size + waveWidth/2 + i*waveWidth,
-        this.size/2 + waveHeight,
-        -this.size + waveWidth + i*waveWidth,
-        this.size/2
+    ctx.fillStyle = domeGradient;
+    ctx.beginPath();
+    ctx.ellipse(0, -this.size * 0.1, this.size * 0.7, this.size * 0.5, 0, Math.PI, 0, true);
+    ctx.fill();
+
+    // Draw tech details - antigravity rings
+    const ringPulse = Math.sin(Date.now() / 300) * 0.2 + 0.8; // Pulsing animation
+
+    // Outer ring
+    ctx.strokeStyle = '#4FC3F7';
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = ringPulse;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, this.size * 1.4, this.size * 0.5, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Inner ring
+    ctx.strokeStyle = '#29B6F6';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, this.size * 0.9, this.size * 0.3, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1.0;
+
+    // Draw hover jets
+    ctx.fillStyle = '#03A9F4';
+    const jetCount = 5;
+    for (let i = 0; i < jetCount; i++) {
+      const angle = (Math.PI * 2 / jetCount) * i;
+      const x = Math.cos(angle) * this.size * 0.8;
+      const y = Math.sin(angle) * this.size * 0.3;
+
+      // Jet nozzle
+      ctx.beginPath();
+      ctx.arc(x, y, this.size * 0.15, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Jet glow
+      const glowSize = this.size * 0.3 * (0.7 + Math.sin(Date.now() / 200 + i) * 0.3);
+      const glowGradient = ctx.createRadialGradient(
+        x, y, 0,
+        x, y, glowSize
       );
+      glowGradient.addColorStop(0, 'rgba(3, 169, 244, 0.8)');
+      glowGradient.addColorStop(1, 'rgba(3, 169, 244, 0)');
+
+      ctx.fillStyle = glowGradient;
+      ctx.globalAlpha = 0.7;
+      ctx.beginPath();
+      ctx.arc(x, y, glowSize, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1.0;
+      ctx.fillStyle = '#03A9F4';
     }
 
-    ctx.lineTo(this.size, -this.size/2);
-    ctx.lineTo(-this.size, -this.size/2);
+    // Draw sensor array
+    ctx.fillStyle = '#F44336';
+    ctx.beginPath();
+    ctx.arc(0, -this.size * 0.3, this.size * 0.15, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Scanner beam
+    const beamHeight = this.size * (0.5 + Math.sin(Date.now() / 150) * 0.3);
+    const beamGradient = ctx.createLinearGradient(
+      0, 0,
+      0, beamHeight
+    );
+    beamGradient.addColorStop(0, 'rgba(244, 67, 54, 0.8)');
+    beamGradient.addColorStop(1, 'rgba(244, 67, 54, 0)');
+
+    ctx.fillStyle = beamGradient;
+    ctx.globalAlpha = 0.6;
+    ctx.beginPath();
+    ctx.moveTo(-this.size * 0.2, 0);
+    ctx.lineTo(this.size * 0.2, 0);
+    ctx.lineTo(this.size * 0.3, beamHeight);
+    ctx.lineTo(-this.size * 0.3, beamHeight);
+    ctx.closePath();
+    ctx.fill();
+    ctx.globalAlpha = 1.0;
+
+    // Draw border
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, this.size * 1.2, this.size * 0.4, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  drawHealingEnemy(ctx) {
+    // Draw futuristic medical drone
+
+    // Main body - octagonal shape
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const angle = (Math.PI / 4) * i;
+      const x = Math.cos(angle) * this.size;
+      const y = Math.sin(angle) * this.size;
+      if (i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
     ctx.closePath();
     ctx.fill();
 
     // Draw border
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.strokeStyle = '#000';
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Draw eyes
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    // Draw medical symbol - caduceus-inspired design
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+
+    // Central staff
     ctx.beginPath();
-    ctx.arc(-this.size/3, -this.size/4, this.size/6, 0, Math.PI * 2);
-    ctx.arc(this.size/3, -this.size/4, this.size/6, 0, Math.PI * 2);
+    ctx.moveTo(0, -this.size * 0.7);
+    ctx.lineTo(0, this.size * 0.7);
+    ctx.stroke();
+
+    // Wings
+    const wingSize = this.size * 0.5;
+    ctx.beginPath();
+    ctx.ellipse(-wingSize/2, 0, wingSize/2, wingSize, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.ellipse(wingSize/2, 0, wingSize/2, wingSize, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Snakes
+    const time = Date.now() / 1000;
+    const snakeWave = Math.sin(time * 2) * 0.2;
+
+    // First snake
+    ctx.strokeStyle = '#B3E5FC';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, -this.size * 0.6);
+
+    for (let t = 0; t <= 1; t += 0.1) {
+      const x = Math.sin(t * Math.PI * 2 + time) * this.size * 0.4;
+      const y = -this.size * 0.6 + t * this.size * 1.2;
+      ctx.lineTo(x, y);
+    }
+
+    ctx.stroke();
+
+    // Second snake
+    ctx.strokeStyle = '#81C784';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, -this.size * 0.6);
+
+    for (let t = 0; t <= 1; t += 0.1) {
+      const x = Math.sin(t * Math.PI * 2 + time + Math.PI) * this.size * 0.4;
+      const y = -this.size * 0.6 + t * this.size * 1.2;
+      ctx.lineTo(x, y);
+    }
+
+    ctx.stroke();
+
+    // Draw healing aura
+    const pulseSize = Math.sin(Date.now() / 500) * 5;
+    const auraGradient = ctx.createRadialGradient(
+      0, 0, this.size,
+      0, 0, this.healRadius/2 + pulseSize
+    );
+    auraGradient.addColorStop(0, 'rgba(76, 175, 80, 0.5)');
+    auraGradient.addColorStop(0.7, 'rgba(76, 175, 80, 0.2)');
+    auraGradient.addColorStop(1, 'rgba(76, 175, 80, 0)');
+
+    ctx.fillStyle = auraGradient;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.healRadius/2 + pulseSize, 0, Math.PI * 2);
     ctx.fill();
+
+    // Draw tech core
+    ctx.fillStyle = '#E8F5E9';
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw healing symbol
+    ctx.strokeStyle = '#4CAF50';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(0, -this.size * 0.2);
+    ctx.lineTo(0, this.size * 0.2);
+    ctx.moveTo(-this.size * 0.2, 0);
+    ctx.lineTo(this.size * 0.2, 0);
+    ctx.stroke();
+
+    // Draw energy particles
+    ctx.fillStyle = '#81C784';
+    for (let i = 0; i < 8; i++) {
+      const angle = (Math.PI / 4) * i + time % (Math.PI * 2);
+      const distance = this.size * 0.8;
+      const particleSize = this.size * 0.1 * (0.7 + Math.sin(time * 3 + i) * 0.3);
+
+      ctx.beginPath();
+      ctx.arc(
+        Math.cos(angle) * distance,
+        Math.sin(angle) * distance,
+        particleSize,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+    }
   }
 
-  drawExplosiveEnemy(ctx) {
-    // Draw body
+  drawSpawnerEnemy(ctx) {
+    // Draw futuristic replicator/factory unit
+    const time = Date.now() / 1000;
+
+    // Main body - hexagonal with rotating parts
     ctx.fillStyle = this.color;
+
+    // Outer shell
     ctx.beginPath();
-    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+    for (let i = 0; i < 6; i++) {
+      const angle = (Math.PI / 3) * i;
+      const x = Math.cos(angle) * this.size * 1.1;
+      const y = Math.sin(angle) * this.size * 1.1;
+      if (i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
+    ctx.closePath();
     ctx.fill();
 
     // Draw border
@@ -728,37 +936,391 @@ class Enemy {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Draw bomb fuse
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(0, -this.size);
+    // Draw inner rotating mechanism
+    ctx.save();
+    ctx.rotate(time % (Math.PI * 2));
 
-    // Wavy fuse
-    for (let i = 0; i < 3; i++) {
-      ctx.quadraticCurveTo(
-        5, -this.size - 5 - i*5,
-        0, -this.size - 10 - i*5
-      );
-      ctx.quadraticCurveTo(
-        -5, -this.size - 15 - i*5,
-        0, -this.size - 20 - i*5
-      );
+    // Inner gear
+    ctx.fillStyle = '#455A64';
+    ctx.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const angle = (Math.PI / 4) * i;
+      const innerRadius = this.size * 0.5;
+      const outerRadius = this.size * 0.8;
+
+      ctx.lineTo(Math.cos(angle) * outerRadius, Math.sin(angle) * outerRadius);
+      ctx.lineTo(Math.cos(angle + Math.PI/8) * innerRadius, Math.sin(angle + Math.PI/8) * innerRadius);
     }
+    ctx.closePath();
+    ctx.fill();
+
+    // Draw gear teeth
+    ctx.strokeStyle = '#263238';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+
+    // Draw spawner indicators - energy beams
+    const beamCount = 3;
+    for (let i = 0; i < beamCount; i++) {
+      const angle = (Math.PI * 2 / beamCount) * i + time % (Math.PI * 2);
+      const startRadius = this.size * 0.4;
+      const endRadius = this.size * 1.3;
+
+      // Beam gradient
+      const beamGradient = ctx.createLinearGradient(
+        Math.cos(angle) * startRadius, Math.sin(angle) * startRadius,
+        Math.cos(angle) * endRadius, Math.sin(angle) * endRadius
+      );
+      beamGradient.addColorStop(0, 'rgba(255, 152, 0, 0.8)');
+      beamGradient.addColorStop(1, 'rgba(255, 152, 0, 0)');
+
+      // Draw beam
+      ctx.strokeStyle = beamGradient;
+      ctx.lineWidth = 8;
+      ctx.globalAlpha = 0.7 + Math.sin(time * 5 + i) * 0.3;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(angle) * startRadius, Math.sin(angle) * startRadius);
+      ctx.lineTo(Math.cos(angle) * endRadius, Math.sin(angle) * endRadius);
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+    }
+
+    // Draw spawning portal
+    const portalPulse = 0.8 + Math.sin(time * 3) * 0.2;
+    const portalGradient = ctx.createRadialGradient(
+      0, 0, 0,
+      0, 0, this.size * 0.4 * portalPulse
+    );
+    portalGradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+    portalGradient.addColorStop(0.5, 'rgba(255, 152, 0, 0.7)');
+    portalGradient.addColorStop(1, 'rgba(255, 87, 34, 0.5)');
+
+    ctx.fillStyle = portalGradient;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size * 0.4 * portalPulse, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw tech details - energy nodes
+    ctx.fillStyle = '#FF9800';
+    for (let i = 0; i < 6; i++) {
+      const angle = (Math.PI / 3) * i;
+      const x = Math.cos(angle) * this.size * 0.7;
+      const y = Math.sin(angle) * this.size * 0.7;
+      const nodeSize = this.size * 0.15 * (0.8 + Math.sin(time * 4 + i) * 0.2);
+
+      ctx.beginPath();
+      ctx.arc(x, y, nodeSize, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Node glow
+      const glowGradient = ctx.createRadialGradient(
+        x, y, 0,
+        x, y, nodeSize * 1.5
+      );
+      glowGradient.addColorStop(0, 'rgba(255, 152, 0, 0.7)');
+      glowGradient.addColorStop(1, 'rgba(255, 152, 0, 0)');
+
+      ctx.fillStyle = glowGradient;
+      ctx.globalAlpha = 0.6;
+      ctx.beginPath();
+      ctx.arc(x, y, nodeSize * 1.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1.0;
+      ctx.fillStyle = '#FF9800';
+    }
+  }
+
+  drawArmoredEnemy(ctx) {
+    // Draw futuristic armored mech
+
+    // Draw base body
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size * 0.7, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw armor plating - segmented hexagonal plates
+    const plateCount = 6;
+    const plateSize = this.size * 0.6;
+    const plateDistance = this.size * 0.8;
+
+    for (let i = 0; i < plateCount; i++) {
+      const angle = (Math.PI * 2 / plateCount) * i;
+      const centerX = Math.cos(angle) * plateDistance;
+      const centerY = Math.sin(angle) * plateDistance;
+
+      // Draw plate
+      ctx.fillStyle = '#455A64';
+      ctx.beginPath();
+      for (let j = 0; j < 6; j++) {
+        const plateAngle = (Math.PI / 3) * j + angle;
+        const x = centerX + Math.cos(plateAngle) * plateSize/2;
+        const y = centerY + Math.sin(plateAngle) * plateSize/2;
+        if (j === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      }
+      ctx.closePath();
+      ctx.fill();
+
+      // Draw plate border
+      ctx.strokeStyle = '#263238';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Draw energy core in each plate
+      ctx.fillStyle = '#03A9F4';
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, plateSize/4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Draw energy glow
+      const glowGradient = ctx.createRadialGradient(
+        centerX, centerY, 0,
+        centerX, centerY, plateSize/3
+      );
+      glowGradient.addColorStop(0, 'rgba(3, 169, 244, 0.7)');
+      glowGradient.addColorStop(1, 'rgba(3, 169, 244, 0)');
+
+      ctx.fillStyle = glowGradient;
+      ctx.globalAlpha = 0.6;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, plateSize/3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1.0;
+    }
+
+    // Draw central core
+    const coreGradient = ctx.createRadialGradient(
+      0, 0, 0,
+      0, 0, this.size * 0.4
+    );
+    coreGradient.addColorStop(0, '#B0BEC5');
+    coreGradient.addColorStop(0.7, '#78909C');
+    coreGradient.addColorStop(1, '#546E7A');
+
+    ctx.fillStyle = coreGradient;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw tech details - scanner array
+    ctx.fillStyle = '#F44336';
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw scanner lines
+    const time = Date.now() / 1000;
+    ctx.strokeStyle = '#FFCDD2';
+    ctx.lineWidth = 2;
+
+    for (let i = 0; i < 3; i++) {
+      const scanAngle = (Math.PI * 2 / 3) * i + time % (Math.PI * 2);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(scanAngle) * this.size, Math.sin(scanAngle) * this.size);
+      ctx.stroke();
+    }
+
+    // Draw border
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Draw fuse spark
-    const sparkSize = Math.sin(Date.now() / 200) * 2 + 4;
-    ctx.fillStyle = '#FFEB3B';
+    // Draw energy shield effect
+    ctx.strokeStyle = 'rgba(3, 169, 244, 0.3)';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([5, 5]);
     ctx.beginPath();
-    ctx.arc(0, -this.size - 20 - 3*5, sparkSize, 0, Math.PI * 2);
+    ctx.arc(0, 0, this.size * 1.1, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  drawInvisibleEnemy(ctx) {
+    // Draw futuristic stealth/cloaking unit
+    const time = Date.now() / 1000;
+
+    // Create shimmering effect with varying opacity
+    const shimmerEffect = 0.3 + Math.sin(time * 3) * 0.1;
+
+    // Draw cloaked body - hexagonal shape with distortion effect
+    ctx.fillStyle = `rgba(200, 230, 255, ${shimmerEffect})`;
+
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      // Add distortion to the vertices
+      const distortion = Math.sin(time * 2 + i) * this.size * 0.1;
+      const angle = (Math.PI / 3) * i;
+      const x = Math.cos(angle) * (this.size + distortion);
+      const y = Math.sin(angle) * (this.size + distortion);
+
+      if (i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        // Use bezier curves for a more fluid, distorted look
+        const prevAngle = (Math.PI / 3) * (i - 1);
+        const prevX = Math.cos(prevAngle) * (this.size + distortion);
+        const prevY = Math.sin(prevAngle) * (this.size + distortion);
+
+        const cp1x = prevX + Math.cos(prevAngle + Math.PI/6) * this.size * 0.2;
+        const cp1y = prevY + Math.sin(prevAngle + Math.PI/6) * this.size * 0.2;
+        const cp2x = x + Math.cos(angle - Math.PI/6) * this.size * 0.2;
+        const cp2y = y + Math.sin(angle - Math.PI/6) * this.size * 0.2;
+
+        ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y);
+      }
+    }
+    ctx.closePath();
     ctx.fill();
 
-    // Draw explosive core
-    ctx.fillStyle = '#FFEB3B';
+    // Draw cloaking field effect - rippling waves
+    ctx.strokeStyle = `rgba(100, 181, 246, ${shimmerEffect + 0.1})`;
+    ctx.lineWidth = 1;
+
+    const waveCount = 3;
+    for (let w = 1; w <= waveCount; w++) {
+      const waveRadius = this.size * (1 + w * 0.2);
+      const wavePhase = time * 2 + w;
+
+      ctx.beginPath();
+      for (let i = 0; i < 360; i += 10) {
+        const angle = (i * Math.PI / 180);
+        const waveDistortion = Math.sin(angle * 6 + wavePhase) * this.size * 0.1;
+        const x = Math.cos(angle) * (waveRadius + waveDistortion);
+        const y = Math.sin(angle) * (waveRadius + waveDistortion);
+
+        if (i === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      }
+      ctx.closePath();
+      ctx.stroke();
+    }
+
+    // Draw tech core - energy source for cloaking
+    const coreGradient = ctx.createRadialGradient(
+      0, 0, 0,
+      0, 0, this.size * 0.4
+    );
+    coreGradient.addColorStop(0, `rgba(255, 255, 255, ${shimmerEffect + 0.3})`);
+    coreGradient.addColorStop(0.5, `rgba(100, 181, 246, ${shimmerEffect + 0.2})`);
+    coreGradient.addColorStop(1, `rgba(30, 136, 229, ${shimmerEffect})`);
+
+    ctx.fillStyle = coreGradient;
     ctx.beginPath();
-    ctx.arc(0, 0, this.size/2, 0, Math.PI * 2);
+    ctx.arc(0, 0, this.size * 0.4, 0, Math.PI * 2);
     ctx.fill();
+
+    // Draw energy pulses
+    ctx.strokeStyle = `rgba(30, 136, 229, ${shimmerEffect + 0.2})`;
+    ctx.lineWidth = 2;
+
+    for (let i = 0; i < 8; i++) {
+      const pulseAngle = (Math.PI / 4) * i + time % (Math.PI * 2);
+      const pulseLength = this.size * (0.5 + Math.sin(time * 3 + i) * 0.3);
+
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(
+        Math.cos(pulseAngle) * pulseLength,
+        Math.sin(pulseAngle) * pulseLength
+      );
+      ctx.stroke();
+    }
+
+    // Draw tech details - sensor array
+    ctx.fillStyle = `rgba(33, 150, 243, ${shimmerEffect + 0.3})`;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw scanning pattern
+    ctx.strokeStyle = `rgba(255, 255, 255, ${shimmerEffect + 0.4})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size * 0.3, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  drawExplosiveEnemy(ctx) {
+    // Draw futuristic explosive drone/mine
+    const time = Date.now() / 1000;
+
+    // Draw main body - octagonal shape
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const angle = (Math.PI / 4) * i + Math.PI / 8; // Rotate 22.5 degrees
+      const x = Math.cos(angle) * this.size;
+      const y = Math.sin(angle) * this.size;
+      if (i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    // Draw border
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Draw warning stripes
+    ctx.fillStyle = '#F44336'; // Red
+    for (let i = 0; i < 4; i++) {
+      const angle = (Math.PI / 2) * i + Math.PI / 4; // 45-degree angles
+
+      ctx.save();
+      ctx.translate(0, 0);
+      ctx.rotate(angle);
+
+      // Draw warning stripe
+      ctx.beginPath();
+      ctx.rect(-this.size * 1.1, -this.size * 0.15, this.size * 2.2, this.size * 0.3);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    // Draw explosive core - pulsing reactor
+    const pulseSize = 0.8 + Math.sin(time * 3) * 0.2;
+    const coreGradient = ctx.createRadialGradient(
+      0, 0, 0,
+      0, 0, this.size * 0.6 * pulseSize
+    );
+    coreGradient.addColorStop(0, '#FFEB3B'); // Yellow
+    coreGradient.addColorStop(0.7, '#FF9800'); // Orange
+    coreGradient.addColorStop(1, '#F44336'); // Red
+
+    ctx.fillStyle = coreGradient;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size * 0.6 * pulseSize, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw energy rings
+    ctx.strokeStyle = '#FFEB3B';
+    ctx.lineWidth = 3;
+
+    for (let i = 1; i <= 3; i++) {
+      const ringPulse = 0.7 + Math.sin(time * 4 + i) * 0.3;
+      ctx.globalAlpha = 0.7 - (i - 1) * 0.2;
+
+      ctx.beginPath();
+      ctx.arc(0, 0, this.size * 0.3 * i * ringPulse, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1.0;
 
     // Draw explosion radius indicator
     ctx.strokeStyle = 'rgba(244, 67, 54, 0.3)';
@@ -769,107 +1331,226 @@ class Enemy {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Draw angry eyes
-    ctx.fillStyle = '#000';
+    // Draw tech details - detonator nodes
+    ctx.fillStyle = '#F44336';
+    for (let i = 0; i < 4; i++) {
+      const angle = (Math.PI / 2) * i;
+      const x = Math.cos(angle) * this.size * 0.8;
+      const y = Math.sin(angle) * this.size * 0.8;
+
+      // Pulsing detonator
+      const detPulse = 0.8 + Math.sin(time * 5 + i * 2) * 0.2;
+
+      ctx.beginPath();
+      ctx.arc(x, y, this.size * 0.15 * detPulse, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Detonator glow
+      const glowGradient = ctx.createRadialGradient(
+        x, y, 0,
+        x, y, this.size * 0.25 * detPulse
+      );
+      glowGradient.addColorStop(0, 'rgba(244, 67, 54, 0.7)');
+      glowGradient.addColorStop(1, 'rgba(244, 67, 54, 0)');
+
+      ctx.fillStyle = glowGradient;
+      ctx.globalAlpha = 0.6;
+      ctx.beginPath();
+      ctx.arc(x, y, this.size * 0.25 * detPulse, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1.0;
+    }
+
+    // Draw countdown display
+    ctx.fillStyle = '#FFEB3B';
     ctx.beginPath();
-    ctx.arc(-this.size/3, -this.size/4, this.size/6, 0, Math.PI * 2);
-    ctx.arc(this.size/3, -this.size/4, this.size/6, 0, Math.PI * 2);
+    ctx.arc(0, 0, this.size * 0.3, 0, Math.PI * 2);
     ctx.fill();
 
-    // Draw angry eyebrows
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-this.size/2, -this.size/2);
-    ctx.lineTo(-this.size/6, -this.size/3);
-    ctx.moveTo(this.size/6, -this.size/3);
-    ctx.lineTo(this.size/2, -this.size/2);
-    ctx.stroke();
+    // Draw countdown digits (just for visual effect)
+    ctx.fillStyle = '#000';
+    ctx.font = `bold ${this.size * 0.3}px monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
 
-    // Draw angry mouth
-    ctx.beginPath();
-    ctx.arc(0, this.size/4, this.size/3, 0, Math.PI, true);
-    ctx.stroke();
+    // Show a random digit that changes periodically
+    const digit = Math.floor((time * 2) % 10);
+    ctx.fillText(digit.toString(), 0, 0);
   }
 
   drawBossEnemy(ctx) {
-    // Draw body
-    const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size);
-    gradient.addColorStop(0, '#F44336');
-    gradient.addColorStop(0.5, '#D32F2F');
-    gradient.addColorStop(1, '#B71C1C');
+    // Draw futuristic mega-boss battle station
+    const time = Date.now() / 1000;
 
-    ctx.fillStyle = gradient;
+    // Draw main body - large mechanical structure
+    const bodyGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size * 1.2);
+    bodyGradient.addColorStop(0, '#B71C1C'); // Dark red
+    bodyGradient.addColorStop(0.7, '#D32F2F'); // Medium red
+    bodyGradient.addColorStop(1, '#F44336'); // Light red
+
+    // Draw main hull - dodecagon (12-sided)
+    ctx.fillStyle = bodyGradient;
     ctx.beginPath();
-    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Draw spikes
-    ctx.fillStyle = '#B71C1C';
     for (let i = 0; i < 12; i++) {
       const angle = (Math.PI / 6) * i;
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(Math.cos(angle) * (this.size + 10), Math.sin(angle) * (this.size + 10));
-      ctx.lineTo(Math.cos(angle + 0.2) * this.size, Math.sin(angle + 0.2) * this.size);
-      ctx.closePath();
-      ctx.fill();
+      const x = Math.cos(angle) * this.size * 1.2;
+      const y = Math.sin(angle) * this.size * 1.2;
+      if (i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
     }
-
-    // Draw border
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
-    ctx.stroke();
-
-    // Draw crown
-    ctx.fillStyle = '#FFEB3B';
-    ctx.beginPath();
-    ctx.moveTo(0, -this.size - 5);
-    ctx.lineTo(-this.size/2, -this.size + 5);
-    ctx.lineTo(-this.size/4, -this.size - 10);
-    ctx.lineTo(0, -this.size + 5);
-    ctx.lineTo(this.size/4, -this.size - 10);
-    ctx.lineTo(this.size/2, -this.size + 5);
     ctx.closePath();
     ctx.fill();
 
-    ctx.strokeStyle = '#FFC107';
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    // Draw armor plating
+    ctx.fillStyle = '#7B1FA2'; // Purple
+    for (let i = 0; i < 6; i++) {
+      const angle = (Math.PI / 3) * i;
 
-    // Draw eyes
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.arc(-this.size/3, -this.size/4, this.size/5, 0, Math.PI * 2);
-    ctx.arc(this.size/3, -this.size/4, this.size/5, 0, Math.PI * 2);
-    ctx.fill();
+      ctx.save();
+      ctx.translate(0, 0);
+      ctx.rotate(angle);
 
-    // Draw glowing pupils
-    const glowIntensity = 0.5 + Math.sin(Date.now() / 500) * 0.5;
-    ctx.fillStyle = `rgba(255, 0, 0, ${glowIntensity})`;
-    ctx.beginPath();
-    ctx.arc(-this.size/3, -this.size/4, this.size/10, 0, Math.PI * 2);
-    ctx.arc(this.size/3, -this.size/4, this.size/10, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Draw mouth
-    ctx.fillStyle = '#000';
-    ctx.beginPath();
-    ctx.arc(0, this.size/4, this.size/3, 0, Math.PI);
-    ctx.fill();
-
-    // Draw teeth
-    ctx.fillStyle = '#fff';
-    const teethCount = 6;
-    const teethWidth = (this.size/3 * 2) / teethCount;
-
-    for (let i = 0; i < teethCount; i++) {
+      // Draw armor plate
       ctx.beginPath();
-      ctx.moveTo(-this.size/3 + i * teethWidth, this.size/4);
-      ctx.lineTo(-this.size/3 + (i+0.5) * teethWidth, this.size/4 + this.size/6);
-      ctx.lineTo(-this.size/3 + (i+1) * teethWidth, this.size/4);
+      ctx.moveTo(this.size * 0.5, -this.size * 0.4);
+      ctx.lineTo(this.size * 1.1, -this.size * 0.6);
+      ctx.lineTo(this.size * 1.1, this.size * 0.6);
+      ctx.lineTo(this.size * 0.5, this.size * 0.4);
+      ctx.closePath();
       ctx.fill();
+
+      // Draw tech details on armor
+      ctx.fillStyle = '#9C27B0'; // Lighter purple
+      ctx.beginPath();
+      ctx.rect(this.size * 0.7, -this.size * 0.3, this.size * 0.3, this.size * 0.6);
+      ctx.fill();
+
+      // Draw energy conduits
+      ctx.strokeStyle = '#E1BEE7'; // Very light purple
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(this.size * 0.7, -this.size * 0.2);
+      ctx.lineTo(this.size * 1.0, -this.size * 0.2);
+      ctx.moveTo(this.size * 0.7, 0);
+      ctx.lineTo(this.size * 1.0, 0);
+      ctx.moveTo(this.size * 0.7, this.size * 0.2);
+      ctx.lineTo(this.size * 1.0, this.size * 0.2);
+      ctx.stroke();
+
+      ctx.fillStyle = '#7B1FA2'; // Reset to armor color
+      ctx.restore();
+    }
+
+    // Draw weapon systems - rotating turrets
+    ctx.save();
+    ctx.rotate(time % (Math.PI * 2));
+
+    for (let i = 0; i < 4; i++) {
+      const turretAngle = (Math.PI / 2) * i;
+      const turretX = Math.cos(turretAngle) * this.size * 0.8;
+      const turretY = Math.sin(turretAngle) * this.size * 0.8;
+
+      // Turret base
+      ctx.fillStyle = '#455A64'; // Blue grey
+      ctx.beginPath();
+      ctx.arc(turretX, turretY, this.size * 0.25, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Turret cannon
+      ctx.fillStyle = '#263238'; // Dark blue grey
+      ctx.save();
+      ctx.translate(turretX, turretY);
+      ctx.rotate(turretAngle);
+
+      ctx.beginPath();
+      ctx.rect(0, -this.size * 0.1, this.size * 0.4, this.size * 0.2);
+      ctx.fill();
+
+      // Cannon energy glow
+      const glowGradient = ctx.createRadialGradient(
+        this.size * 0.4, 0, 0,
+        this.size * 0.4, 0, this.size * 0.15
+      );
+      glowGradient.addColorStop(0, 'rgba(244, 67, 54, 0.9)');
+      glowGradient.addColorStop(1, 'rgba(244, 67, 54, 0)');
+
+      ctx.fillStyle = glowGradient;
+      ctx.globalAlpha = 0.7 + Math.sin(time * 3 + i) * 0.3;
+      ctx.beginPath();
+      ctx.arc(this.size * 0.4, 0, this.size * 0.15, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1.0;
+
+      ctx.restore();
+    }
+    ctx.restore();
+
+    // Draw central command module
+    const coreGradient = ctx.createRadialGradient(
+      0, 0, 0,
+      0, 0, this.size * 0.5
+    );
+    coreGradient.addColorStop(0, '#FFEB3B'); // Yellow
+    coreGradient.addColorStop(0.7, '#FFC107'); // Amber
+    coreGradient.addColorStop(1, '#FF9800'); // Orange
+
+    ctx.fillStyle = coreGradient;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw energy shield
+    ctx.strokeStyle = 'rgba(33, 150, 243, 0.3)';
+    ctx.lineWidth = 5;
+    ctx.setLineDash([10, 10]);
+
+    // Pulsing shield effect
+    const shieldPulse = 1 + Math.sin(time * 2) * 0.1;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size * 1.3 * shieldPulse, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Draw energy core - central reactor
+    const reactorPulse = 0.7 + Math.sin(time * 5) * 0.3;
+    ctx.fillStyle = '#F44336';
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size * 0.3 * reactorPulse, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw scanner array
+    for (let i = 0; i < 3; i++) {
+      const scanAngle = (Math.PI * 2 / 3) * i + time % (Math.PI * 2);
+      const scanGradient = ctx.createLinearGradient(
+        0, 0,
+        Math.cos(scanAngle) * this.size * 1.5,
+        Math.sin(scanAngle) * this.size * 1.5
+      );
+      scanGradient.addColorStop(0, 'rgba(244, 67, 54, 0.8)');
+      scanGradient.addColorStop(1, 'rgba(244, 67, 54, 0)');
+
+      ctx.strokeStyle = scanGradient;
+      ctx.lineWidth = 3;
+      ctx.globalAlpha = 0.6;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(
+        Math.cos(scanAngle) * this.size * 1.5,
+        Math.sin(scanAngle) * this.size * 1.5
+      );
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+    }
+
+    // Draw boss name
+    if (this.name) {
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = `bold ${this.size * 0.2}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.fillText(this.name, 0, -this.size * 1.4);
     }
   }
 
