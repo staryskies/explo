@@ -191,16 +191,22 @@ class Game {
 
   // Place a tower at the given coordinates or select a tower for upgrade
   placeTower(x, y) {
+    // Make sure the map is fully loaded before allowing tower placement
+    if (!this.map || !this.map.grid || this.map.grid.length === 0) {
+      console.log('Cannot place tower - map not fully loaded yet');
+      return false;
+    }
+
     // Check if we're clicking on an existing tower for upgrade
     const clickedTower = this.getTowerAtPosition(x, y);
     if (clickedTower) {
       // Just log the tower info instead of opening the upgrade menu
       console.log(`Clicked on tower: ${clickedTower.type} at (${clickedTower.gridX}, ${clickedTower.gridY})`);
-      return;
+      return false;
     }
 
     // If no tower type is selected, do nothing
-    if (!this.selectedTowerType) return;
+    if (!this.selectedTowerType) return false;
 
     // Convert pixel coordinates to grid coordinates
     const gridPos = this.map.pixelToGrid(x, y);

@@ -4,8 +4,10 @@
 // Log that mapTemplates.js is loaded
 console.log('Map templates loaded');
 
-// Define map templates
-const mapTemplates = [
+// Define map templates - use window.mapTemplates to avoid redeclaration
+// Check if mapTemplates is already defined
+if (typeof window.mapTemplates === 'undefined') {
+  window.mapTemplates = [
   {
     id: "classic",
     name: "Classic",
@@ -62,3 +64,4 @@ const mapTemplates = [
     decorationColors: ["#2E7D32", "#388E3C", "#43A047"] // Various green shades
   }
 ];
+}

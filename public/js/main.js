@@ -10,6 +10,9 @@ window.onerror = function(message, source, lineno, colno, error) {
   return false;
 };
 
+// Create a global game variable to be accessible throughout the file
+let game;
+
 document.addEventListener('DOMContentLoaded', () => {
   console.log('DOM loaded, initializing game...');
   try {
@@ -29,15 +32,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectedMapId = sessionStorage.getItem('selectedMap') || 'classic';
     console.log(`Selected map: ${selectedMapId}`);
 
-    // Find the map template
+    // Find the map template - use window.mapTemplates to avoid undefined errors
+    const mapTemplates = window.mapTemplates || [];
     const selectedMapTemplate = mapTemplates.find(map => map.id === selectedMapId) || mapTemplates[0];
 
     // Create the game instance with the selected map
-    const game = new Game(canvas, selectedMapTemplate);
+    game = new Game(canvas, selectedMapTemplate);
 
     // Force a redraw after a short delay to ensure everything is initialized
     setTimeout(() => {
-      if (game.map) {
+      if (game && game.map) {
         console.log('Forcing map redraw after delay');
         game.draw();
       }

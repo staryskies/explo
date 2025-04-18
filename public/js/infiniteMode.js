@@ -681,6 +681,12 @@ Game.prototype.initializeInfiniteMode = function() {
 // Override startWave method to use infinite mode
 const originalStartWave = Game.prototype.startWave;
 Game.prototype.startWave = function() {
+  // Make sure the map is fully loaded before starting a wave
+  if (!this.map || !this.map.grid || this.map.grid.length === 0) {
+    console.log('Cannot start wave - map not fully loaded yet');
+    return;
+  }
+
   if (this.infiniteMode) {
     this.startInfiniteWave();
   } else {
