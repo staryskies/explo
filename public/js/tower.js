@@ -966,49 +966,105 @@ class Tower {
   draw(ctx, showRange = false) {
     // Draw range indicator if requested
     if (showRange) {
-      ctx.fillStyle = `${this.color}33`; // 20% opacity
+      // Create a more futuristic range indicator with pulsing effect
+      const time = Date.now() / 1000;
+      const pulseSize = Math.sin(time * 2) * 5;
+
+      // Outer glow
+      ctx.fillStyle = `${this.color}22`; // 13% opacity
       ctx.beginPath();
-      ctx.arc(this.x, this.y, this.range, 0, Math.PI * 2);
+      ctx.arc(this.x, this.y, this.range + pulseSize, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.strokeStyle = `${this.color}88`; // 50% opacity
-      ctx.lineWidth = 1;
+      // Inner circle
+      ctx.strokeStyle = `${this.color}88`; // 53% opacity
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]); // Dashed line for futuristic look
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.range - 5, 0, Math.PI * 2);
       ctx.stroke();
+      ctx.setLineDash([]); // Reset line dash
     }
 
-    // Draw tower base with gradient and shadow
-    const baseGradient = ctx.createRadialGradient(
-      this.x, this.y, 5,
-      this.x, this.y, 20
-    );
-    baseGradient.addColorStop(0, '#777');
-    baseGradient.addColorStop(1, '#333');
+    // Draw 2D futuristic tower base (flat hexagonal)
+    const baseSize = 20;
+    const hexPoints = [];
 
-    // Add shadow
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetX = 2;
-    ctx.shadowOffsetY = 2;
+    // Create hexagon points
+    for (let i = 0; i < 6; i++) {
+      const angle = (Math.PI / 3) * i;
+      hexPoints.push({
+        x: this.x + Math.cos(angle) * baseSize,
+        y: this.y + Math.sin(angle) * baseSize
+      });
+    }
+
+    // Draw base with lighter gradient
+    const baseGradient = ctx.createLinearGradient(
+      this.x - baseSize, this.y - baseSize,
+      this.x + baseSize, this.y + baseSize
+    );
+    baseGradient.addColorStop(0, '#ecf0f1'); // Very light gray
+    baseGradient.addColorStop(1, '#bdc3c7'); // Light gray
 
     ctx.fillStyle = baseGradient;
     ctx.beginPath();
-    ctx.arc(this.x, this.y, 20, 0, Math.PI * 2);
+    ctx.moveTo(hexPoints[0].x, hexPoints[0].y);
+    for (let i = 1; i < hexPoints.length; i++) {
+      ctx.lineTo(hexPoints[i].x, hexPoints[i].y);
+    }
+    ctx.closePath();
     ctx.fill();
 
-    // Reset shadow
-    ctx.shadowColor = 'transparent';
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-
-    // Add metallic rim
-    ctx.strokeStyle = '#999';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, 20, 0, Math.PI * 2);
+    // Add tech-inspired details to base
+    ctx.strokeStyle = '#95a5a6'; // Light gray border
+    ctx.lineWidth = 1;
     ctx.stroke();
 
-    // Draw tower body based on type and upgrades
+    // Add inner hexagon for detail - more 2D look
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const angle = (Math.PI / 3) * i + Math.PI / 6;
+      const innerSize = baseSize * 0.6;
+      const x = this.x + Math.cos(angle) * innerSize;
+      const y = this.y + Math.sin(angle) * innerSize;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = '#3498db'; // Blue accent
+    ctx.stroke();
+
+    // Add flat colored center instead of glow for more 2D look
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Add tech circuit pattern
+    ctx.strokeStyle = '#3498db'; // Blue accent
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(this.x - 10, this.y);
+    ctx.lineTo(this.x - 5, this.y);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(this.x + 5, this.y);
+    ctx.lineTo(this.x + 10, this.y);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(this.x, this.y - 10);
+    ctx.lineTo(this.x, this.y - 5);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(this.x, this.y + 5);
+    ctx.lineTo(this.x, this.y + 10);
+    ctx.stroke();
+
+    // Draw tower body based on type and upgrades - more 2D and futuristic style
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
@@ -1028,26 +1084,96 @@ class Tower {
     // Use variant color if available
     const towerColor = this.variantColor || this.color;
 
+    // Add a pulsing glow effect for upgraded towers
+    if (hasPathAUpgrades || hasPathBUpgrades) {
+      const time = Date.now() / 1000;
+      const pulseIntensity = 0.4 + Math.sin(time * 3) * 0.2;
+      ctx.fillStyle = hasPathAUpgrades ? '#FFA000' : '#9C27B0';
+      ctx.globalAlpha = pulseIntensity;
+      ctx.beginPath();
+      ctx.arc(0, -15, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1.0;
+    }
+
     // Draw tower based on type and upgrades
     switch (this.type) {
       case 'basic':
-        // Basic tower - simple design
-        ctx.fillStyle = towerColor;
+        // Basic tower - flat 2D futuristic design with lighter colors
+
+        // Draw a flat rectangular tower body
+        ctx.fillStyle = '#ecf0f1'; // Light gray base
         ctx.fillRect(-8, -25, 16, 25);
 
-        // Tower head
+        // Add colored accent based on tower color
+        ctx.fillStyle = towerColor;
+        ctx.fillRect(-8, -25, 3, 25); // Left stripe
+
+        // Add tech details - circuit pattern
+        ctx.strokeStyle = '#3498db'; // Blue accent
+        ctx.lineWidth = 1;
+
+        // Horizontal lines
+        for (let i = 1; i <= 3; i++) {
+          ctx.beginPath();
+          ctx.moveTo(-5, -5 * i);
+          ctx.lineTo(8, -5 * i);
+          ctx.stroke();
+        }
+
+        // Vertical line
+        ctx.beginPath();
+        ctx.moveTo(0, -5);
+        ctx.lineTo(0, -20);
+        ctx.stroke();
+
+        // Draw flat circular tower head
+        ctx.fillStyle = '#bdc3c7'; // Light gray
         ctx.beginPath();
         ctx.arc(0, -25, 8, 0, Math.PI * 2);
         ctx.fill();
+
+        // Add colored center to tower head
+        ctx.fillStyle = towerColor;
+        ctx.beginPath();
+        ctx.arc(0, -25, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Add tech ring
+        ctx.strokeStyle = '#3498db'; // Blue accent
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(0, -25, 6, 0, Math.PI * 2);
+        ctx.stroke();
 
         // Add variant-specific effects if a variant is applied
         if (this.variant && this.variant !== this.type) {
           switch (this.variant) {
             case 'gold':
-              // Add gold trim
+              // Add gold trim with tech pattern
               ctx.strokeStyle = '#FFD700';
-              ctx.lineWidth = 2;
-              ctx.strokeRect(-8, -25, 16, 25);
+              ctx.lineWidth = 1.5;
+              ctx.beginPath();
+              ctx.moveTo(-10, 0);
+              ctx.lineTo(10, 0);
+              ctx.lineTo(8, -25);
+              ctx.lineTo(-8, -25);
+              ctx.closePath();
+              ctx.stroke();
+
+              // Add gold circuit pattern
+              ctx.beginPath();
+              ctx.moveTo(-5, 0);
+              ctx.lineTo(-5, -15);
+              ctx.lineTo(0, -15);
+              ctx.lineTo(0, -25);
+              ctx.stroke();
+
+              ctx.beginPath();
+              ctx.moveTo(5, 0);
+              ctx.lineTo(5, -10);
+              ctx.lineTo(0, -10);
+              ctx.stroke();
 
               // Add gold glow
               ctx.fillStyle = '#FFD700';
@@ -1059,21 +1185,30 @@ class Tower {
               break;
 
             case 'crystal':
-              // Add crystal effect
+              // Add crystal effect with geometric pattern
               ctx.strokeStyle = '#88CCEE';
               ctx.lineWidth = 1;
 
-              // Draw crystal facets
+              // Draw crystal facets as geometric pattern
               for (let i = 0; i < 3; i++) {
+                const y = -25 + i * 8;
                 ctx.beginPath();
-                ctx.moveTo(-8, -25 + i * 8);
-                ctx.lineTo(8, -25 + i * 8);
+                ctx.moveTo(-8 + i, y);
+                ctx.lineTo(8 - i, y);
                 ctx.stroke();
               }
 
-              // Add crystal glow
+              // Add diagonal lines for crystal effect
+              ctx.beginPath();
+              ctx.moveTo(-8, -25);
+              ctx.lineTo(0, 0);
+              ctx.lineTo(8, -25);
+              ctx.stroke();
+
+              // Add crystal glow with pulsing effect
+              const crystalPulse = 0.2 + Math.sin(time * 2) * 0.1;
               ctx.fillStyle = '#88CCEE';
-              ctx.globalAlpha = 0.3;
+              ctx.globalAlpha = crystalPulse;
               ctx.beginPath();
               ctx.arc(0, -25, 10, 0, Math.PI * 2);
               ctx.fill();
@@ -1081,27 +1216,26 @@ class Tower {
               break;
 
             case 'shadow':
-              // Add shadow effect
+              // Add shadow effect with dark energy visualization
               ctx.fillStyle = '#000000';
               ctx.globalAlpha = 0.5;
               ctx.beginPath();
               ctx.arc(0, -25, 10, 0, Math.PI * 2);
               ctx.fill();
 
-              // Add smoky particles
-              const time = Date.now() / 1000;
+              // Add smoky particles with more tech feel
               ctx.fillStyle = '#444444';
               ctx.globalAlpha = 0.7;
 
-              for (let i = 0; i < 3; i++) {
-                const angle = time + i * Math.PI * 2 / 3;
-                const x = Math.cos(angle) * 12;
-                const y = Math.sin(angle) * 12 - 15;
-                const size = 2 + Math.sin(time * 2 + i) * 1;
+              for (let i = 0; i < 5; i++) {
+                const angle = time + i * Math.PI * 2 / 5;
+                const distance = 6 + Math.sin(time * 3 + i) * 3;
+                const x = Math.cos(angle) * distance;
+                const y = Math.sin(angle) * distance - 15;
+                const size = 1.5 + Math.sin(time * 2 + i) * 0.5;
 
-                ctx.beginPath();
-                ctx.arc(x, y, size, 0, Math.PI * 2);
-                ctx.fill();
+                // Draw square particles instead of circles for tech feel
+                ctx.fillRect(x - size, y - size, size * 2, size * 2);
               }
 
               ctx.globalAlpha = 1.0;
@@ -1519,37 +1653,47 @@ class Tower {
         // Apply recoil to cannon position
         const cannonRecoil = recoilOffset;
 
-        // Base tower body with enhanced design
-        const cannonGradient = ctx.createLinearGradient(-10, -25 + cannonRecoil, 10, 0);
-        cannonGradient.addColorStop(0, '#795548'); // Brown
-        cannonGradient.addColorStop(1, '#5D4037'); // Darker brown
+        // Flat 2D futuristic cannon design with lighter colors
+        // Base tower body
+        ctx.fillStyle = '#ecf0f1'; // Light gray base
+        ctx.fillRect(-10, -25 + cannonRecoil, 20, 30);
 
-        ctx.fillStyle = cannonGradient;
+        // Add colored accent based on tower color
+        ctx.fillStyle = towerColor;
+        ctx.fillRect(-10, -25 + cannonRecoil, 4, 30); // Left stripe
+        ctx.fillRect(6, -25 + cannonRecoil, 4, 30); // Right stripe
 
-        // Draw cannon barrel with rounded edges
-        ctx.beginPath();
-        ctx.moveTo(-10, -25 + cannonRecoil); // Top left with recoil
-        ctx.lineTo(10, -25 + cannonRecoil);  // Top right with recoil
-        ctx.lineTo(12, -10); // Middle right
-        ctx.lineTo(10, 5);   // Bottom right
-        ctx.lineTo(-10, 5);  // Bottom left
-        ctx.lineTo(-12, -10); // Middle left
-        ctx.closePath();
-        ctx.fill();
+        // Draw cannon barrel (rectangular for 2D look)
+        ctx.fillStyle = '#bdc3c7'; // Light gray
+        ctx.fillRect(-8, -30 + cannonRecoil, 16, 10); // Barrel
 
         // Draw cannon opening
-        ctx.fillStyle = '#3E2723';
+        ctx.fillStyle = '#34495e'; // Dark blue-gray
         ctx.beginPath();
-        ctx.arc(0, -25 + cannonRecoil, 6, 0, Math.PI * 2);
+        ctx.arc(0, -25 + cannonRecoil, 5, 0, Math.PI * 2);
         ctx.fill();
 
-        // Add metallic highlights
-        ctx.strokeStyle = '#8D6E63';
+        // Add tech details - circuit pattern
+        ctx.strokeStyle = '#3498db'; // Blue accent
         ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(-10, -15 + cannonRecoil);
-        ctx.lineTo(10, -15 + cannonRecoil);
-        ctx.stroke();
+
+        // Horizontal lines
+        for (let i = 1; i <= 2; i++) {
+          ctx.beginPath();
+          ctx.moveTo(-10, -10 * i + cannonRecoil);
+          ctx.lineTo(10, -10 * i + cannonRecoil);
+          ctx.stroke();
+        }
+
+        // Add animated firing effect when recoil is active
+        if (recoilOffset > 0) {
+          ctx.fillStyle = '#e74c3c'; // Red glow
+          ctx.globalAlpha = recoilOffset / 5; // Fade based on recoil
+          ctx.beginPath();
+          ctx.arc(0, -25 + cannonRecoil, 3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1.0;
+        }
 
         // Path A: Blast Radius - Wider cannon
         if (hasPathAUpgrades) {
@@ -2013,9 +2157,18 @@ class Tower {
     let typeIndicator;
     switch (this.type) {
       case 'sniper': typeIndicator = 'S'; break;
-      case 'aoe': typeIndicator = 'A'; break;
-      case 'slow': typeIndicator = 'F'; break; // F for Freeze
+      case 'archer': typeIndicator = 'A'; break;
+      case 'cannon': typeIndicator = 'C'; break;
+      case 'freeze': typeIndicator = 'F'; break;
+      case 'mortar': typeIndicator = 'M'; break;
+      case 'laser': typeIndicator = 'L'; break;
+      case 'tesla': typeIndicator = 'T'; break;
+      case 'flame': typeIndicator = 'F'; break;
+      case 'missile': typeIndicator = 'M'; break;
+      case 'poison': typeIndicator = 'P'; break;
+      case 'vortex': typeIndicator = 'V'; break;
       case 'basic': typeIndicator = 'B'; break;
+      default: typeIndicator = this.type.charAt(0).toUpperCase(); break;
     }
 
     ctx.fillText(typeIndicator, this.x, this.y);

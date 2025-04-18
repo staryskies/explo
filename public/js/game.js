@@ -192,9 +192,7 @@ class Game {
     const clickedTower = this.getTowerAtPosition(x, y);
     if (clickedTower) {
       // Select the tower for upgrade
-      // This would normally call this.selectTowerForUpgrade(clickedTower)
-      // but for now we'll just log it
-      console.log(`Clicked on tower: ${clickedTower.type} at (${clickedTower.gridX}, ${clickedTower.gridY})`);
+      this.selectTowerForUpgrade(clickedTower);
       return;
     }
 

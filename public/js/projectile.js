@@ -27,78 +27,78 @@ class Projectile {
 
   // Set projectile properties based on type
   setPropertiesByType() {
-    // Smaller bullets with different colors for each tower type
+    // Smaller bullets with different colors for each tower type - more 2D style
     switch (this.type) {
       case 'sniper':
-        this.size = 3;
-        this.color = '#2196F3'; // Blue
+        this.size = 2; // Smaller
+        this.color = '#3498db'; // Lighter blue
         this.trailLength = 0; // No trail
-        this.speed *= 1.5; // Faster
+        this.speed *= 2.5; // Faster
         break;
       case 'cannon':
-        this.size = 4;
-        this.color = '#795548'; // Brown
+        this.size = 3; // Smaller
+        this.color = '#e67e22'; // Orange
         this.trailLength = 0;
         this.speed *= 1.2;
         break;
       case 'archer':
         this.size = 2;
-        this.color = '#8BC34A'; // Green
+        this.color = '#2ecc71'; // Brighter green
         this.trailLength = 0;
         this.speed *= 1.4;
         break;
       case 'freeze':
-        this.size = 3;
+        this.size = 2;
         this.color = '#00BCD4'; // Cyan
         this.trailLength = 0;
         this.speed *= 1.3;
         break;
       case 'mortar':
-        this.size = 4;
-        this.color = '#607D8B'; // Gray
+        this.size = 3;
+        this.color = '#95a5a6'; // Light gray
         this.trailLength = 0;
         this.speed *= 1.1;
         break;
       case 'laser':
         this.size = 2;
-        this.color = '#F44336'; // Red
-        this.trailLength = 8; // Keep trail for laser
+        this.color = '#e74c3c'; // Bright red
+        this.trailLength = 8; // Keep trail ONLY for laser
         this.speed *= 1.6;
         break;
       case 'tesla':
         this.size = 2;
-        this.color = '#FFEB3B'; // Yellow
-        this.trailLength = 5; // Keep short trail for tesla
+        this.color = '#f1c40f'; // Bright yellow
+        this.trailLength = 0; // No trail
         this.speed *= 1.7;
         break;
       case 'flame':
-        this.size = 3;
-        this.color = '#FF9800'; // Orange
-        this.trailLength = 4; // Short trail for flame
+        this.size = 2;
+        this.color = '#e67e22'; // Orange
+        this.trailLength = 0; // No trail
         this.speed *= 1.3;
         break;
       case 'missile':
-        this.size = 3;
-        this.color = '#9E9E9E'; // Gray
-        this.trailLength = 3;
+        this.size = 2;
+        this.color = '#7f8c8d'; // Gray
+        this.trailLength = 0; // No trail
         this.speed *= 1.4;
         break;
       case 'poison':
         this.size = 2;
-        this.color = '#9C27B0'; // Purple
+        this.color = '#9b59b6'; // Purple
         this.trailLength = 0;
         this.speed *= 1.3;
         break;
       case 'vortex':
-        this.size = 3;
-        this.color = '#009688'; // Teal
+        this.size = 2;
+        this.color = '#1abc9c'; // Teal
         this.trailLength = 0;
         this.speed *= 1.2;
         break;
       case 'basic':
       default:
         this.size = 2;
-        this.color = '#4CAF50'; // Green
+        this.color = '#2ecc71'; // Brighter green
         this.trailLength = 0;
         this.speed *= 1.3;
         break;
@@ -182,12 +182,12 @@ class Projectile {
     return affectedEnemies;
   }
 
-  // Draw the projectile
+  // Draw the projectile - simplified 2D style without trails except for laser
   draw(ctx) {
     if (!this.active) return;
 
-    // Only draw trail for specific tower types (laser, tesla, flame)
-    if (this.trailLength > 0) {
+    // Only draw trail for laser tower
+    if (this.trailLength > 0 && this.type === 'laser') {
       ctx.save();
       for (let i = 0; i < this.trail.length; i++) {
         const point = this.trail[i];
@@ -203,21 +203,20 @@ class Projectile {
       ctx.restore();
     }
 
-    // Draw projectile - smaller and cleaner
+    // Draw projectile - smaller and cleaner with flat 2D look
     ctx.fillStyle = this.color;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-    ctx.fill();
 
-    // Add a small glow effect for visibility
-    ctx.save();
-    ctx.globalAlpha = 0.3;
-    ctx.filter = `blur(${this.size/2}px)`;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size * 1.2, 0, Math.PI * 2);
-    ctx.fillStyle = this.color;
-    ctx.fill();
-    ctx.restore();
+    // Use squares for a more 2D look instead of circles
+    if (this.type === 'laser') {
+      // Keep circles for laser
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // Use squares for other projectiles
+      const halfSize = this.size * 0.8; // Slightly smaller for better look
+      ctx.fillRect(this.x - halfSize, this.y - halfSize, halfSize * 2, halfSize * 2);
+    }
 
     // Draw special effects based on type
     if (this.type === 'sniper') {
