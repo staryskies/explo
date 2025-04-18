@@ -497,7 +497,7 @@ class Game {
   }
 
   // Draw game state
-  draw() {
+  draw(currentTime = performance.now()) {
     // Clear canvas
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -514,7 +514,7 @@ class Game {
     // Always draw towers regardless of game state
     if (this.towers && this.towers.length > 0) {
       this.towers.forEach(tower => {
-        tower.draw(this.ctx, this.showTowerRanges);
+        tower.draw(this.ctx, this.showTowerRanges, currentTime);
       });
     }
 
@@ -745,7 +745,7 @@ class Game {
       this.update(currentTime);
 
       // Draw game state
-      this.draw();
+      this.draw(currentTime);
     }
   }
 

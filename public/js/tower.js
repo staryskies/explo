@@ -963,11 +963,11 @@ class Tower {
   }
 
   // Draw the tower
-  draw(ctx, showRange = false) {
+  draw(ctx, showRange = false, currentTime = Date.now()) {
     // Draw range indicator if requested
     if (showRange) {
       // Create a more futuristic range indicator with pulsing effect
-      const time = Date.now() / 1000;
+      const time = currentTime / 1000;
       const pulseSize = Math.sin(time * 2) * 5;
 
       // Outer glow
@@ -1206,7 +1206,7 @@ class Tower {
               ctx.stroke();
 
               // Add crystal glow with pulsing effect
-              const crystalPulse = 0.2 + Math.sin(time * 2) * 0.1;
+              const crystalPulse = 0.2 + Math.sin(currentTime / 1000 * 2) * 0.1;
               ctx.fillStyle = '#88CCEE';
               ctx.globalAlpha = crystalPulse;
               ctx.beginPath();
@@ -1227,12 +1227,14 @@ class Tower {
               ctx.fillStyle = '#444444';
               ctx.globalAlpha = 0.7;
 
+              const timeInSec = currentTime / 1000;
+
               for (let i = 0; i < 5; i++) {
-                const angle = time + i * Math.PI * 2 / 5;
-                const distance = 6 + Math.sin(time * 3 + i) * 3;
+                const angle = timeInSec + i * Math.PI * 2 / 5;
+                const distance = 6 + Math.sin(timeInSec * 3 + i) * 3;
                 const x = Math.cos(angle) * distance;
                 const y = Math.sin(angle) * distance - 15;
-                const size = 1.5 + Math.sin(time * 2 + i) * 0.5;
+                const size = 1.5 + Math.sin(timeInSec * 2 + i) * 0.5;
 
                 // Draw square particles instead of circles for tech feel
                 ctx.fillRect(x - size, y - size, size * 2, size * 2);
