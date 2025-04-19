@@ -351,7 +351,7 @@ class Game {
     this.enemiesSpawned++;
   }
 
-  // Update game state
+  // Update game state with variable delta time (original method, kept for compatibility)
   update(currentTime) {
     if (this.paused || this.gameOver) return;
 
@@ -359,10 +359,19 @@ class Game {
     // Ensure we have a valid time difference and it's not too large (can happen on first frame or tab switch)
     let deltaTime = 0;
     if (this.lastUpdateTime > 0) {
-      // Convert to seconds and apply speed multiplier
-      deltaTime = Math.min(currentTime - this.lastUpdateTime, 100) / 1000 * this.speedMultiplier;
+      // Convert to seconds but don't apply speed multiplier here anymore
+      // Speed is controlled by running multiple update cycles instead
+      deltaTime = Math.min(currentTime - this.lastUpdateTime, 100) / 1000;
     }
     this.lastUpdateTime = currentTime;
+
+    // Use the fixed delta time update method
+    this.updateWithFixedDeltaTime(currentTime, deltaTime);
+  }
+
+  // Update game state with fixed delta time
+  updateWithFixedDeltaTime(currentTime, deltaTime) {
+    if (this.paused || this.gameOver) return;
 
     // Track time since last spawn in seconds
     this.timeSinceLastSpawn = (this.timeSinceLastSpawn || 0) + deltaTime;
@@ -752,10 +761,21 @@ class Game {
       // Update last frame time with adjustment to maintain consistent frame rate
       this.lastFrameTime = currentTime - (elapsed % this.frameInterval);
 
-      // Update game state
-      this.update(currentTime);
+      // Run multiple update cycles based on speed multiplier
+      // This increases the effective game speed without changing the frame rate
+      const updateCycles = this.speedMultiplier;
 
-      // Draw game state
+      // Run update multiple times based on speed multiplier
+      for (let i = 0; i < updateCycles; i++) {
+        // Use a fixed delta time for each update to ensure consistent behavior
+        // We're using 1/30 second (matching our target FPS) for each update
+        const fixedDeltaTime = 1 / 30;
+
+        // Update game state with fixed time step
+        this.updateWithFixedDeltaTime(currentTime, fixedDeltaTime);
+      }
+
+      // Draw game state only once per frame
       this.draw(currentTime);
     }
   }

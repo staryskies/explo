@@ -598,15 +598,12 @@ class Tower {
     // Calculate angle to target
     this.angle = getAngle(this.x, this.y, this.target.x, this.target.y);
 
-    // Get the game speed multiplier from the game instance
-    const gameSpeedMultiplier = window.game ? window.game.speedMultiplier : 1;
-
     // Create visual effect for shooting
     this.createShootEffect();
 
     try {
-      // Calculate scaled damage once to avoid duplicate declarations
-      const scaledDamage = gameSpeedMultiplier > 1 ? this.damage * Math.sqrt(gameSpeedMultiplier) : this.damage;
+      // Use the tower's base damage without scaling
+      // Game speed is now controlled by running multiple update cycles
 
       // Handle special tower abilities based on tower type
       switch (this.type) {
@@ -622,7 +619,7 @@ class Tower {
               this.y,
               this.angle + angleOffset,
               this.projectileSpeed,
-              scaledDamage,
+              this.damage,
               this.type,
               this.target,
               this.type
@@ -645,7 +642,7 @@ class Tower {
             this.y,
             this.angle,
             this.projectileSpeed,
-            scaledDamage,
+            this.damage,
             this.type,
             this.target,
             this.type
@@ -670,7 +667,7 @@ class Tower {
             this.y,
             this.angle,
             this.projectileSpeed,
-            scaledDamage,
+            this.damage,
             this.type,
             this.target,
             this.type
@@ -695,7 +692,7 @@ class Tower {
             this.y,
             this.angle,
             this.projectileSpeed * 1.5, // Faster projectile
-            scaledDamage,
+            this.damage,
             this.type,
             this.target,
             this.type
@@ -722,7 +719,7 @@ class Tower {
             this.y,
             this.angle,
             this.projectileSpeed,
-            scaledDamage,
+            this.damage,
             this.type,
             this.target,
             this.type
