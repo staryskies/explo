@@ -1004,11 +1004,11 @@ class Game {
   // Get starting gold based on difficulty
   getDifficultyGold() {
     switch(this.difficulty) {
-      case 'easy': return 90; // Reduced from 100
-      case 'medium': return 180; // Harder
-      case 'hard': return 270; // Much harder
-      case 'nightmare': return 360;
-      case 'void': return 500;
+      case 'easy': return 100; // Reduced from 100
+      case 'medium': return 280; // Harder
+      case 'hard': return 370; // Much harder
+      case 'nightmare': return 560;
+      case 'void': return 800;
       default: return 100;
     }
   }

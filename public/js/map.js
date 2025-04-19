@@ -94,7 +94,7 @@ class GameMap {
       // Track void spikes
       this.voidSpikes = [];
       this.lastSpikeTime = 0;
-      this.spikeInterval = 2000; // New spike every 2 seconds
+      this.spikeInterval = 1500; // New spike every 1.5 seconds (more frequent)
 
       // Initialize the void effect
       this.initializeVoidEffect();
@@ -515,6 +515,25 @@ class GameMap {
   placeTower(gridX, gridY) {
     if (this.canPlaceTower(gridX, gridY)) {
       this.grid[gridY][gridX] = this.TILE_TYPES.OCCUPIED;
+
+      // If using void effect, add this tile to important tiles
+      if (this.useVoidEffect) {
+        // Check if this tile is already in the important tiles list
+        const alreadyImportant = this.importantTiles.some(tile =>
+          tile.x === gridX && tile.y === gridY
+        );
+
+        // If not, add it
+        if (!alreadyImportant) {
+          this.importantTiles.push({x: gridX, y: gridY});
+
+          // Ensure it's visible
+          if (this.visibleTiles[gridY] && this.visibleTiles[gridY][gridX] !== undefined) {
+            this.visibleTiles[gridY][gridX] = true;
+          }
+        }
+      }
+
       return true;
     }
     return false;
@@ -526,6 +545,19 @@ class GameMap {
       if (this.grid[gridY][gridX] === this.TILE_TYPES.OCCUPIED) {
         this.grid[gridY][gridX] = this.TILE_TYPES.GRASS;
         console.log(`Tile at (${gridX}, ${gridY}) marked as grass again`);
+
+        // If using void effect, remove this tile from important tiles
+        if (this.useVoidEffect) {
+          // Remove from important tiles if it's not a path tile
+          const isPathTile = this.path.some(pathTile => pathTile.x === gridX && pathTile.y === gridY);
+
+          if (!isPathTile) {
+            this.importantTiles = this.importantTiles.filter(tile =>
+              !(tile.x === gridX && tile.y === gridY)
+            );
+          }
+        }
+
         return true;
       }
     }
@@ -718,7 +750,16 @@ class GameMap {
       this.importantTiles.push({x: point.x, y: point.y});
     }
 
-    // Keep some tiles around the path visible
+    // Find all occupied tiles (towers) and mark them as important
+    for (let y = 0; y < this.gridHeight; y++) {
+      for (let x = 0; x < this.gridWidth; x++) {
+        if (this.grid[y] && this.grid[y][x] === this.TILE_TYPES.OCCUPIED) {
+          this.importantTiles.push({x, y});
+        }
+      }
+    }
+
+    // Keep some buildable tiles around the path visible
     const directions = [
       {dx: 1, dy: 0},
       {dx: -1, dy: 0},
@@ -727,7 +768,7 @@ class GameMap {
     ];
 
     // Add tiles adjacent to the path (but not all of them)
-    for (let i = 0; i < this.path.length; i += 3) { // Only check every 3rd path tile
+    for (let i = 0; i < this.path.length; i += 2) { // Check every 2nd path tile
       const point = this.path[i];
 
       // Add some adjacent tiles
@@ -737,9 +778,16 @@ class GameMap {
 
         // Check if within bounds and not already in important tiles
         if (nx >= 0 && nx < this.gridWidth && ny >= 0 && ny < this.gridHeight) {
-          // Only add some tiles (random selection)
-          if (Math.random() < 0.3) { // 30% chance to add
-            this.importantTiles.push({x: nx, y: ny});
+          // Check if this is a buildable tile (grass)
+          if (this.grid[ny] && this.grid[ny][nx] === this.TILE_TYPES.GRASS) {
+            // Add to important tiles
+            const alreadyExists = this.importantTiles.some(tile =>
+              tile.x === nx && tile.y === ny
+            );
+
+            if (!alreadyExists) {
+              this.importantTiles.push({x: nx, y: ny});
+            }
           }
         }
       }
@@ -747,19 +795,33 @@ class GameMap {
 
     // If we have too many important tiles, remove some randomly
     while (this.importantTiles.length > this.tilesRemainingAtEnd) {
-      // Remove a random non-path tile
-      const nonPathTiles = this.importantTiles.filter(tile =>
-        !this.path.some(pathTile => pathTile.x === tile.x && pathTile.y === tile.y)
-      );
+      // Remove a random non-path, non-occupied tile
+      const nonEssentialTiles = this.importantTiles.filter(tile => {
+        // Check if it's not a path tile
+        const isPathTile = this.path.some(pathTile => pathTile.x === tile.x && pathTile.y === tile.y);
 
-      if (nonPathTiles.length > 0) {
-        const tileToRemove = nonPathTiles[Math.floor(Math.random() * nonPathTiles.length)];
+        // Check if it's not an occupied tile
+        const isOccupiedTile = this.grid[tile.y] && this.grid[tile.y][tile.x] === this.TILE_TYPES.OCCUPIED;
+
+        // Keep if it's neither a path tile nor an occupied tile
+        return !isPathTile && !isOccupiedTile;
+      });
+
+      if (nonEssentialTiles.length > 0) {
+        const tileToRemove = nonEssentialTiles[Math.floor(Math.random() * nonEssentialTiles.length)];
         this.importantTiles = this.importantTiles.filter(tile =>
           !(tile.x === tileToRemove.x && tile.y === tileToRemove.y)
         );
       } else {
-        // If we only have path tiles left, we're done
+        // If we only have essential tiles left, we're done
         break;
+      }
+    }
+
+    // Ensure all important tiles are marked as visible
+    for (const tile of this.importantTiles) {
+      if (this.visibleTiles[tile.y] && this.visibleTiles[tile.y][tile.x] !== undefined) {
+        this.visibleTiles[tile.y][tile.x] = true;
       }
     }
   }
@@ -922,11 +984,6 @@ class GameMap {
       const currentX = startX + (endX - startX) * spike.progress;
       const currentY = startY + (endY - startY) * spike.progress;
 
-      // Draw the spike
-      this.ctx.beginPath();
-      this.ctx.moveTo(startX, startY);
-      this.ctx.lineTo(currentX, currentY);
-
       // Determine color based on progress
       let color;
       if (spike.progress < 0.5) {
@@ -941,10 +998,58 @@ class GameMap {
         color = `rgb(${r}, ${g}, ${b})`;
       }
 
+      // Draw the spike as a jagged path instead of a straight line
+      this.ctx.beginPath();
+      this.ctx.moveTo(startX, startY);
+
+      // Calculate the main direction vector
+      const dirX = endX - startX;
+      const dirY = endY - startY;
+      const length = Math.sqrt(dirX * dirX + dirY * dirY);
+      const normalizedDirX = dirX / length;
+      const normalizedDirY = dirY / length;
+
+      // Calculate perpendicular vector for jagged edges
+      const perpX = -normalizedDirY;
+      const perpY = normalizedDirX;
+
+      // Number of segments in the spike
+      const segments = Math.floor(length / 15) + 5; // More segments for more jaggedness
+
+      // Draw jagged spike segments
+      for (let i = 1; i <= segments; i++) {
+        // Only draw up to the current progress point
+        if (i / segments > spike.progress) break;
+
+        // Calculate segment endpoint
+        const segmentProgress = i / segments;
+        const segmentX = startX + dirX * segmentProgress;
+        const segmentY = startY + dirY * segmentProgress;
+
+        // Add jaggedness - alternating sides
+        const jaggedness = (spike.width * 3.0) * (1 - segmentProgress * 0.7); // Reduce jaggedness as we approach the end, but keep some
+        const jitterX = perpX * jaggedness * (i % 2 === 0 ? 1 : -1);
+        const jitterY = perpY * jaggedness * (i % 2 === 0 ? 1 : -1);
+
+        // Add some randomness to the jaggedness
+        const randomFactor = spike.randomFactors[i % spike.randomFactors.length];
+        const finalX = segmentX + jitterX * randomFactor;
+        const finalY = segmentY + jitterY * randomFactor;
+
+        // Draw the line segment
+        this.ctx.lineTo(finalX, finalY);
+      }
+
+      // If not complete, draw to current position
+      if (spike.progress < 1) {
+        this.ctx.lineTo(currentX, currentY);
+      }
+
       // Set line style
       this.ctx.strokeStyle = color;
-      this.ctx.lineWidth = spike.width;
-      this.ctx.lineCap = 'round';
+      this.ctx.lineWidth = Math.max(2, spike.width * (1 - spike.progress * 0.5)); // Taper the width
+      this.ctx.lineJoin = 'miter'; // Sharp corners for spiky look
+      this.ctx.miterLimit = 10; // Control the spikiness
 
       // Draw the spike
       this.ctx.stroke();
@@ -953,7 +1058,7 @@ class GameMap {
       if (spike.progress >= 1) {
         this.ctx.fillStyle = '#000';
         this.ctx.beginPath();
-        this.ctx.arc(endX, endY, spike.width / 2, 0, Math.PI * 2);
+        this.ctx.arc(endX, endY, spike.width * 0.75, 0, Math.PI * 2);
         this.ctx.fill();
       }
     }
@@ -978,8 +1083,8 @@ class GameMap {
     for (let i = 0; i < this.voidSpikes.length; i++) {
       const spike = this.voidSpikes[i];
 
-      // Update progress
-      spike.progress += 0.01; // Speed of spike movement
+      // Update progress - slower for more dramatic effect
+      spike.progress += 0.005; // Reduced speed for more dramatic effect
 
       // Remove completed spikes
       if (spike.progress > 1.2) { // Give a little extra time to show the void circle
@@ -1022,14 +1127,21 @@ class GameMap {
     endX = this.canvas.width / 2 + (Math.random() - 0.5) * this.canvas.width * (1 - centerBias);
     endY = this.canvas.height / 2 + (Math.random() - 0.5) * this.canvas.height * (1 - centerBias);
 
+    // Generate random factors for jagged appearance
+    const randomFactors = [];
+    for (let i = 0; i < 10; i++) {
+      randomFactors.push(0.5 + Math.random() * 1.0); // Random values between 0.5 and 1.5
+    }
+
     // Create the spike
     this.voidSpikes.push({
       startX,
       startY,
       endX,
       endY,
-      width: Math.random() * 5 + 3, // Width between 3 and 8
-      progress: 0
+      width: Math.random() * 6 + 4, // Width between 4 and 10 (slightly thicker)
+      progress: 0,
+      randomFactors: randomFactors
     });
   }
 
@@ -1060,6 +1172,9 @@ class GameMap {
     if (this.voidProgress > 1.0) {
       this.voidProgress = 1.0;
     }
+
+    // Update important tiles list to include any new occupied tiles (towers)
+    this.updateImportantTiles();
 
     // Calculate how many tiles should be visible
     const totalTiles = this.gridWidth * this.gridHeight;
@@ -1122,6 +1237,26 @@ class GameMap {
 
       // Update count
       visibleCount--;
+    }
+  }
+
+  // Update important tiles list to include any new occupied tiles
+  updateImportantTiles() {
+    // Find all occupied tiles (towers) and mark them as important if not already
+    for (let y = 0; y < this.gridHeight; y++) {
+      for (let x = 0; x < this.gridWidth; x++) {
+        if (this.grid[y] && this.grid[y][x] === this.TILE_TYPES.OCCUPIED) {
+          // Check if this tile is already in the important tiles list
+          const alreadyImportant = this.importantTiles.some(tile =>
+            tile.x === x && tile.y === y
+          );
+
+          // If not, add it
+          if (!alreadyImportant) {
+            this.importantTiles.push({x, y});
+          }
+        }
+      }
     }
   }
 

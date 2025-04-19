@@ -72,8 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Tower buttons are already handled in game.initEventListeners()
 
-  // Initialize infinite mode
-  game.initializeInfiniteMode();
+
 
   // Force initial draw to show the map immediately
   game.draw();
@@ -115,23 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const game = window.game;
 
     switch (e.key) {
-      case '1':
-        // Select basic tower
-        game.selectTowerType('basic');
-        break;
-      case '2':
-        // Select sniper tower
-        game.selectTowerType('sniper');
-        break;
-      case '3':
-        // Select AOE tower
-        game.selectTowerType('aoe');
-        break;
-      case '4':
-        // Select slow tower
-        game.selectTowerType('slow');
-        break;
-      case 'Escape':
+      case 'q':
         // Deselect tower
         game.selectedTowerType = null;
         document.querySelectorAll('.tower-btn').forEach(btn => {

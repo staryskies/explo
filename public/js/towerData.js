@@ -8,162 +8,183 @@ console.log('Tower data loaded');
 const towerStats = {
   basic: {
     name: "Basic Tower",
-    description: "A simple tower with balanced stats",
+    description: "A very weak tower with poor stats",
     persistentCost: 50,
-    ability: "Basic shot",
-    range: 200,
-    damage: 25,
-    fireRate: 1,
-    projectileSpeed: 12,
+    ability: "Weak shot",
+    range: 150, // Reduced range
+    damage: 10, // Significantly reduced damage
+    fireRate: 0.6, // Slower fire rate
+    projectileSpeed: 8, // Slower projectiles
     canTargetFlying: false,
     color: '#4CAF50'
   },
   archer: {
     name: "Archer Tower",
-    description: "Fires two arrows in quick succession",
+    description: "Fires multiple arrows in quick succession",
     persistentCost: 225,
-    ability: "Double shot",
-    range: 220,
-    damage: 20,
-    fireRate: 1.5,
-    projectileSpeed: 14,
+    ability: "Triple shot",
+    range: 250, // Increased range
+    damage: 30, // Increased damage
+    fireRate: 2.0, // Faster fire rate
+    projectileSpeed: 18, // Faster projectiles
     canTargetFlying: true,
+    multiShot: 3, // Now fires 3 arrows by default
     color: '#8BC34A'
   },
   cannon: {
     name: "Cannon Tower",
-    description: "Deals splash damage to enemies",
+    description: "Deals massive splash damage to enemies",
     persistentCost: 300,
-    ability: "Splash damage",
-    range: 180,
-    damage: 35,
-    fireRate: 0.8,
-    projectileSpeed: 10,
+    ability: "Heavy splash damage",
+    range: 200, // Increased range
+    damage: 60, // Significantly increased damage
+    fireRate: 1.0, // Faster fire rate
+    projectileSpeed: 12, // Faster projectiles
     canTargetFlying: false,
-    aoeRadius: 40,
+    aoeRadius: 60, // Larger splash radius
+    stunChance: 0.15, // Added stun chance
     color: '#795548'
   },
   sniper: {
     name: "Sniper Tower",
-    description: "Long range with chance for critical hits",
+    description: "Extreme range with high chance for devastating critical hits",
     persistentCost: 350,
-    ability: "Critical hit",
-    range: 300,
-    damage: 50,
-    fireRate: 0.6,
-    projectileSpeed: 20,
+    ability: "Deadly precision",
+    range: 400, // Greatly increased range
+    damage: 80, // Significantly increased damage
+    fireRate: 0.8, // Faster fire rate
+    projectileSpeed: 25, // Faster projectiles
     canTargetFlying: true,
-    critChance: 0.2,
-    critMultiplier: 2.5,
+    critChance: 0.4, // Double crit chance
+    critMultiplier: 3.5, // Higher crit multiplier
+    pierceCount: 1, // Added pierce ability
     color: '#2196F3'
   },
   freeze: {
     name: "Freeze Tower",
-    description: "Slows down enemies in its range",
+    description: "Severely slows and damages enemies in its range",
     persistentCost: 400,
-    ability: "Slows enemies",
-    range: 180,
-    damage: 10,
-    fireRate: 1.2,
-    projectileSpeed: 12,
+    ability: "Arctic blast",
+    range: 220, // Increased range
+    damage: 25, // Increased damage
+    fireRate: 1.5, // Faster fire rate
+    projectileSpeed: 15, // Faster projectiles
     canTargetFlying: true,
-    slowFactor: 0.5,
-    slowDuration: 2000,
+    slowFactor: 0.7, // Stronger slow effect
+    slowDuration: 3500, // Longer slow duration
+    aoeRadius: 40, // Added area effect
     color: '#00BCD4'
   },
   mortar: {
     name: "Mortar Tower",
-    description: "Deals heavy splash damage in a large area",
+    description: "Deals devastating splash damage across a massive area",
     persistentCost: 450,
-    ability: "Large splash",
-    range: 250,
-    damage: 60,
-    fireRate: 0.5,
-    projectileSpeed: 8,
+    ability: "Massive bombardment",
+    range: 300, // Increased range
+    damage: 100, // Significantly increased damage
+    fireRate: 0.7, // Faster fire rate
+    projectileSpeed: 10, // Faster projectiles
     canTargetFlying: false,
-    aoeRadius: 70,
+    aoeRadius: 100, // Much larger splash radius
+    stunChance: 0.25, // Added stun chance
+    stunDuration: 1000, // Added stun duration
     color: '#607D8B'
   },
   laser: {
     name: "Laser Tower",
-    description: "Fires a continuous beam at enemies",
+    description: "Fires a powerful continuous beam that pierces through enemies",
     persistentCost: 500,
-    ability: "Continuous beam",
-    range: 200,
-    damage: 5,
-    fireRate: 10,
-    projectileSpeed: 25,
+    ability: "Piercing beam",
+    range: 250, // Increased range
+    damage: 12, // More than doubled damage
+    fireRate: 15, // Faster fire rate
+    projectileSpeed: 30, // Faster projectiles
     canTargetFlying: true,
+    pierceCount: 3, // Can hit multiple enemies in a line
+    rampUpRate: 0.1, // Damage increases the longer it fires
+    maxRampUp: 1.0, // Up to double damage
     color: '#E91E63'
   },
   tesla: {
     name: "Tesla Tower",
-    description: "Electricity jumps between nearby enemies",
+    description: "Powerful electricity jumps between many nearby enemies, stunning them",
     persistentCost: 550,
-    ability: "Chain lightning",
-    range: 160,
-    damage: 30,
-    fireRate: 0.9,
-    projectileSpeed: 15,
+    ability: "Advanced chain lightning",
+    range: 200, // Increased range
+    damage: 45, // 50% more damage
+    fireRate: 1.2, // Faster fire rate
+    projectileSpeed: 20, // Faster projectiles
     canTargetFlying: true,
-    chainCount: 3,
-    chainRange: 80,
+    chainCount: 5, // More chain targets
+    chainRange: 120, // Longer chain range
+    stunChance: 0.3, // Added stun chance
+    stunDuration: 800, // Added stun duration
     color: '#673AB7'
   },
   flame: {
     name: "Flame Tower",
-    description: "Sets enemies on fire, dealing damage over time",
+    description: "Engulfs enemies in a raging inferno, dealing massive damage over time",
     persistentCost: 350,
-    ability: "Burning damage",
-    range: 150,
-    damage: 15,
-    fireRate: 2,
-    projectileSpeed: 10,
-    canTargetFlying: false,
-    burnDuration: 3000,
-    burnDamage: 5,
+    ability: "Inferno",
+    range: 180, // Increased range
+    damage: 25, // Increased initial damage
+    fireRate: 2.5, // Faster fire rate
+    projectileSpeed: 12, // Faster projectiles
+    canTargetFlying: true, // Now can target flying enemies
+    burnDuration: 5000, // Much longer burn duration
+    burnDamage: 12, // More than doubled burn damage
+    aoeRadius: 30, // Added splash damage
+    spreadChance: 0.2, // Chance to spread to nearby enemies
+    spreadRadius: 40, // Radius for spreading
     color: '#FF5722'
   },
   missile: {
     name: "Missile Tower",
-    description: "Fires powerful missiles with splash damage",
+    description: "Launches devastating guided missiles that obliterate groups of enemies",
     persistentCost: 650,
-    ability: "High damage",
-    range: 220,
-    damage: 80,
-    fireRate: 0.4,
-    projectileSpeed: 9,
+    ability: "Guided destruction",
+    range: 280, // Increased range
+    damage: 150, // Nearly doubled damage
+    fireRate: 0.6, // Faster fire rate
+    projectileSpeed: 12, // Faster projectiles
     canTargetFlying: true,
-    aoeRadius: 50,
+    aoeRadius: 80, // Much larger splash radius
+    trackingStrength: 0.4, // Added tracking ability
+    multiHit: 1, // Hits twice
     color: '#F44336'
   },
   poison: {
     name: "Poison Tower",
-    description: "Poisons enemies, reducing their health over time",
+    description: "Unleashes deadly toxins that devastate enemies and weaken their defenses",
     persistentCost: 700,
-    ability: "Poison splash",
-    range: 170,
-    damage: 10,
-    fireRate: 0.8,
-    projectileSpeed: 11,
+    ability: "Toxic cloud",
+    range: 220, // Increased range
+    damage: 20, // Doubled initial damage
+    fireRate: 1.0, // Faster fire rate
+    projectileSpeed: 14, // Faster projectiles
     canTargetFlying: true,
-    poisonDuration: 4000,
-    poisonDamage: 8,
-    aoeRadius: 45,
+    poisonDuration: 6000, // 50% longer poison duration
+    poisonDamage: 18, // More than doubled poison damage
+    aoeRadius: 70, // Much larger splash radius
+    armorReduction: 0.3, // Reduces enemy armor
+    speedReduction: 0.2, // Slows enemies
     color: '#9C27B0'
   },
   vortex: {
     name: "Vortex Tower",
-    description: "Creates a vortex that pulls enemies closer",
+    description: "Creates a powerful black hole that pulls enemies in and crushes them",
     persistentCost: 750,
-    ability: "Pulls enemies",
-    range: 190,
-    damage: 20,
-    fireRate: 0.7,
-    projectileSpeed: 10,
+    ability: "Gravitational collapse",
+    range: 250, // Increased range
+    damage: 40, // Doubled damage
+    fireRate: 0.9, // Faster fire rate
+    projectileSpeed: 14, // Faster projectiles
     canTargetFlying: true,
-    pullStrength: 30,
-    pullDuration: 1500,
+    pullStrength: 60, // Doubled pull strength
+    pullDuration: 2500, // Longer pull duration
+    damagePerSecond: 20, // Added damage over time while pulling
+    slowFactor: 0.3, // Added slow effect
+    aoeRadius: 60, // Added area effect
     color: '#009688'
   }
 };
@@ -172,26 +193,26 @@ const towerStats = {
 // Each tower has two upgrade paths with 4 upgrades each
 const towerUpgrades = {
   basic: {
-    // Path A: Increase damage
+    // Path A: Increase damage (but less effective)
     pathA: {
       name: "Power",
-      description: "Increases attack damage",
+      description: "Slightly increases attack damage",
       upgrades: [
-        { level: 1, cost: 50, damageBonus: 10, description: "10% more damage" },
-        { level: 2, cost: 100, damageBonus: 25, description: "25% more damage" },
-        { level: 3, cost: 200, damageBonus: 50, description: "50% more damage" },
-        { level: 4, cost: 400, damageBonus: 100, description: "100% more damage" }
+        { level: 1, cost: 50, damageBonus: 5, description: "5% more damage" },
+        { level: 2, cost: 100, damageBonus: 10, description: "10% more damage" },
+        { level: 3, cost: 200, damageBonus: 20, description: "20% more damage" },
+        { level: 4, cost: 400, damageBonus: 40, description: "40% more damage" }
       ]
     },
-    // Path B: Increase attack speed
+    // Path B: Increase attack speed (but less effective)
     pathB: {
       name: "Speed",
-      description: "Increases attack speed",
+      description: "Slightly increases attack speed",
       upgrades: [
-        { level: 1, cost: 50, fireRateBonus: 15, description: "15% faster attacks" },
-        { level: 2, cost: 100, fireRateBonus: 30, description: "30% faster attacks" },
-        { level: 3, cost: 200, fireRateBonus: 50, description: "50% faster attacks" },
-        { level: 4, cost: 400, fireRateBonus: 100, description: "100% faster attacks" }
+        { level: 1, cost: 50, fireRateBonus: 5, description: "5% faster attacks" },
+        { level: 2, cost: 100, fireRateBonus: 10, description: "10% faster attacks" },
+        { level: 3, cost: 200, fireRateBonus: 20, description: "20% faster attacks" },
+        { level: 4, cost: 400, fireRateBonus: 40, description: "40% faster attacks" }
       ]
     }
   },
