@@ -17,7 +17,7 @@
         <button id="shop-button" class="menu-btn">Tower Shop</button>
         <button id="upgrades-button" class="menu-btn">Upgrades</button>
       </div>
-      
+
       <div class="player-stats">
         <div class="stat-item">
           <span class="stat-label">Silver:</span>
@@ -33,7 +33,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Map Selection Modal -->
     <div id="map-selection-modal" class="modal">
       <div class="modal-content">
@@ -45,11 +45,67 @@
           <!-- Map options will be generated here -->
         </div>
         <div class="modal-footer">
+          <button id="select-difficulty-btn" class="primary-btn">Next: Select Difficulty</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Difficulty Selection Modal -->
+    <div id="difficulty-selection-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Select Difficulty</h2>
+          <span class="close-btn" id="close-difficulty-selection">&times;</span>
+        </div>
+        <div class="difficulty-grid" id="difficulty-selection-options">
+          <!-- Difficulty options will be generated here -->
+          <div class="difficulty-option easy" data-difficulty="easy">
+            <div class="difficulty-icon">🌱</div>
+            <h3>Easy</h3>
+            <p>Perfect for beginners. Enemies are weaker and move slower.</p>
+            <div class="waves">20 Waves</div>
+            <div class="reward">Silver Reward: x1</div>
+          </div>
+
+          <div class="difficulty-option medium" data-difficulty="medium">
+            <div class="difficulty-icon">🌿</div>
+            <h3>Medium</h3>
+            <p>Balanced challenge with moderate enemy strength.</p>
+            <div class="waves">30 Waves</div>
+            <div class="reward">Silver Reward: x1.5</div>
+          </div>
+
+          <div class="difficulty-option hard" data-difficulty="hard">
+            <div class="difficulty-icon">🔥</div>
+            <h3>Hard</h3>
+            <p>Challenging gameplay with stronger enemies and special units.</p>
+            <div class="waves">40 Waves</div>
+            <div class="reward">Silver Reward: x2</div>
+          </div>
+
+          <div class="difficulty-option nightmare" data-difficulty="nightmare">
+            <div class="difficulty-icon">☠️</div>
+            <h3>Nightmare</h3>
+            <p>Extremely difficult with powerful enemies and unique bosses.</p>
+            <div class="waves">50 Waves</div>
+            <div class="reward">Silver Reward: x3</div>
+          </div>
+
+          <div class="difficulty-option void" data-difficulty="void">
+            <div class="difficulty-icon">⚫</div>
+            <h3>Void</h3>
+            <p>The ultimate challenge with corrupted versions of all enemies.</p>
+            <div class="waves">50 Waves</div>
+            <div class="reward">Silver Reward: x4</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="back-to-map-btn" class="secondary-btn">Back</button>
           <button id="start-game-btn" class="primary-btn">Start Game</button>
         </div>
       </div>
     </div>
-    
+
     <!-- Tower Shop Modal -->
     <div id="tower-shop-modal" class="modal">
       <div class="modal-content shop-content">
@@ -68,7 +124,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Tower Upgrades Modal -->
     <div id="tower-upgrades-modal" class="modal">
       <div class="modal-content upgrades-content">

@@ -122,6 +122,7 @@ const enemyTypes = {
 
 // Boss types with their properties
 const bossTypes = {
+  // Original bosses
   megaTank: {
     name: "Mega Tank",
     baseHealth: 500,
@@ -177,5 +178,283 @@ const bossTypes = {
         interval: 8
       }
     ]
+  },
+
+  // Difficulty-specific bosses
+  easyBoss: {
+    name: "Forest Guardian",
+    baseHealth: 1500,
+    speed: 0.6,
+    reward: 150,
+    damage: 3,
+    color: '#4CAF50', // Green
+    size: 40,
+    flying: false,
+    armor: 0.3,
+    abilities: [
+      {
+        name: "Nature's Blessing",
+        effect: "Heals itself over time",
+        healAmount: 10,
+        interval: 3
+      }
+    ],
+    specialEffect: 'pulse'
+  },
+
+  mediumBoss: {
+    name: "Frost Titan",
+    baseHealth: 3000,
+    speed: 0.5,
+    reward: 250,
+    damage: 4,
+    color: '#2196F3', // Blue
+    size: 45,
+    flying: false,
+    armor: 0.4,
+    abilities: [
+      {
+        name: "Freezing Aura",
+        effect: "Slows nearby towers",
+        radius: 150,
+        slowFactor: 0.5,
+        duration: 3,
+        interval: 5
+      }
+    ],
+    specialEffect: 'ice'
+  },
+
+  hardBoss: {
+    name: "Inferno Colossus",
+    baseHealth: 5000,
+    speed: 0.4,
+    reward: 400,
+    damage: 5,
+    color: '#FF9800', // Orange
+    size: 50,
+    flying: false,
+    armor: 0.5,
+    abilities: [
+      {
+        name: "Flame Dash",
+        effect: "Teleports forward on the path",
+        distance: 200,
+        interval: 8
+      },
+      {
+        name: "Heat Wave",
+        effect: "Damages nearby towers",
+        radius: 120,
+        damage: 20,
+        interval: 10
+      }
+    ],
+    specialEffect: 'fire'
+  },
+
+  nightmareBoss: {
+    name: "Nightmare Devourer",
+    baseHealth: 8000,
+    speed: 0.35,
+    reward: 600,
+    damage: 8,
+    color: '#F44336', // Red
+    size: 55,
+    flying: true,
+    armor: 0.6,
+    abilities: [
+      {
+        name: "Shadow Step",
+        effect: "Teleports forward on the path",
+        distance: 250,
+        interval: 6
+      },
+      {
+        name: "Summon Nightmares",
+        effect: "Spawns smaller enemies",
+        spawnType: 'fast',
+        spawnCount: 3,
+        interval: 7
+      },
+      {
+        name: "Life Drain",
+        effect: "Heals itself by damaging towers",
+        radius: 150,
+        damage: 15,
+        healFactor: 2,
+        interval: 5
+      }
+    ],
+    specialEffect: 'shadow'
+  },
+
+  voidBoss: {
+    name: "Void Entity",
+    baseHealth: 12000,
+    speed: 0.3,
+    reward: 1000,
+    damage: 10,
+    color: '#9C27B0', // Purple
+    size: 60,
+    flying: true,
+    armor: 0.7,
+    abilities: [
+      {
+        name: "Reality Warp",
+        effect: "Teleports forward on the path",
+        distance: 300,
+        interval: 5
+      },
+      {
+        name: "Void Spawn",
+        effect: "Spawns corrupted enemies",
+        spawnType: 'armored',
+        spawnCount: 4,
+        interval: 6
+      },
+      {
+        name: "Energy Absorption",
+        effect: "Heals itself by disabling towers",
+        radius: 200,
+        disableDuration: 3,
+        healAmount: 100,
+        interval: 8
+      },
+      {
+        name: "Dimensional Shift",
+        effect: "Becomes invulnerable briefly",
+        duration: 2,
+        interval: 12
+      }
+    ],
+    specialEffect: 'void'
+  },
+
+  // Void versions of other bosses (black versions)
+  voidEasyBoss: {
+    name: "Corrupted Forest Guardian",
+    baseHealth: 3000,
+    speed: 0.5,
+    reward: 300,
+    damage: 5,
+    color: '#000000', // Black
+    secondaryColor: '#4CAF50', // Green glow
+    size: 40,
+    flying: false,
+    armor: 0.4,
+    abilities: [
+      {
+        name: "Corrupted Blessing",
+        effect: "Heals itself and nearby enemies",
+        healAmount: 15,
+        radius: 120,
+        interval: 3
+      },
+      {
+        name: "Nature's Wrath",
+        effect: "Disables towers temporarily",
+        radius: 150,
+        disableDuration: 2,
+        interval: 8
+      }
+    ],
+    specialEffect: 'void'
+  },
+
+  voidMediumBoss: {
+    name: "Corrupted Frost Titan",
+    baseHealth: 5000,
+    speed: 0.45,
+    reward: 400,
+    damage: 6,
+    color: '#000000', // Black
+    secondaryColor: '#2196F3', // Blue glow
+    size: 45,
+    flying: false,
+    armor: 0.5,
+    abilities: [
+      {
+        name: "Void Freeze",
+        effect: "Freezes all towers briefly",
+        radius: 250,
+        freezeDuration: 1.5,
+        interval: 10
+      },
+      {
+        name: "Dimensional Shift",
+        effect: "Teleports forward on the path",
+        distance: 200,
+        interval: 7
+      }
+    ],
+    specialEffect: 'void'
+  },
+
+  voidHardBoss: {
+    name: "Corrupted Inferno Colossus",
+    baseHealth: 8000,
+    speed: 0.4,
+    reward: 600,
+    damage: 8,
+    color: '#000000', // Black
+    secondaryColor: '#FF9800', // Orange glow
+    size: 50,
+    flying: false,
+    armor: 0.6,
+    abilities: [
+      {
+        name: "Void Flame",
+        effect: "Damages all towers in range",
+        radius: 200,
+        damage: 30,
+        interval: 8
+      },
+      {
+        name: "Summon Void Flames",
+        effect: "Spawns smaller enemies",
+        spawnType: 'fast',
+        spawnCount: 3,
+        interval: 6
+      }
+    ],
+    specialEffect: 'void'
+  },
+
+  voidNightmareBoss: {
+    name: "Corrupted Nightmare Devourer",
+    baseHealth: 12000,
+    speed: 0.35,
+    reward: 800,
+    damage: 10,
+    color: '#000000', // Black
+    secondaryColor: '#F44336', // Red glow
+    size: 55,
+    flying: true,
+    armor: 0.7,
+    abilities: [
+      {
+        name: "Void Step",
+        effect: "Teleports forward on the path",
+        distance: 300,
+        interval: 5
+      },
+      {
+        name: "Summon Void Nightmares",
+        effect: "Spawns corrupted enemies",
+        spawnType: 'armored',
+        spawnCount: 4,
+        interval: 6
+      },
+      {
+        name: "Void Drain",
+        effect: "Disables towers and heals",
+        radius: 180,
+        disableDuration: 2,
+        healAmount: 200,
+        interval: 7
+      }
+    ],
+    specialEffect: 'void'
   }
 };

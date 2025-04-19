@@ -11,6 +11,13 @@ class Game {
     this.gameOver = false;
     this.paused = false;
     this.speedMultiplier = 1;
+    this.maxSpeedMultiplier = 2.3; // Changed from 5 to 2.3 as requested
+
+    // Difficulty settings
+    this.difficulty = sessionStorage.getItem('selectedDifficulty') || 'easy';
+    this.waveLimit = getWaveLimit(this.difficulty); // Get wave limit based on difficulty
+    this.silverMultiplier = getSilverMultiplier(this.difficulty); // Get silver multiplier
+    console.log(`Game difficulty: ${this.difficulty}, Wave limit: ${this.waveLimit}, Silver multiplier: ${this.silverMultiplier}x`);
 
     // Make the game instance globally accessible
     window.game = this;
@@ -280,7 +287,7 @@ class Game {
   // Toggle game speed
   toggleSpeed() {
     if (this.speedMultiplier === 1) {
-      this.speedMultiplier = 5;
+      this.speedMultiplier = this.maxSpeedMultiplier;
       document.getElementById('speedUp').textContent = 'Normal Speed';
     } else {
       this.speedMultiplier = 1;
@@ -324,24 +331,85 @@ class Game {
     console.log(`Started wave ${this.wave} with ${this.totalEnemiesInWave} enemies`);
   }
 
+  // Generate boss waves based on difficulty
+  generateBossWaves() {
+    // Define boss waves for each difficulty
+    const bossWaves = {
+      easy: [10, 20], // Wave 10: Regular boss, Wave 20: Easy boss (final)
+      medium: [10, 20, 30], // Wave 30: Medium boss (final)
+      hard: [10, 20, 30, 40], // Wave 40: Hard boss (final)
+      nightmare: [10, 20, 30, 40, 50], // Wave 50: Nightmare boss (final)
+      void: [10, 20, 30, 40, 50] // Wave 50: Void boss (final)
+    };
+
+    return bossWaves[this.difficulty] || [10, 20];
+  }
+
+  // Determine if current wave is a boss wave
+  isBossWave(wave) {
+    return this.bossWaves.includes(wave);
+  }
+
+  // Get boss type based on wave and difficulty
+  getBossType(wave) {
+    // For void difficulty, use corrupted versions of bosses
+    if (this.difficulty === 'void') {
+      if (wave === 10) return 'voidEasyBoss';
+      if (wave === 20) return 'voidMediumBoss';
+      if (wave === 30) return 'voidHardBoss';
+      if (wave === 40) return 'voidNightmareBoss';
+      if (wave === 50) return 'voidBoss';
+      return 'boss';
+    }
+
+    // For other difficulties
+    if (wave === this.waveLimit) {
+      // Final boss for this difficulty
+      switch (this.difficulty) {
+        case 'easy': return 'easyBoss';
+        case 'medium': return 'mediumBoss';
+        case 'hard': return 'hardBoss';
+        case 'nightmare': return 'nightmareBoss';
+        default: return 'boss';
+      }
+    }
+
+    // Regular boss for intermediate boss waves
+    return 'boss';
+  }
+
   // Spawn an enemy
   spawnEnemy() {
     if (this.enemiesSpawned >= this.totalEnemiesInWave) return;
 
-    // Determine enemy type based on wave and randomness
+    // Determine enemy type based on wave, difficulty, and randomness
     let enemyType = 'normal';
     const rand = Math.random();
+    const isFinalEnemy = this.enemiesSpawned === this.totalEnemiesInWave - 1;
 
-    // Normal mode enemy spawning
-    if (this.wave >= 8 && this.enemiesSpawned === this.totalEnemiesInWave - 1) {
-      // Spawn a boss at the end of waves 8+ (reduced from 10)
-      enemyType = 'boss';
-    } else if (this.wave >= 4 && rand < 0.15) {
+    // Check if this is a boss wave and the final enemy of the wave
+    if (this.isBossWave(this.wave) && isFinalEnemy) {
+      // Get appropriate boss type based on wave and difficulty
+      enemyType = this.getBossType(this.wave);
+      console.log(`Spawning ${enemyType} for wave ${this.wave} on ${this.difficulty} difficulty`);
+    }
+    // Regular enemy spawning based on wave progression
+    else if (this.wave >= 4 && rand < 0.15) {
       enemyType = 'tank';
     } else if (this.wave >= 2 && rand < 0.25) {
       enemyType = 'fast';
     } else if (this.wave >= 6 && rand < 0.2) {
       enemyType = 'flying';
+    } else if (this.wave >= 8 && rand < 0.15) {
+      enemyType = 'armored';
+    } else if (this.wave >= 10 && rand < 0.1) {
+      enemyType = 'healing';
+    } else if (this.wave >= 12 && rand < 0.1) {
+      enemyType = 'spawner';
+    } else if (this.wave >= 15 && rand < 0.1) {
+      enemyType = 'invisible';
+    } else if (this.wave >= 18 && rand < 0.1) {
+      enemyType = 'explosive';
     }
 
     // Create the enemy
@@ -399,18 +467,22 @@ class Game {
         if (this.lives <= 0) {
           this.gameOver = true;
 
-          // Calculate silver earned (10% of score + 5 per wave completed)
-          this.silverEarned = Math.floor(this.score * 0.1) + (this.wave * 5);
+          // Calculate silver earned (10% of score + 5 per wave completed) with difficulty multiplier
+          this.silverEarned = Math.floor((this.score * 0.1) + (this.wave * 5)) * this.silverMultiplier;
 
           // Update player data if available
           if (typeof addSilver === 'function') {
             addSilver(this.silverEarned);
             updateHighScore(this.score);
+            updateHighestWave(this.wave);
           }
 
           // Show game over screen
           document.getElementById('game-over').classList.add('active');
+          document.getElementById('game-over-title').textContent = 'Game Over';
           document.getElementById('final-score').textContent = formatNumber(this.score);
+          document.getElementById('final-difficulty').textContent = this.difficulty.charAt(0).toUpperCase() + this.difficulty.slice(1);
+          document.getElementById('waves-completed').textContent = this.wave;
 
           // Add silver earned to game over screen
           const silverElement = document.getElementById('silver-earned');
@@ -476,20 +548,59 @@ class Game {
         this.enemiesSpawned >= this.totalEnemiesInWave &&
         this.enemies.length === 0) {
       this.waveInProgress = false;
+
+      // Check if we've reached the wave limit for this difficulty
+      if (this.wave >= this.waveLimit) {
+        // Victory! Player has completed all waves for this difficulty
+        this.gameOver = true;
+        this.victory = true;
+
+        // Calculate silver earned with difficulty multiplier
+        this.silverEarned = Math.floor((this.score * 0.1) + (this.wave * 5)) * this.silverMultiplier;
+
+        // Update player data
+        if (typeof addSilver === 'function') {
+          addSilver(this.silverEarned);
+          updateHighScore(this.score);
+          updateHighestWave(this.wave);
+
+          // Mark this difficulty as completed
+          completeDifficulty(this.difficulty);
+        }
+
+        // Show victory screen
+        document.getElementById('game-over').classList.add('active');
+        document.getElementById('game-over-title').textContent = 'Victory!';
+        document.getElementById('final-score').textContent = formatNumber(this.score);
+
+        // Add silver earned to victory screen
+        const silverElement = document.getElementById('silver-earned');
+        if (silverElement) {
+          silverElement.textContent = this.silverEarned;
+        }
+
+        console.log(`Victory! Completed ${this.difficulty} difficulty. Final score: ${this.score}, Silver earned: ${this.silverEarned}`);
+        return;
+      }
+
+      // Continue to next wave
       this.wave++;
 
       // Bonus gold for completing wave
       const waveBonus = 50 + this.wave * 10;
       this.gold += waveBonus;
 
-      // Award silver for completing waves
-      const silverReward = Math.floor(this.wave * 5);
+      // Award silver for completing waves with difficulty multiplier
+      const silverReward = Math.floor(this.wave * 5 * this.silverMultiplier);
       if (typeof addSilver === 'function') {
         addSilver(silverReward);
         console.log(`Earned ${silverReward} silver for completing wave ${this.wave-1}`);
 
         // Show silver reward notification
         this.showSilverReward(silverReward);
+
+        // Update highest wave
+        updateHighestWave(this.wave - 1);
       }
 
       // Update UI

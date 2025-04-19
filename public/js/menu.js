@@ -37,6 +37,66 @@ function isVariantUnlocked(towerType, variant) {
   return playerData.towerVariants[towerType]?.includes(variant);
 }
 
+// Check for unlocked difficulties
+function checkUnlockedDifficulties() {
+  // Get player progress from playerData
+  const highestWaveCompleted = playerData.highestWaveCompleted || 0;
+
+  // Lock difficulties based on progress
+  const difficultyOptions = document.querySelectorAll('.difficulty-option');
+
+  // Easy is always unlocked
+  difficultyOptions[0].classList.add('selected'); // Select Easy by default
+
+  // Medium unlocks after completing wave 15 on Easy
+  if (highestWaveCompleted < 15) {
+    difficultyOptions[1].classList.add('locked');
+    if (!difficultyOptions[1].querySelector('.lock-icon')) {
+      const lockIcon = document.createElement('div');
+      lockIcon.className = 'lock-icon';
+      lockIcon.textContent = '🔒';
+      difficultyOptions[1].appendChild(lockIcon);
+      difficultyOptions[1].querySelector('p').textContent = 'Unlocks after completing Wave 15 on Easy';
+    }
+  }
+
+  // Hard unlocks after completing wave 25 on Medium
+  if (highestWaveCompleted < 25) {
+    difficultyOptions[2].classList.add('locked');
+    if (!difficultyOptions[2].querySelector('.lock-icon')) {
+      const lockIcon = document.createElement('div');
+      lockIcon.className = 'lock-icon';
+      lockIcon.textContent = '🔒';
+      difficultyOptions[2].appendChild(lockIcon);
+      difficultyOptions[2].querySelector('p').textContent = 'Unlocks after completing Wave 25 on Medium';
+    }
+  }
+
+  // Nightmare unlocks after completing wave 35 on Hard
+  if (highestWaveCompleted < 35) {
+    difficultyOptions[3].classList.add('locked');
+    if (!difficultyOptions[3].querySelector('.lock-icon')) {
+      const lockIcon = document.createElement('div');
+      lockIcon.className = 'lock-icon';
+      lockIcon.textContent = '🔒';
+      difficultyOptions[3].appendChild(lockIcon);
+      difficultyOptions[3].querySelector('p').textContent = 'Unlocks after completing Wave 35 on Hard';
+    }
+  }
+
+  // Void unlocks after completing wave 45 on Nightmare
+  if (highestWaveCompleted < 45) {
+    difficultyOptions[4].classList.add('locked');
+    if (!difficultyOptions[4].querySelector('.lock-icon')) {
+      const lockIcon = document.createElement('div');
+      lockIcon.className = 'lock-icon';
+      lockIcon.textContent = '🔒';
+      difficultyOptions[4].appendChild(lockIcon);
+      difficultyOptions[4].querySelector('p').textContent = 'Unlocks after completing Wave 45 on Nightmare';
+    }
+  }
+}
+
 // Create animated stars in the background
 function createStars() {
   // Use document.body as the container to make stars appear on all screens
@@ -118,18 +178,54 @@ function setupEventListeners() {
     });
   });
 
-  // Start game button
-  document.getElementById('start-game-btn').addEventListener('click', () => {
+  // Select difficulty button (after map selection)
+  document.getElementById('select-difficulty-btn').addEventListener('click', () => {
     const selectedMap = document.querySelector('.map-option.selected');
     if (selectedMap) {
       const mapId = selectedMap.dataset.mapId;
       // Store selected map in session storage
       sessionStorage.setItem('selectedMap', mapId);
-      // Navigate to game.html
-      window.location.href = 'game.html';
+      // Show difficulty selection modal
+      document.getElementById('map-selection-modal').classList.remove('active');
+      document.getElementById('difficulty-selection-modal').classList.add('active');
+
+      // Check for unlocked difficulties
+      checkUnlockedDifficulties();
     } else {
       alert('Please select a map first');
     }
+  });
+
+  // Back to map selection button
+  document.getElementById('back-to-map-btn').addEventListener('click', () => {
+    document.getElementById('difficulty-selection-modal').classList.remove('active');
+    document.getElementById('map-selection-modal').classList.add('active');
+  });
+
+  // Start game button (after difficulty selection)
+  document.getElementById('start-game-btn').addEventListener('click', () => {
+    const selectedDifficulty = document.querySelector('.difficulty-option.selected');
+    if (selectedDifficulty) {
+      const difficulty = selectedDifficulty.dataset.difficulty;
+      // Store selected difficulty in session storage
+      sessionStorage.setItem('selectedDifficulty', difficulty);
+      // Navigate to game.html
+      window.location.href = 'game.html';
+    } else {
+      alert('Please select a difficulty level first');
+    }
+  });
+
+  // Add click event listeners to difficulty options
+  document.querySelectorAll('.difficulty-option:not(.locked)').forEach(option => {
+    option.addEventListener('click', () => {
+      // Remove selected class from all options
+      document.querySelectorAll('.difficulty-option').forEach(opt => {
+        opt.classList.remove('selected');
+      });
+      // Add selected class to clicked option
+      option.classList.add('selected');
+    });
   });
 }
 

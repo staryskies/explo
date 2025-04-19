@@ -196,7 +196,8 @@ class Projectile {
 
     const affectedEnemies = [];
 
-    if (this.type === 'aoe' && this.aoeRadius) {
+    // Handle AOE projectiles (cannon, mortar)
+    if ((this.type === 'aoe' || this.type === 'cannon' || this.type === 'mortar') && this.aoeRadius) {
       // Apply AOE damage to all enemies in radius
       enemies.forEach(enemy => {
         if (enemy.alive) {
@@ -206,20 +207,139 @@ class Projectile {
             const falloff = 1 - (dist / this.aoeRadius) * 0.7;
             const actualDamage = Math.floor(this.damage * falloff);
 
+            // Apply stun effect if this projectile has stun chance
+            if (this.stunChance && Math.random() < this.stunChance) {
+              enemy.applyStunEffect(this.stunDuration || 1000);
+            }
+
             const killed = enemy.takeDamage(actualDamage, this.towerType);
             affectedEnemies.push({enemy, killed, damage: actualDamage});
           }
         }
       });
-    } else if (this.type === 'slow' && this.target && this.target.alive) {
+    }
+    // Handle freeze tower projectiles
+    else if ((this.type === 'slow' || this.type === 'freeze') && this.target && this.target.alive) {
       // Apply slow effect to target
-      this.target.applySlowEffect(this.slowFactor, this.slowDuration);
+      this.target.applySlowEffect(this.slowFactor || 0.5, this.slowDuration || 2000);
+
+      // Apply splash slow if this projectile has splash radius
+      if (this.aoeRadius) {
+        enemies.forEach(enemy => {
+          if (enemy.alive && enemy !== this.target) {
+            const dist = distance(this.x, this.y, enemy.x, enemy.y);
+            if (dist <= this.aoeRadius) {
+              enemy.applySlowEffect(this.slowFactor || 0.5, this.slowDuration || 2000);
+            }
+          }
+        });
+      }
+
       const killed = this.target.takeDamage(this.damage, this.towerType);
       affectedEnemies.push({enemy: this.target, killed, damage: this.damage});
-    } else if (this.target && this.target.alive) {
+    }
+    // Handle flame tower projectiles
+    else if (this.type === 'flame' && this.target && this.target.alive) {
+      // Apply burn effect to target
+      this.target.applyBurnEffect(this.damage * 0.2, 3000); // 20% of damage per second for 3 seconds
+
+      const killed = this.target.takeDamage(this.damage, this.towerType);
+      affectedEnemies.push({enemy: this.target, killed, damage: this.damage});
+    }
+    // Handle poison tower projectiles
+    else if (this.type === 'poison' && this.target && this.target.alive) {
+      // Apply poison effect to target
+      this.target.applyPoisonEffect(this.damage * 0.15, 5000); // 15% of damage per second for 5 seconds
+
+      const killed = this.target.takeDamage(this.damage, this.towerType);
+      affectedEnemies.push({enemy: this.target, killed, damage: this.damage});
+    }
+    // Handle tesla tower projectiles
+    else if (this.type === 'tesla' && this.target && this.target.alive) {
+      // Apply stun effect to target
+      this.target.applyStunEffect(1000); // 1 second stun
+
+      // Chain lightning to nearby enemies
+      if (this.chainCount && this.chainCount > 0) {
+        let remainingChains = this.chainCount;
+        let lastTarget = this.target;
+        let chainDamage = this.damage * 0.7; // 70% damage for chained targets
+
+        while (remainingChains > 0) {
+          // Find the closest enemy to the last target
+          let closestEnemy = null;
+          let closestDist = this.chainRange || 150;
+
+          enemies.forEach(enemy => {
+            if (enemy.alive && enemy !== lastTarget && enemy !== this.target) {
+              const dist = distance(lastTarget.x, lastTarget.y, enemy.x, enemy.y);
+              if (dist < closestDist) {
+                closestDist = dist;
+                closestEnemy = enemy;
+              }
+            }
+          });
+
+          if (closestEnemy) {
+            // Apply chain lightning effect
+            closestEnemy.applyStunEffect(500); // 0.5 second stun for chained targets
+            const killed = closestEnemy.takeDamage(chainDamage, this.towerType);
+            affectedEnemies.push({enemy: closestEnemy, killed, damage: chainDamage});
+
+            // Set up for next chain
+            lastTarget = closestEnemy;
+            chainDamage *= 0.7; // Reduce damage for each chain
+          } else {
+            // No more targets in range
+            break;
+          }
+
+          remainingChains--;
+        }
+      }
+
+      const killed = this.target.takeDamage(this.damage, this.towerType);
+      affectedEnemies.push({enemy: this.target, killed, damage: this.damage});
+    }
+    // Handle acid projectiles (special variant of poison)
+    else if (this.towerType === 'acid' && this.target && this.target.alive) {
+      // Apply acid effect to target (reduces armor)
+      this.target.applyAcidEffect(0.5, 4000); // Reduce armor by 50% for 4 seconds
+
+      const killed = this.target.takeDamage(this.damage, this.towerType);
+      affectedEnemies.push({enemy: this.target, killed, damage: this.damage});
+    }
+    // Handle all other projectile types
+    else if (this.target && this.target.alive) {
       // Apply direct damage to target
       const killed = this.target.takeDamage(this.damage, this.towerType);
       affectedEnemies.push({enemy: this.target, killed, damage: this.damage});
+
+      // Apply armor piercing for sniper towers
+      if (this.towerType === 'sniper' && this.armorPiercing && this.target.armor) {
+        // Bypass a percentage of armor
+        const armorPiercingDamage = this.damage * this.armorPiercing * this.target.armor;
+        const piercingKilled = this.target.takeDamage(armorPiercingDamage, this.towerType);
+
+        if (piercingKilled && !killed) {
+          affectedEnemies[0].killed = true;
+        }
+
+        affectedEnemies[0].damage += armorPiercingDamage;
+      }
+
+      // Apply critical hit visual effect
+      if (this.isCritical) {
+        // Add critical hit effect to the game if available
+        if (window.game && window.game.addEffect) {
+          window.game.addEffect({
+            type: 'critical',
+            x: this.target.x,
+            y: this.target.y,
+            duration: 500
+          });
+        }
+      }
     }
 
     return affectedEnemies;

@@ -14,9 +14,19 @@ const playerData = {
   gamesPlayed: 0,
   wavesCompleted: 0,
   enemiesKilled: 0,
+  highestWaveCompleted: 0,
+  completedDifficulties: [],
 
-  // Unlocked towers (all towers unlocked for testing)
+  // Unlocked towers (basic is always unlocked)
   unlockedTowers: ['basic'],
+
+  // Towers that require completing specific difficulties
+  lockedTowers: {
+    'tesla': 'easy',     // Unlocked after completing Easy difficulty
+    'flame': 'medium',   // Unlocked after completing Medium difficulty
+    'poison': 'hard',    // Unlocked after completing Hard difficulty
+    'vortex': 'nightmare' // Unlocked after completing Nightmare difficulty
+  },
 
   // Tower variants unlocked
   towerVariants: {
@@ -259,6 +269,66 @@ function addSilver(amount) {
   }
 
   return amount;
+}
+
+// Complete a difficulty level
+function completeDifficulty(difficulty) {
+  if (!playerData.completedDifficulties.includes(difficulty)) {
+    playerData.completedDifficulties.push(difficulty);
+    savePlayerData();
+
+    // Unlock towers associated with this difficulty
+    Object.entries(playerData.lockedTowers).forEach(([tower, requiredDifficulty]) => {
+      if (requiredDifficulty === difficulty && !playerData.unlockedTowers.includes(tower)) {
+        unlockTower(tower);
+        console.log(`Unlocked ${tower} tower for completing ${difficulty} difficulty!`);
+      }
+    });
+
+    return true;
+  }
+  return false;
+}
+
+// Check if a difficulty is completed
+function isDifficultyCompleted(difficulty) {
+  return playerData.completedDifficulties.includes(difficulty);
+}
+
+// Update highest wave completed
+function updateHighestWave(wave) {
+  if (wave > playerData.highestWaveCompleted) {
+    playerData.highestWaveCompleted = wave;
+    savePlayerData();
+    return true;
+  }
+  return false;
+}
+
+// Get silver multiplier based on difficulty
+function getSilverMultiplier(difficulty) {
+  const multipliers = {
+    'easy': 1,
+    'medium': 1.5,
+    'hard': 2,
+    'nightmare': 3,
+    'void': 4
+  };
+
+  return multipliers[difficulty] || 1;
+}
+
+// Get wave limit based on difficulty
+function getWaveLimit(difficulty) {
+  const waveLimits = {
+    'easy': 20,
+    'medium': 30,
+    'hard': 40,
+    'nightmare': 50,
+    'void': 50
+  };
+
+  return waveLimits[difficulty] || 20;
 }
 
 // Initialize player data

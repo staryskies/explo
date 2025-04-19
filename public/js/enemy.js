@@ -15,17 +15,45 @@ class Enemy {
     this.reachedEnd = false;
     this.slowEffect = 1; // 1 = normal speed, < 1 = slowed
     this.slowDuration = 0;
-    this.isBoss = false;
-    this.bossType = null;
-    this.isInvulnerable = false;
     this.speedBoost = 1;
+
+    // Status effects
+    this.isInvulnerable = false;
+    this.isSlowed = false;
+    this.isBurning = false;
+    this.isPoisoned = false;
+    this.isStunned = false;
+    this.isAcidified = false; // Acid effect reduces armor
+
+    // Status effect durations (in milliseconds)
+    this.burnDuration = 0;
+    this.poisonDuration = 0;
+    this.stunDuration = 0;
+    this.acidDuration = 0;
+
+    // Status effect values
+    this.burnDamage = 0;
+    this.poisonDamage = 0;
+    this.acidArmorReduction = 0;
+
+    // Special effects
+    this.specialEffect = null;
+    this.specialEffectTimer = 0;
+
+    // Check if this is a boss type
+    this.isBoss = type.includes('Boss') || type === 'boss';
+    this.bossType = this.isBoss ? type : null;
+
+    // Boss abilities
+    this.abilities = [];
+    this.abilityCooldowns = {};
 
     // Set properties based on enemy type
     this.setPropertiesByType();
 
-    // Initialize special abilities if applicable
-    if (typeof this.initializeSpecialAbilities === 'function') {
-      this.initializeSpecialAbilities();
+    // Initialize special abilities for bosses
+    if (this.isBoss) {
+      this.initializeBossAbilities();
     }
 
     // Calculate direction to the next point
@@ -34,8 +62,37 @@ class Enemy {
 
   // Set enemy properties based on type
   setPropertiesByType() {
-    // If this is a boss, properties are set elsewhere
-    if (this.isBoss) return;
+    // For boss types, get properties from bossTypes
+    if (this.isBoss && typeof bossTypes !== 'undefined' && bossTypes[this.type]) {
+      const bossData = bossTypes[this.type];
+      this.maxHealth = bossData.baseHealth;
+      this.health = this.maxHealth;
+      this.speed = bossData.speed;
+      this.reward = bossData.reward;
+      this.color = bossData.color;
+      this.secondaryColor = bossData.secondaryColor; // For void bosses
+      this.size = bossData.size;
+      this.flying = bossData.flying || false;
+      this.damage = bossData.damage || 5;
+      this.armor = bossData.armor || 0;
+      this.abilities = bossData.abilities || [];
+      this.specialEffect = bossData.specialEffect;
+      this.name = bossData.name || 'Boss';
+      return;
+    }
+
+    // If this is a regular boss but not in bossTypes
+    if (this.isBoss) {
+      this.maxHealth = 1000;
+      this.health = this.maxHealth;
+      this.speed = 0.6;
+      this.size = 40;
+      this.color = '#F44336';
+      this.reward = 200;
+      this.damage = 5;
+      this.armor = 0.3;
+      return;
+    }
 
     // Get properties from enemyTypes if available
     if (typeof enemyTypes !== 'undefined' && enemyTypes[this.type]) {
@@ -187,6 +244,191 @@ class Enemy {
     }
   }
 
+  // Initialize boss abilities
+  initializeBossAbilities() {
+    // If this boss has abilities defined in bossTypes
+    if (typeof bossTypes !== 'undefined' && bossTypes[this.type] && bossTypes[this.type].abilities) {
+      const abilities = bossTypes[this.type].abilities;
+
+      // Initialize cooldowns for each ability
+      abilities.forEach(ability => {
+        if (ability.name) {
+          this.abilityCooldowns[ability.name] = 0;
+        }
+      });
+
+      console.log(`Initialized boss ${this.type} with abilities:`, abilities);
+    }
+  }
+
+  // Use boss ability
+  useAbility(game) {
+    if (!this.isBoss || !game) return;
+
+    // Get abilities from bossTypes
+    const abilities = bossTypes[this.type]?.abilities || [];
+
+    // Try to use each ability if off cooldown
+    abilities.forEach(ability => {
+      if (!ability.name || !ability.interval) return;
+
+      // Check if ability is off cooldown
+      if (this.abilityCooldowns[ability.name] <= 0) {
+        // Use the ability based on its type
+        switch(ability.name) {
+          case 'Regeneration':
+          case 'Nature\'s Blessing':
+          case 'Corrupted Blessing':
+            // Heal self
+            this.health = Math.min(this.maxHealth, this.health + (ability.healAmount || 10));
+            console.log(`${this.type} used ${ability.name} and healed for ${ability.healAmount}`);
+            break;
+
+          case 'Summon Minions':
+          case 'Summon Nightmares':
+          case 'Void Spawn':
+          case 'Summon Void Flames':
+          case 'Summon Void Nightmares':
+            // Spawn minions
+            const spawnCount = ability.spawnCount || 2;
+            const spawnType = ability.spawnType || 'normal';
+
+            for (let i = 0; i < spawnCount; i++) {
+              // Create a new enemy at the boss's position
+              const minion = new Enemy(this.path, spawnType);
+              minion.pathIndex = this.pathIndex;
+              minion.x = this.x;
+              minion.y = this.y;
+
+              // Add to game's enemies array
+              if (game.enemies) {
+                game.enemies.push(minion);
+                console.log(`${this.type} spawned a ${spawnType} minion`);
+              }
+            }
+            break;
+
+          case 'Phase Shift':
+          case 'Dimensional Shift':
+            // Become invulnerable
+            this.isInvulnerable = true;
+            setTimeout(() => {
+              this.isInvulnerable = false;
+            }, (ability.duration || 2) * 1000);
+            console.log(`${this.type} used ${ability.name} and became invulnerable for ${ability.duration}s`);
+            break;
+
+          case 'Flame Dash':
+          case 'Shadow Step':
+          case 'Reality Warp':
+          case 'Void Step':
+            // Teleport forward on the path
+            const teleportDistance = ability.distance || 200;
+            let distanceMoved = 0;
+            let originalPathIndex = this.pathIndex;
+
+            // Move forward along the path
+            while (distanceMoved < teleportDistance && this.pathIndex < this.path.length - 1) {
+              const nextPoint = this.path[this.pathIndex + 1];
+              const segmentDistance = distance(this.x, this.y, nextPoint.x, nextPoint.y);
+
+              if (distanceMoved + segmentDistance <= teleportDistance) {
+                // Move to next point
+                this.pathIndex++;
+                this.x = nextPoint.x;
+                this.y = nextPoint.y;
+                distanceMoved += segmentDistance;
+              } else {
+                // Move partially along segment
+                const ratio = (teleportDistance - distanceMoved) / segmentDistance;
+                this.x += (nextPoint.x - this.x) * ratio;
+                this.y += (nextPoint.y - this.y) * ratio;
+                distanceMoved = teleportDistance;
+              }
+            }
+
+            // Recalculate direction
+            this.calculateDirection();
+            console.log(`${this.type} used ${ability.name} and teleported from path index ${originalPathIndex} to ${this.pathIndex}`);
+            break;
+
+          case 'Freezing Aura':
+          case 'Void Freeze':
+            // Slow nearby towers
+            if (game.towers) {
+              const radius = ability.radius || 150;
+              const slowFactor = ability.slowFactor || 0.5;
+              const duration = ability.duration || 3;
+
+              game.towers.forEach(tower => {
+                const dist = distance(this.x, this.y, tower.x, tower.y);
+                if (dist <= radius) {
+                  // Apply slow effect to tower
+                  tower.slowEffect = slowFactor;
+                  tower.slowDuration = duration * 1000;
+                }
+              });
+              console.log(`${this.type} used ${ability.name} and slowed nearby towers`);
+            }
+            break;
+
+          case 'Heat Wave':
+          case 'Void Flame':
+            // Damage nearby towers
+            if (game.towers) {
+              const radius = ability.radius || 120;
+              const damage = ability.damage || 20;
+
+              game.towers.forEach(tower => {
+                const dist = distance(this.x, this.y, tower.x, tower.y);
+                if (dist <= radius) {
+                  // Damage tower
+                  if (tower.takeDamage) {
+                    tower.takeDamage(damage);
+                  }
+                }
+              });
+              console.log(`${this.type} used ${ability.name} and damaged nearby towers`);
+            }
+            break;
+
+          case 'Life Drain':
+          case 'Energy Absorption':
+          case 'Void Drain':
+            // Disable towers and heal
+            if (game.towers) {
+              const radius = ability.radius || 150;
+              const healAmount = ability.healAmount || 100;
+              const disableDuration = ability.disableDuration || 2;
+
+              let towersAffected = 0;
+              game.towers.forEach(tower => {
+                const dist = distance(this.x, this.y, tower.x, tower.y);
+                if (dist <= radius) {
+                  // Disable tower
+                  tower.disabled = true;
+                  setTimeout(() => {
+                    tower.disabled = false;
+                  }, disableDuration * 1000);
+                  towersAffected++;
+                }
+              });
+
+              // Heal based on towers affected
+              if (towersAffected > 0) {
+                this.health = Math.min(this.maxHealth, this.health + healAmount);
+                console.log(`${this.type} used ${ability.name}, disabled ${towersAffected} towers and healed for ${healAmount}`);
+              }
+            }
+            break;
+        }
+
+        // Set cooldown
+        this.abilityCooldowns[ability.name] = ability.interval;
+      }
+    });
+  }
+
   // Update enemy position and state
   update(deltaTime) {
     if (!this.alive) return;
@@ -198,6 +440,26 @@ class Enemy {
         this.slowEffect = 1; // Reset to normal speed
       }
     }
+
+    // Update status effects
+    this.updateStatusEffects(deltaTime);
+
+    // Update boss ability cooldowns
+    if (this.isBoss) {
+      Object.keys(this.abilityCooldowns).forEach(ability => {
+        if (this.abilityCooldowns[ability] > 0) {
+          this.abilityCooldowns[ability] -= deltaTime;
+        }
+      });
+
+      // Try to use abilities if this is a boss
+      if (window.game) {
+        this.useAbility(window.game);
+      }
+    }
+
+    // Don't move if stunned
+    if (this.isStunned) return;
 
     // Calculate actual speed based on deltaTime
     // deltaTime is already in seconds
@@ -231,15 +493,116 @@ class Enemy {
     }
   }
 
+  // Update status effects
+  updateStatusEffects(deltaTime) {
+    // Convert deltaTime to milliseconds for duration tracking
+    const dtMs = deltaTime * 1000;
+
+    // Update burn effect
+    if (this.isBurning && this.burnDuration > 0) {
+      // Apply burn damage over time
+      this.health -= this.burnDamage * deltaTime;
+      this.burnDuration -= dtMs;
+
+      if (this.burnDuration <= 0) {
+        this.isBurning = false;
+      }
+    }
+
+    // Update poison effect
+    if (this.isPoisoned && this.poisonDuration > 0) {
+      // Apply poison damage over time
+      this.health -= this.poisonDamage * deltaTime;
+      this.poisonDuration -= dtMs;
+
+      if (this.poisonDuration <= 0) {
+        this.isPoisoned = false;
+      }
+    }
+
+    // Update stun effect
+    if (this.isStunned && this.stunDuration > 0) {
+      this.stunDuration -= dtMs;
+
+      if (this.stunDuration <= 0) {
+        this.isStunned = false;
+      }
+    }
+
+    // Update acid effect
+    if (this.isAcidified && this.acidDuration > 0) {
+      this.acidDuration -= dtMs;
+
+      if (this.acidDuration <= 0) {
+        this.isAcidified = false;
+        // Restore armor when acid effect ends
+        if (this.originalArmor !== undefined) {
+          this.armor = this.originalArmor;
+          delete this.originalArmor;
+        }
+      }
+    }
+
+    // Check if enemy died from status effects
+    if (this.health <= 0) {
+      this.health = 0;
+      this.alive = false;
+    }
+  }
+
   // Take damage from towers
   takeDamage(amount) {
-    this.health -= amount;
+    // If invulnerable, take no damage
+    if (this.isInvulnerable) return false;
+
+    // Apply armor reduction if applicable
+    let actualDamage = amount;
+    if (this.armor && !this.isAcidified) {
+      actualDamage *= (1 - this.armor);
+    } else if (this.armor && this.isAcidified) {
+      // Acid effect reduces armor effectiveness
+      actualDamage *= (1 - this.armor * (1 - this.acidArmorReduction));
+    }
+
+    this.health -= actualDamage;
     if (this.health <= 0) {
       this.health = 0;
       this.alive = false;
       return true; // Enemy died
     }
     return false; // Enemy still alive
+  }
+
+  // Apply burn effect (flame towers)
+  applyBurnEffect(damage, duration) {
+    this.isBurning = true;
+    this.burnDamage = damage;
+    this.burnDuration = duration;
+  }
+
+  // Apply poison effect (poison towers)
+  applyPoisonEffect(damage, duration) {
+    this.isPoisoned = true;
+    this.poisonDamage = damage;
+    this.poisonDuration = duration;
+  }
+
+  // Apply stun effect (tesla towers)
+  applyStunEffect(duration) {
+    this.isStunned = true;
+    this.stunDuration = duration;
+  }
+
+  // Apply acid effect (acid towers) - reduces armor
+  applyAcidEffect(armorReduction, duration) {
+    this.isAcidified = true;
+    this.acidArmorReduction = armorReduction;
+    this.acidDuration = duration;
+
+    // Store original armor value if not already stored
+    if (this.originalArmor === undefined && this.armor) {
+      this.originalArmor = this.armor;
+    }
   }
 
   // Apply slow effect
@@ -367,12 +730,244 @@ class Enemy {
       healthBarHeight
     );
 
-    // Draw slow effect indicator if slowed
+    // Draw status effect indicators
+
+    // Slow effect
     if (this.slowEffect < 1) {
       ctx.fillStyle = 'rgba(0, 149, 255, 0.5)';
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.size + 5, 0, Math.PI * 2);
       ctx.fill();
+    }
+
+    // Burn effect
+    if (this.isBurning) {
+      ctx.fillStyle = 'rgba(255, 87, 34, 0.5)';
+      ctx.beginPath();
+      for (let i = 0; i < 8; i++) {
+        const angle = Math.PI * 2 * i / 8;
+        const x = this.x + Math.cos(angle) * (this.size + 8);
+        const y = this.y + Math.sin(angle) * (this.size + 8);
+        const flameHeight = 10 + Math.random() * 5;
+
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(x, y);
+        ctx.lineTo(x + Math.cos(angle) * flameHeight, y + Math.sin(angle) * flameHeight);
+      }
+      ctx.fill();
+    }
+
+    // Poison effect
+    if (this.isPoisoned) {
+      ctx.fillStyle = 'rgba(76, 175, 80, 0.5)';
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size + 7, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Add poison bubbles
+      for (let i = 0; i < 5; i++) {
+        const angle = Math.PI * 2 * Math.random();
+        const distance = this.size * 0.8 * Math.random();
+        const x = this.x + Math.cos(angle) * distance;
+        const y = this.y + Math.sin(angle) * distance;
+
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(76, 175, 80, 0.8)';
+        ctx.fill();
+      }
+    }
+
+    // Stun effect
+    if (this.isStunned) {
+      ctx.fillStyle = 'rgba(255, 235, 59, 0.5)';
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size + 10, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Add stars
+      for (let i = 0; i < 3; i++) {
+        const angle = Math.PI * 2 * i / 3;
+        const x = this.x + Math.cos(angle) * (this.size + 15);
+        const y = this.y + Math.sin(angle) * (this.size + 15);
+
+        // Draw star
+        ctx.fillStyle = 'rgba(255, 235, 59, 0.9)';
+        ctx.beginPath();
+        for (let j = 0; j < 5; j++) {
+          const starAngle = Math.PI * 2 * j / 5 - Math.PI / 2;
+          const radius = j % 2 === 0 ? 5 : 2;
+          const starX = x + Math.cos(starAngle) * radius;
+          const starY = y + Math.sin(starAngle) * radius;
+
+          if (j === 0) {
+            ctx.moveTo(starX, starY);
+          } else {
+            ctx.lineTo(starX, starY);
+          }
+        }
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+
+    // Acid effect
+    if (this.isAcidified) {
+      ctx.fillStyle = 'rgba(156, 39, 176, 0.5)';
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size + 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Add acid drips
+      ctx.strokeStyle = 'rgba(156, 39, 176, 0.8)';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 6; i++) {
+        const angle = Math.PI * 2 * i / 6;
+        const startX = this.x + Math.cos(angle) * this.size;
+        const startY = this.y + Math.sin(angle) * this.size;
+        const endX = startX + Math.cos(angle) * 10;
+        const endY = startY + Math.sin(angle) * 10;
+
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(endX, endY);
+        ctx.stroke();
+
+        // Add drip at the end
+        ctx.beginPath();
+        ctx.arc(endX, endY, 3, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(156, 39, 176, 0.8)';
+        ctx.fill();
+      }
+    }
+
+    // Special boss effects
+    if (this.specialEffect) {
+      switch(this.specialEffect) {
+        case 'pulse':
+          // Pulsing green aura for Forest Guardian
+          const pulseSize = this.size + 10 + Math.sin(Date.now() / 200) * 5;
+          ctx.fillStyle = 'rgba(76, 175, 80, 0.3)';
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, pulseSize, 0, Math.PI * 2);
+          ctx.fill();
+          break;
+
+        case 'ice':
+          // Ice crystals for Frost Titan
+          ctx.fillStyle = 'rgba(33, 150, 243, 0.4)';
+          for (let i = 0; i < 6; i++) {
+            const angle = Math.PI * 2 * i / 6;
+            const x = this.x + Math.cos(angle) * (this.size + 15);
+            const y = this.y + Math.sin(angle) * (this.size + 15);
+
+            // Draw ice crystal
+            ctx.beginPath();
+            ctx.moveTo(x, y - 10);
+            ctx.lineTo(x + 5, y - 5);
+            ctx.lineTo(x + 10, y);
+            ctx.lineTo(x + 5, y + 5);
+            ctx.lineTo(x, y + 10);
+            ctx.lineTo(x - 5, y + 5);
+            ctx.lineTo(x - 10, y);
+            ctx.lineTo(x - 5, y - 5);
+            ctx.closePath();
+            ctx.fill();
+          }
+          break;
+
+        case 'fire':
+          // Fire aura for Inferno Colossus
+          for (let i = 0; i < 12; i++) {
+            const angle = Math.PI * 2 * i / 12;
+            const x = this.x + Math.cos(angle) * (this.size + 10);
+            const y = this.y + Math.sin(angle) * (this.size + 10);
+            const flameHeight = 15 + Math.random() * 10;
+
+            ctx.fillStyle = `rgba(255, ${Math.floor(87 + Math.random() * 100)}, 34, ${0.5 + Math.random() * 0.5})`;
+            ctx.beginPath();
+            ctx.moveTo(this.x, this.y);
+            ctx.quadraticCurveTo(
+              x, y,
+              x + Math.cos(angle) * flameHeight, y + Math.sin(angle) * flameHeight
+            );
+            ctx.quadraticCurveTo(
+              x + Math.cos(angle + 0.2) * (flameHeight/2), y + Math.sin(angle + 0.2) * (flameHeight/2),
+              this.x, this.y
+            );
+            ctx.fill();
+          }
+          break;
+
+        case 'shadow':
+          // Shadow aura for Nightmare Devourer
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size + 15, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Add shadow tendrils
+          ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+          ctx.lineWidth = 3;
+          for (let i = 0; i < 8; i++) {
+            const angle = Math.PI * 2 * i / 8;
+            const startX = this.x + Math.cos(angle) * this.size;
+            const startY = this.y + Math.sin(angle) * this.size;
+
+            // Create wavy tendril
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+
+            const length = 30 + Math.random() * 20;
+            const segments = 5;
+
+            for (let j = 1; j <= segments; j++) {
+              const segmentLength = length / segments;
+              const segmentAngle = angle + Math.sin(Date.now() / 500 + i) * 0.5;
+              const endX = startX + Math.cos(segmentAngle) * segmentLength * j;
+              const endY = startY + Math.sin(segmentAngle) * segmentLength * j;
+
+              ctx.lineTo(endX, endY);
+            }
+
+            ctx.stroke();
+          }
+          break;
+
+        case 'void':
+          // Void aura for Void Entity and corrupted bosses
+          // Create a gradient for the void effect
+          const gradient = ctx.createRadialGradient(
+            this.x, this.y, this.size,
+            this.x, this.y, this.size + 20
+          );
+
+          // Use secondary color for glow if available (for corrupted bosses)
+          const glowColor = this.secondaryColor || '#9C27B0';
+
+          gradient.addColorStop(0, 'rgba(0, 0, 0, 0.8)');
+          gradient.addColorStop(1, `${glowColor}80`); // 50% opacity
+
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size + 20, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Add void particles
+          for (let i = 0; i < 15; i++) {
+            const angle = Math.PI * 2 * Math.random();
+            const distance = (this.size + 5 + Math.random() * 15);
+            const x = this.x + Math.cos(angle) * distance;
+            const y = this.y + Math.sin(angle) * distance;
+            const particleSize = 1 + Math.random() * 3;
+
+            ctx.beginPath();
+            ctx.arc(x, y, particleSize, 0, Math.PI * 2);
+            ctx.fillStyle = Math.random() > 0.5 ? 'rgba(0, 0, 0, 0.8)' : `${glowColor}CC`; // 80% opacity
+            ctx.fill();
+          }
+          break;
+      }
     }
 
     // Reset alpha if it was changed

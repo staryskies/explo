@@ -148,9 +148,15 @@
 
     <div id="game-over" class="modal">
       <div class="modal-content">
-        <h2>Game Over</h2>
+        <h2 id="game-over-title">Game Over</h2>
+        <p>Difficulty: <span id="final-difficulty">Easy</span></p>
+        <p>Waves Completed: <span id="waves-completed">0</span></p>
         <p>Your final score: <span id="final-score">0</span></p>
         <p>Silver earned: <span id="silver-earned">0</span></p>
+        <div id="unlocked-content" style="display: none;">
+          <h3>Unlocked Content!</h3>
+          <p id="unlocked-tower">You've unlocked a new tower!</p>
+        </div>
         <div class="game-over-buttons">
           <button id="restart">Play Again</button>
           <button id="return-to-menu">Return to Menu</button>
