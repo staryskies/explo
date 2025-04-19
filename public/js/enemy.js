@@ -662,6 +662,27 @@ class Enemy {
   draw(ctx) {
     if (!this.alive) return;
 
+    // Apply darkness effect for Nightmare and Void difficulties
+    if (window.game?.difficulty === 'nightmare' || window.game?.difficulty === 'void') {
+      // Make enemies darker and more ominous in Nightmare/Void mode
+      ctx.globalAlpha = 0.7; // Reduce visibility of enemies
+
+      // Store original color to restore later
+      this.originalColor = this.color;
+
+      // Darken the enemy color
+      if (this.color && this.color.startsWith('#')) {
+        // Convert hex to RGB and darken
+        const r = parseInt(this.color.slice(1, 3), 16);
+        const g = parseInt(this.color.slice(3, 5), 16);
+        const b = parseInt(this.color.slice(5, 7), 16);
+
+        // Darken the color
+        const darkenFactor = 0.6; // 60% darker
+        this.color = `rgb(${Math.floor(r * darkenFactor)}, ${Math.floor(g * darkenFactor)}, ${Math.floor(b * darkenFactor)})`;
+      }
+    }
+
     // Apply invisibility effect
     if (this.type === 'invisible') {
       ctx.globalAlpha = 0.3;
@@ -722,6 +743,15 @@ class Enemy {
 
     // Restore context
     ctx.restore();
+
+    // Reset global alpha
+    ctx.globalAlpha = 1.0;
+
+    // Restore original color if it was changed for Nightmare/Void mode
+    if (this.originalColor) {
+      this.color = this.originalColor;
+      this.originalColor = null;
+    }
 
     // Draw health bar (after restoring context)
     const healthBarWidth = this.size * 2;

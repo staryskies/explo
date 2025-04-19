@@ -67,6 +67,34 @@ class GameMap {
       this.initializeLightOrbs();
     }
 
+    // Add void effect for Void difficulty - tiles disappear into the void
+    this.useVoidEffect = this.difficulty === 'void';
+    if (this.useVoidEffect) {
+      // Track which tiles are visible (start with all visible)
+      this.visibleTiles = [];
+      for (let y = 0; y < this.gridHeight; y++) {
+        const row = [];
+        for (let x = 0; x < this.gridWidth; x++) {
+          row.push(true); // All tiles start visible
+        }
+        this.visibleTiles.push(row);
+      }
+
+      // Track important tiles that should remain visible
+      this.importantTiles = [];
+
+      // Track the void effect progress
+      this.voidProgress = 0;
+      this.lastVoidUpdateTime = 0;
+      this.voidUpdateInterval = 5000; // Update every 5 seconds
+
+      // Number of tiles to keep visible at the end
+      this.tilesRemainingAtEnd = 12;
+
+      // Initialize the void effect
+      this.initializeVoidEffect();
+    }
+
     // Store decoration colors for use in draw method
     this.decorationColors = this.mapTemplate.decorationColors || ["#8BC34A", "#689F38", "#33691E"];
 
@@ -599,6 +627,11 @@ class GameMap {
       return;
     }
 
+    // Update void effect if active
+    if (this.useVoidEffect) {
+      this.updateVoidEffect(currentTime);
+    }
+
     // Draw all tiles
     try {
       // First, draw the base background color across the entire canvas
@@ -617,6 +650,11 @@ class GameMap {
             continue;
           }
 
+          // Skip tiles that have disappeared into the void
+          if (this.useVoidEffect && this.visibleTiles[y] && this.visibleTiles[y][x] === false) {
+            continue;
+          }
+
           const tileType = this.grid[y][x];
 
           // Only draw non-grass tiles (since we already filled the background)
@@ -628,6 +666,19 @@ class GameMap {
           // Draw subtle grid lines
           this.ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)';
           this.ctx.strokeRect(x * this.tileSize, y * this.tileSize, this.tileSize, this.tileSize);
+
+          // For void effect, draw a special effect on visible tiles
+          if (this.useVoidEffect && this.visibleTiles[y] && this.visibleTiles[y][x] === true) {
+            // Draw a subtle void glow around the tile
+            const glowColor = 'rgba(75, 0, 130, 0.2)'; // Indigo glow
+            this.ctx.fillStyle = glowColor;
+            this.ctx.fillRect(
+              x * this.tileSize - 2,
+              y * this.tileSize - 2,
+              this.tileSize + 4,
+              this.tileSize + 4
+            );
+          }
         }
       }
 
@@ -647,47 +698,120 @@ class GameMap {
     }
   }
 
+  // Initialize the void effect for Void difficulty
+  initializeVoidEffect() {
+    // Clear any existing important tiles
+    this.importantTiles = [];
+
+    // Always keep the path visible
+    for (const point of this.path) {
+      this.importantTiles.push({x: point.x, y: point.y});
+    }
+
+    // Keep some tiles around the path visible
+    const directions = [
+      {dx: 1, dy: 0},
+      {dx: -1, dy: 0},
+      {dx: 0, dy: 1},
+      {dx: 0, dy: -1}
+    ];
+
+    // Add tiles adjacent to the path (but not all of them)
+    for (let i = 0; i < this.path.length; i += 3) { // Only check every 3rd path tile
+      const point = this.path[i];
+
+      // Add some adjacent tiles
+      for (const dir of directions) {
+        const nx = point.x + dir.dx;
+        const ny = point.y + dir.dy;
+
+        // Check if within bounds and not already in important tiles
+        if (nx >= 0 && nx < this.gridWidth && ny >= 0 && ny < this.gridHeight) {
+          // Only add some tiles (random selection)
+          if (Math.random() < 0.3) { // 30% chance to add
+            this.importantTiles.push({x: nx, y: ny});
+          }
+        }
+      }
+    }
+
+    // If we have too many important tiles, remove some randomly
+    while (this.importantTiles.length > this.tilesRemainingAtEnd) {
+      // Remove a random non-path tile
+      const nonPathTiles = this.importantTiles.filter(tile =>
+        !this.path.some(pathTile => pathTile.x === tile.x && pathTile.y === tile.y)
+      );
+
+      if (nonPathTiles.length > 0) {
+        const tileToRemove = nonPathTiles[Math.floor(Math.random() * nonPathTiles.length)];
+        this.importantTiles = this.importantTiles.filter(tile =>
+          !(tile.x === tileToRemove.x && tile.y === tileToRemove.y)
+        );
+      } else {
+        // If we only have path tiles left, we're done
+        break;
+      }
+    }
+  }
+
   // Initialize light orbs for Nightmare and Void difficulties
   initializeLightOrbs() {
     // Clear any existing orbs
     this.lightOrbs = [];
 
-    // Number of orbs based on map size
-    const numOrbs = Math.max(3, Math.floor((this.gridWidth * this.gridHeight) / 100));
+    // Number of orbs based on map size - significantly increased
+    const numOrbs = Math.max(8, Math.floor((this.gridWidth * this.gridHeight) / 50));
 
     // Create orbs
     for (let i = 0; i < numOrbs; i++) {
       this.lightOrbs.push({
         x: Math.random() * this.canvas.width,
         y: Math.random() * this.canvas.height,
-        radius: Math.random() * 20 + 30, // Light radius between 30-50 pixels
+        radius: Math.random() * 15 + 20, // Light radius between 20-35 pixels (smaller)
         color: this.difficulty === 'nightmare' ? '#29B6F6' : '#7E57C2', // Blue for nightmare, purple for void
-        speedX: (Math.random() - 0.5) * 0.5, // Random speed between -0.25 and 0.25
-        speedY: (Math.random() - 0.5) * 0.5,
+        speedX: (Math.random() - 0.5) * 0.7, // Random speed between -0.35 and 0.35 (faster)
+        speedY: (Math.random() - 0.5) * 0.7,
         pulseSpeed: Math.random() * 0.005 + 0.002, // How fast the orb pulses
         pulsePhase: Math.random() * Math.PI * 2, // Random starting phase
-        intensity: Math.random() * 0.2 + 0.6 // Light intensity between 0.6 and 0.8
+        intensity: Math.random() * 0.2 + 0.5 // Light intensity between 0.5 and 0.7 (dimmer)
       });
     }
 
-    // Add a player light orb that follows the mouse
-    this.playerLightOrb = {
-      x: this.canvas.width / 2,
-      y: this.canvas.height / 2,
-      radius: 80, // Larger radius for player's light
-      color: this.difficulty === 'nightmare' ? '#FFFFFF' : '#E1BEE7', // White for nightmare, light purple for void
-      intensity: 0.9 // Brighter than other orbs
-    };
-
-    // Add the player orb to the list
-    this.lightOrbs.push(this.playerLightOrb);
+    // Add a few stationary orbs at strategic locations (path intersections, etc.)
+    const numStaticOrbs = Math.min(5, Math.floor(this.path.length / 10));
+    for (let i = 0; i < numStaticOrbs; i++) {
+      // Place orbs at different points along the path
+      const pathIndex = Math.floor(this.path.length * (i + 1) / (numStaticOrbs + 1));
+      if (pathIndex < this.path.length && this.pathCoordinates[pathIndex]) {
+        const pathPoint = this.pathCoordinates[pathIndex];
+        this.lightOrbs.push({
+          x: pathPoint.x,
+          y: pathPoint.y,
+          radius: 25, // Slightly larger static orbs
+          color: this.difficulty === 'nightmare' ? '#4FC3F7' : '#9575CD',
+          speedX: 0,
+          speedY: 0,
+          pulseSpeed: 0.003,
+          pulsePhase: Math.random() * Math.PI * 2,
+          intensity: 0.7
+        });
+      }
+    }
   }
 
   // Update light orbs positions and properties
   updateLightOrbs(currentTime) {
     // Update each orb
-    for (let i = 0; i < this.lightOrbs.length - 1; i++) { // Skip the last one (player orb)
+    for (let i = 0; i < this.lightOrbs.length; i++) {
       const orb = this.lightOrbs[i];
+
+      // Skip stationary orbs
+      if (orb.speedX === 0 && orb.speedY === 0) {
+        // Just update pulse for stationary orbs
+        const pulse = Math.sin(currentTime * orb.pulseSpeed + orb.pulsePhase);
+        orb.currentRadius = orb.radius * (1 + pulse * 0.2); // Pulse by 20%
+        continue;
+      }
 
       // Move the orb
       orb.x += orb.speedX;
@@ -709,12 +833,6 @@ class GameMap {
       const pulse = Math.sin(currentTime * orb.pulseSpeed + orb.pulsePhase);
       orb.currentRadius = orb.radius * (1 + pulse * 0.2); // Pulse by 20%
     }
-
-    // Update player light orb position to follow mouse if available
-    if (window.game && window.game.mouseX && window.game.mouseY) {
-      this.playerLightOrb.x = window.game.mouseX;
-      this.playerLightOrb.y = window.game.mouseY;
-    }
   }
 
   // Draw the light orbs and darkness overlay
@@ -729,7 +847,7 @@ class GameMap {
     this.ctx.globalCompositeOperation = 'source-over';
 
     // Draw a dark overlay across the entire canvas
-    const darknessAlpha = this.difficulty === 'nightmare' ? 0.92 : 0.95; // 92% darkness for nightmare, 95% for void
+    const darknessAlpha = this.difficulty === 'nightmare' ? 0.96 : 0.98; // 96% darkness for nightmare, 98% for void
     this.ctx.fillStyle = `rgba(0, 0, 0, ${darknessAlpha})`;
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -774,6 +892,98 @@ class GameMap {
       this.ctx.beginPath();
       this.ctx.arc(orb.x, orb.y, radius * 0.3, 0, Math.PI * 2);
       this.ctx.fill();
+    }
+  }
+
+  // Update the void effect - make tiles gradually disappear
+  updateVoidEffect(currentTime) {
+    // Skip if not using void effect
+    if (!this.useVoidEffect) return;
+
+    // Check if it's time to update
+    if (!this.lastVoidUpdateTime) {
+      this.lastVoidUpdateTime = currentTime;
+      return;
+    }
+
+    // Calculate time since last update
+    const timeDelta = currentTime - this.lastVoidUpdateTime;
+
+    // Only update at certain intervals
+    if (timeDelta < this.voidUpdateInterval) return;
+
+    // Update the last update time
+    this.lastVoidUpdateTime = currentTime;
+
+    // Increase the void progress
+    this.voidProgress += 0.05; // 5% more tiles disappear each update
+
+    // Cap at 1.0 (100% complete)
+    if (this.voidProgress > 1.0) {
+      this.voidProgress = 1.0;
+    }
+
+    // Calculate how many tiles should be visible
+    const totalTiles = this.gridWidth * this.gridHeight;
+    const tilesToKeepVisible = Math.max(
+      this.tilesRemainingAtEnd,
+      Math.floor(totalTiles * (1 - this.voidProgress))
+    );
+
+    // Reset visibility
+    for (let y = 0; y < this.gridHeight; y++) {
+      for (let x = 0; x < this.gridWidth; x++) {
+        // Check if this is an important tile that should always remain visible
+        const isImportantTile = this.importantTiles.some(tile => tile.x === x && tile.y === y);
+
+        if (isImportantTile) {
+          // Important tiles always stay visible
+          this.visibleTiles[y][x] = true;
+        } else {
+          // Non-important tiles have a chance to disappear based on void progress
+          const disappearChance = this.voidProgress * 1.2; // Slightly higher chance to create a more dramatic effect
+          this.visibleTiles[y][x] = Math.random() > disappearChance;
+        }
+      }
+    }
+
+    // If we have too many visible tiles, hide some random ones (except important ones)
+    let visibleCount = 0;
+    for (let y = 0; y < this.gridHeight; y++) {
+      for (let x = 0; x < this.gridWidth; x++) {
+        if (this.visibleTiles[y][x]) {
+          visibleCount++;
+        }
+      }
+    }
+
+    // Create a list of non-important visible tiles
+    const nonImportantVisibleTiles = [];
+    for (let y = 0; y < this.gridHeight; y++) {
+      for (let x = 0; x < this.gridWidth; x++) {
+        if (this.visibleTiles[y][x]) {
+          const isImportantTile = this.importantTiles.some(tile => tile.x === x && tile.y === y);
+          if (!isImportantTile) {
+            nonImportantVisibleTiles.push({x, y});
+          }
+        }
+      }
+    }
+
+    // Hide random non-important tiles until we reach the target
+    while (visibleCount > tilesToKeepVisible && nonImportantVisibleTiles.length > 0) {
+      // Pick a random tile to hide
+      const randomIndex = Math.floor(Math.random() * nonImportantVisibleTiles.length);
+      const tileToHide = nonImportantVisibleTiles[randomIndex];
+
+      // Hide it
+      this.visibleTiles[tileToHide.y][tileToHide.x] = false;
+
+      // Remove from the list
+      nonImportantVisibleTiles.splice(randomIndex, 1);
+
+      // Update count
+      visibleCount--;
     }
   }
 
