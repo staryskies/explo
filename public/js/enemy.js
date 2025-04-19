@@ -65,16 +65,16 @@ class Enemy {
     // For boss types, get properties from bossTypes
     if (this.isBoss && typeof bossTypes !== 'undefined' && bossTypes[this.type]) {
       const bossData = bossTypes[this.type];
-      this.maxHealth = bossData.baseHealth;
+      this.maxHealth = this.applyDifficultyMultiplier(bossData.baseHealth, 'health');
       this.health = this.maxHealth;
-      this.speed = bossData.speed;
+      this.speed = this.applyDifficultyMultiplier(bossData.speed, 'speed');
       this.reward = bossData.reward;
       this.color = bossData.color;
       this.secondaryColor = bossData.secondaryColor; // For void bosses
       this.size = bossData.size;
       this.flying = bossData.flying || false;
-      this.damage = bossData.damage || 5;
-      this.armor = bossData.armor || 0;
+      this.damage = this.applyDifficultyMultiplier(bossData.damage || 5, 'damage');
+      this.armor = this.applyDifficultyMultiplier(bossData.armor || 0, 'armor');
       this.abilities = bossData.abilities || [];
       this.specialEffect = bossData.specialEffect;
       this.name = bossData.name || 'Boss';
@@ -83,28 +83,28 @@ class Enemy {
 
     // If this is a regular boss but not in bossTypes
     if (this.isBoss) {
-      this.maxHealth = 1000;
+      this.maxHealth = this.applyDifficultyMultiplier(1000, 'health');
       this.health = this.maxHealth;
-      this.speed = 0.6;
+      this.speed = this.applyDifficultyMultiplier(0.6, 'speed');
       this.size = 40;
       this.color = '#F44336';
       this.reward = 200;
-      this.damage = 5;
-      this.armor = 0.3;
+      this.damage = this.applyDifficultyMultiplier(5, 'damage');
+      this.armor = this.applyDifficultyMultiplier(0.3, 'armor');
       return;
     }
 
     // Get properties from enemyTypes if available
     if (typeof enemyTypes !== 'undefined' && enemyTypes[this.type]) {
       const typeData = enemyTypes[this.type];
-      this.maxHealth = typeData.health;
+      this.maxHealth = this.applyDifficultyMultiplier(typeData.health, 'health');
       this.health = this.maxHealth;
-      this.speed = typeData.speed;
+      this.speed = this.applyDifficultyMultiplier(typeData.speed, 'speed');
       this.reward = typeData.reward;
       this.color = typeData.color;
       this.size = typeData.size;
       this.flying = typeData.flying;
-      this.damage = typeData.damage || 1;
+      this.damage = this.applyDifficultyMultiplier(typeData.damage || 1, 'damage');
 
       // Copy any special properties
       if (typeData.healRadius) this.healRadius = typeData.healRadius;
@@ -605,6 +605,50 @@ class Enemy {
     }
   }
 
+  // Apply difficulty multiplier to enemy stats
+  applyDifficultyMultiplier(value, statType) {
+    // Get the game difficulty from the global game object
+    const difficulty = window.game?.difficulty || 'easy';
+
+    // Define multipliers for each difficulty and stat type
+    const multipliers = {
+      health: {
+        easy: 1.1,     // 10% more health
+        medium: 1.3,   // 30% more health
+        hard: 1.5,     // 50% more health
+        nightmare: 2.0, // 100% more health
+        void: 2.5      // 150% more health
+      },
+      speed: {
+        easy: 1.05,    // 5% faster
+        medium: 1.1,    // 10% faster
+        hard: 1.15,     // 15% faster
+        nightmare: 1.2, // 20% faster
+        void: 1.25      // 25% faster
+      },
+      damage: {
+        easy: 1.1,     // 10% more damage
+        medium: 1.2,    // 20% more damage
+        hard: 1.3,      // 30% more damage
+        nightmare: 1.5, // 50% more damage
+        void: 2.0       // 100% more damage
+      },
+      armor: {
+        easy: 1.1,     // 10% more armor
+        medium: 1.2,    // 20% more armor
+        hard: 1.3,      // 30% more armor
+        nightmare: 1.4, // 40% more armor
+        void: 1.5       // 50% more armor
+      }
+    };
+
+    // Get the multiplier for the current difficulty and stat type
+    const multiplier = multipliers[statType]?.[difficulty] || 1.0;
+
+    // Apply the multiplier
+    return value * multiplier;
+  }
+
   // Apply slow effect
   applySlowEffect(slowFactor, duration) {
     // Only apply if the new slow is stronger or extends the duration
@@ -732,16 +776,68 @@ class Enemy {
 
     // Draw status effect indicators
 
+    // Status effect icons positioning
+    const iconSize = this.size * 0.5;
+    const iconPositions = [
+      { x: this.x - this.size - iconSize, y: this.y - this.size - iconSize }, // Top left
+      { x: this.x + this.size + iconSize, y: this.y - this.size - iconSize }, // Top right
+      { x: this.x - this.size - iconSize, y: this.y + this.size + iconSize }, // Bottom left
+      { x: this.x + this.size + iconSize, y: this.y + this.size + iconSize }  // Bottom right
+    ];
+
+    // Track which positions are used
+    let usedPositions = 0;
+
     // Slow effect
     if (this.slowEffect < 1) {
+      // Draw slow effect aura
       ctx.fillStyle = 'rgba(0, 149, 255, 0.5)';
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.size + 5, 0, Math.PI * 2);
       ctx.fill();
+
+      // Draw snowflake icon
+      if (usedPositions < iconPositions.length) {
+        const pos = iconPositions[usedPositions++];
+        ctx.fillStyle = '#2196F3';
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 1;
+
+        // Draw snowflake
+        for (let i = 0; i < 6; i++) {
+          const angle = Math.PI * i / 3;
+          ctx.beginPath();
+          ctx.moveTo(pos.x, pos.y);
+          ctx.lineTo(pos.x + Math.cos(angle) * iconSize, pos.y + Math.sin(angle) * iconSize);
+          ctx.stroke();
+
+          // Draw small lines on each arm
+          const midX = pos.x + Math.cos(angle) * iconSize * 0.5;
+          const midY = pos.y + Math.sin(angle) * iconSize * 0.5;
+          const perpAngle1 = angle + Math.PI / 2;
+          const perpAngle2 = angle - Math.PI / 2;
+
+          ctx.beginPath();
+          ctx.moveTo(midX, midY);
+          ctx.lineTo(midX + Math.cos(perpAngle1) * iconSize * 0.3, midY + Math.sin(perpAngle1) * iconSize * 0.3);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(midX, midY);
+          ctx.lineTo(midX + Math.cos(perpAngle2) * iconSize * 0.3, midY + Math.sin(perpAngle2) * iconSize * 0.3);
+          ctx.stroke();
+        }
+
+        // Draw center circle
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, iconSize * 0.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
     // Burn effect
     if (this.isBurning) {
+      // Draw burn effect aura
       ctx.fillStyle = 'rgba(255, 87, 34, 0.5)';
       ctx.beginPath();
       for (let i = 0; i < 8; i++) {
@@ -755,10 +851,44 @@ class Enemy {
         ctx.lineTo(x + Math.cos(angle) * flameHeight, y + Math.sin(angle) * flameHeight);
       }
       ctx.fill();
+
+      // Draw flame icon
+      if (usedPositions < iconPositions.length) {
+        const pos = iconPositions[usedPositions++];
+
+        // Draw flame
+        ctx.fillStyle = '#FF5722';
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y + iconSize);
+        ctx.quadraticCurveTo(
+          pos.x - iconSize * 0.6, pos.y,
+          pos.x, pos.y - iconSize
+        );
+        ctx.quadraticCurveTo(
+          pos.x + iconSize * 0.6, pos.y,
+          pos.x, pos.y + iconSize
+        );
+        ctx.fill();
+
+        // Draw inner flame
+        ctx.fillStyle = '#FFEB3B';
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y + iconSize * 0.7);
+        ctx.quadraticCurveTo(
+          pos.x - iconSize * 0.4, pos.y,
+          pos.x, pos.y - iconSize * 0.6
+        );
+        ctx.quadraticCurveTo(
+          pos.x + iconSize * 0.4, pos.y,
+          pos.x, pos.y + iconSize * 0.7
+        );
+        ctx.fill();
+      }
     }
 
     // Poison effect
     if (this.isPoisoned) {
+      // Draw poison effect aura
       ctx.fillStyle = 'rgba(76, 175, 80, 0.5)';
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.size + 7, 0, Math.PI * 2);
@@ -776,10 +906,45 @@ class Enemy {
         ctx.fillStyle = 'rgba(76, 175, 80, 0.8)';
         ctx.fill();
       }
+
+      // Draw poison icon
+      if (usedPositions < iconPositions.length) {
+        const pos = iconPositions[usedPositions++];
+
+        // Draw poison flask
+        ctx.fillStyle = '#4CAF50';
+        ctx.beginPath();
+        ctx.moveTo(pos.x - iconSize * 0.5, pos.y + iconSize * 0.5);
+        ctx.lineTo(pos.x - iconSize * 0.3, pos.y - iconSize * 0.5);
+        ctx.lineTo(pos.x + iconSize * 0.3, pos.y - iconSize * 0.5);
+        ctx.lineTo(pos.x + iconSize * 0.5, pos.y + iconSize * 0.5);
+        ctx.closePath();
+        ctx.fill();
+
+        // Draw skull on flask
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, iconSize * 0.25, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw skull eyes
+        ctx.fillStyle = '#4CAF50';
+        ctx.beginPath();
+        ctx.arc(pos.x - iconSize * 0.1, pos.y - iconSize * 0.05, iconSize * 0.05, 0, Math.PI * 2);
+        ctx.arc(pos.x + iconSize * 0.1, pos.y - iconSize * 0.05, iconSize * 0.05, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw skull mouth
+        ctx.beginPath();
+        ctx.moveTo(pos.x - iconSize * 0.15, pos.y + iconSize * 0.1);
+        ctx.lineTo(pos.x + iconSize * 0.15, pos.y + iconSize * 0.1);
+        ctx.stroke();
+      }
     }
 
     // Stun effect
     if (this.isStunned) {
+      // Draw stun effect aura
       ctx.fillStyle = 'rgba(255, 235, 59, 0.5)';
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.size + 10, 0, Math.PI * 2);
@@ -809,10 +974,39 @@ class Enemy {
         ctx.closePath();
         ctx.fill();
       }
+
+      // Draw lightning bolt icon
+      if (usedPositions < iconPositions.length) {
+        const pos = iconPositions[usedPositions++];
+
+        // Draw lightning bolt
+        ctx.fillStyle = '#FFC107';
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y - iconSize);
+        ctx.lineTo(pos.x + iconSize * 0.4, pos.y - iconSize * 0.2);
+        ctx.lineTo(pos.x, pos.y + iconSize * 0.2);
+        ctx.lineTo(pos.x, pos.y + iconSize);
+        ctx.lineTo(pos.x - iconSize * 0.4, pos.y + iconSize * 0.2);
+        ctx.lineTo(pos.x, pos.y - iconSize * 0.2);
+        ctx.closePath();
+        ctx.fill();
+
+        // Add highlight
+        ctx.fillStyle = '#FFFFFF';
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(pos.x - iconSize * 0.1, pos.y - iconSize * 0.8);
+        ctx.lineTo(pos.x + iconSize * 0.2, pos.y - iconSize * 0.3);
+        ctx.lineTo(pos.x - iconSize * 0.1, pos.y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+      }
     }
 
     // Acid effect
     if (this.isAcidified) {
+      // Draw acid effect aura
       ctx.fillStyle = 'rgba(156, 39, 176, 0.5)';
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.size + 6, 0, Math.PI * 2);
@@ -838,6 +1032,36 @@ class Enemy {
         ctx.arc(endX, endY, 3, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(156, 39, 176, 0.8)';
         ctx.fill();
+      }
+
+      // Draw acid flask icon
+      if (usedPositions < iconPositions.length) {
+        const pos = iconPositions[usedPositions++];
+
+        // Draw flask
+        ctx.fillStyle = '#9C27B0';
+        ctx.beginPath();
+        ctx.moveTo(pos.x - iconSize * 0.3, pos.y - iconSize * 0.5);
+        ctx.lineTo(pos.x - iconSize * 0.5, pos.y + iconSize * 0.3);
+        ctx.quadraticCurveTo(
+          pos.x, pos.y + iconSize * 0.7,
+          pos.x + iconSize * 0.5, pos.y + iconSize * 0.3
+        );
+        ctx.lineTo(pos.x + iconSize * 0.3, pos.y - iconSize * 0.5);
+        ctx.closePath();
+        ctx.fill();
+
+        // Draw acid bubbles
+        ctx.fillStyle = '#E040FB';
+        for (let i = 0; i < 3; i++) {
+          const bubbleX = pos.x + (Math.random() - 0.5) * iconSize * 0.6;
+          const bubbleY = pos.y + (Math.random() * 0.3) * iconSize;
+          const bubbleSize = (0.1 + Math.random() * 0.1) * iconSize;
+
+          ctx.beginPath();
+          ctx.arc(bubbleX, bubbleY, bubbleSize, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
     }
 

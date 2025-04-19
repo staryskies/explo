@@ -799,9 +799,15 @@ body {
   color: #34495e; /* Dark blue-gray */
 }
 
-#restart {
+.game-over-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+#restart, #return-to-menu {
   padding: 12px 24px;
-  background: linear-gradient(45deg, #00b0ff, #0091ea);
   border: none;
   border-radius: 5px;
   color: #fff;
@@ -811,8 +817,22 @@ body {
   transition: all 0.3s ease;
 }
 
+#restart {
+  background: linear-gradient(45deg, #00b0ff, #0091ea);
+}
+
 #restart:hover {
   background: linear-gradient(45deg, #0091ea, #0277bd);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+#return-to-menu {
+  background: linear-gradient(45deg, #ff9800, #f57c00);
+}
+
+#return-to-menu:hover {
+  background: linear-gradient(45deg, #f57c00, #e65100);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }

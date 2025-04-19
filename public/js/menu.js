@@ -45,55 +45,64 @@ function checkUnlockedDifficulties() {
   // Lock difficulties based on progress
   const difficultyOptions = document.querySelectorAll('.difficulty-option');
 
-  // Easy is always unlocked
+  // Easy, Medium, and Hard are always unlocked
   difficultyOptions[0].classList.add('selected'); // Select Easy by default
 
-  // Medium unlocks after completing wave 15 on Easy
-  if (highestWaveCompleted < 15) {
-    difficultyOptions[1].classList.add('locked');
-    if (!difficultyOptions[1].querySelector('.lock-icon')) {
-      const lockIcon = document.createElement('div');
-      lockIcon.className = 'lock-icon';
-      lockIcon.textContent = '🔒';
-      difficultyOptions[1].appendChild(lockIcon);
-      difficultyOptions[1].querySelector('p').textContent = 'Unlocks after completing Wave 15 on Easy';
-    }
+  // Add click event listeners to Easy, Medium, and Hard
+  for (let i = 0; i <= 2; i++) {
+    difficultyOptions[i].classList.remove('locked');
+    difficultyOptions[i].addEventListener('click', () => {
+      // Remove selected class from all options
+      document.querySelectorAll('.difficulty-option').forEach(opt => {
+        opt.classList.remove('selected');
+      });
+      // Add selected class to clicked option
+      difficultyOptions[i].classList.add('selected');
+    });
   }
 
-  // Hard unlocks after completing wave 25 on Medium
-  if (highestWaveCompleted < 25) {
-    difficultyOptions[2].classList.add('locked');
-    if (!difficultyOptions[2].querySelector('.lock-icon')) {
-      const lockIcon = document.createElement('div');
-      lockIcon.className = 'lock-icon';
-      lockIcon.textContent = '🔒';
-      difficultyOptions[2].appendChild(lockIcon);
-      difficultyOptions[2].querySelector('p').textContent = 'Unlocks after completing Wave 25 on Medium';
-    }
-  }
-
-  // Nightmare unlocks after completing wave 35 on Hard
-  if (highestWaveCompleted < 35) {
+  // Nightmare unlocks after completing wave 40 on Hard
+  if (highestWaveCompleted < 40) {
     difficultyOptions[3].classList.add('locked');
     if (!difficultyOptions[3].querySelector('.lock-icon')) {
       const lockIcon = document.createElement('div');
       lockIcon.className = 'lock-icon';
       lockIcon.textContent = '🔒';
       difficultyOptions[3].appendChild(lockIcon);
-      difficultyOptions[3].querySelector('p').textContent = 'Unlocks after completing Wave 35 on Hard';
+      difficultyOptions[3].querySelector('p').textContent = 'Unlocks after completing Wave 40 on Hard';
     }
+  } else {
+    difficultyOptions[3].classList.remove('locked');
+    difficultyOptions[3].addEventListener('click', () => {
+      // Remove selected class from all options
+      document.querySelectorAll('.difficulty-option').forEach(opt => {
+        opt.classList.remove('selected');
+      });
+      // Add selected class to clicked option
+      difficultyOptions[3].classList.add('selected');
+    });
   }
 
-  // Void unlocks after completing wave 45 on Nightmare
-  if (highestWaveCompleted < 45) {
+  // Void unlocks after completing wave 50 on Nightmare
+  if (highestWaveCompleted < 50) {
     difficultyOptions[4].classList.add('locked');
     if (!difficultyOptions[4].querySelector('.lock-icon')) {
       const lockIcon = document.createElement('div');
       lockIcon.className = 'lock-icon';
       lockIcon.textContent = '🔒';
       difficultyOptions[4].appendChild(lockIcon);
-      difficultyOptions[4].querySelector('p').textContent = 'Unlocks after completing Wave 45 on Nightmare';
+      difficultyOptions[4].querySelector('p').textContent = 'Unlocks after completing Wave 50 on Nightmare';
     }
+  } else {
+    difficultyOptions[4].classList.remove('locked');
+    difficultyOptions[4].addEventListener('click', () => {
+      // Remove selected class from all options
+      document.querySelectorAll('.difficulty-option').forEach(opt => {
+        opt.classList.remove('selected');
+      });
+      // Add selected class to clicked option
+      difficultyOptions[4].classList.add('selected');
+    });
   }
 }
 

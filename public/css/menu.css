@@ -286,6 +286,23 @@ h1 {
   margin-top: 20px;
 }
 
+/* Difficulty Intro Styles */
+.difficulty-intro {
+  background: rgba(245, 222, 179, 0.5);
+  border-radius: 10px;
+  padding: 15px;
+  margin: 10px 0;
+  text-align: center;
+  border: 1px solid rgba(210, 180, 140, 0.4);
+}
+
+.difficulty-intro p {
+  margin: 0;
+  font-size: 16px;
+  color: #8B4513;
+  line-height: 1.5;
+}
+
 /* Difficulty Grid Styles */
 .difficulty-grid {
   display: grid;

@@ -32,9 +32,9 @@ class Game {
     // Silver earned in this game (permanent currency)
     this.silverEarned = 0;
 
-    // Player stats
-    this.lives = 10;
-    this.gold = 100;
+    // Player stats - adjusted based on difficulty
+    this.lives = this.getDifficultyLives();
+    this.gold = this.getDifficultyGold();
     this.score = 0;
     this.wave = 1;
 
@@ -200,6 +200,11 @@ class Game {
       window.location.href = 'index.html';
     });
 
+    // Return to menu button (on game over screen)
+    document.getElementById('return-to-menu').addEventListener('click', () => {
+      window.location.href = 'index.html';
+    });
+
     // Show tutorial button
     document.getElementById('showTutorial').addEventListener('click', () => {
       if (window.tutorialSystem) {
@@ -311,8 +316,8 @@ class Game {
     this.enemiesKilled = 0;
     this.enemiesLeaked = 0;
 
-    // Calculate number of enemies based on wave (reduced for slower spawning)
-    this.totalEnemiesInWave = 5 + Math.floor(this.wave * 1.0);
+    // Calculate number of enemies based on wave and difficulty
+    this.totalEnemiesInWave = this.getEnemiesForWave();
 
     // Update UI
     document.getElementById('startWave').textContent = 'Wave in Progress...';
@@ -483,7 +488,7 @@ class Game {
           document.getElementById('game-over-title').textContent = 'Game Over';
           document.getElementById('final-score').textContent = formatNumber(this.score);
           document.getElementById('final-difficulty').textContent = this.difficulty.charAt(0).toUpperCase() + this.difficulty.slice(1);
-          document.getElementById('waves-completed').textContent = this.wave;
+          document.getElementById('waves-completed').textContent = this.wave - 1;
 
           // Add silver earned to game over screen
           const silverElement = document.getElementById('silver-earned');
@@ -573,6 +578,8 @@ class Game {
         document.getElementById('game-over').classList.add('active');
         document.getElementById('game-over-title').textContent = 'Victory!';
         document.getElementById('final-score').textContent = formatNumber(this.score);
+        document.getElementById('final-difficulty').textContent = this.difficulty.charAt(0).toUpperCase() + this.difficulty.slice(1);
+        document.getElementById('waves-completed').textContent = this.wave;
 
         // Add silver earned to victory screen
         const silverElement = document.getElementById('silver-earned');
@@ -981,5 +988,44 @@ class Game {
     // Start game loop
     this.lastUpdateTime = performance.now();
     window.requestAnimationFrame((time) => this.gameLoop(time));
+  }
+
+  // Get starting lives based on difficulty
+  getDifficultyLives() {
+    switch(this.difficulty) {
+      case 'easy': return 8; // Reduced from 10
+      case 'medium': return 6; // Harder
+      case 'hard': return 4; // Much harder
+      case 'nightmare': return 3;
+      case 'void': return 2;
+      default: return 10;
+    }
+  }
+
+  // Get starting gold based on difficulty
+  getDifficultyGold() {
+    switch(this.difficulty) {
+      case 'easy': return 90; // Reduced from 100
+      case 'medium': return 80; // Harder
+      case 'hard': return 70; // Much harder
+      case 'nightmare': return 60;
+      case 'void': return 50;
+      default: return 100;
+    }
+  }
+
+  // Get number of enemies for current wave based on difficulty
+  getEnemiesForWave() {
+    const baseEnemies = 5 + Math.floor(this.wave * 1.0);
+
+    // Apply difficulty multiplier
+    switch(this.difficulty) {
+      case 'easy': return Math.floor(baseEnemies * 1.1); // 10% more enemies
+      case 'medium': return Math.floor(baseEnemies * 1.2); // 20% more enemies
+      case 'hard': return Math.floor(baseEnemies * 1.3); // 30% more enemies
+      case 'nightmare': return Math.floor(baseEnemies * 1.4);
+      case 'void': return Math.floor(baseEnemies * 1.5);
+      default: return baseEnemies;
+    }
   }
 }
