@@ -52,14 +52,14 @@ class GameMap {
     // Set colors based on map template and difficulty
     this.tileColors = this.getDifficultyColors();
 
-    // Add blackout effect for Hard and Nightmare difficulties
-    this.useBlackoutEffect = this.difficulty === 'hard' || this.difficulty === 'nightmare' || this.difficulty === 'void';
+    // Add blackout effect for Hard and Nightmare difficulties (not Void)
+    this.useBlackoutEffect = this.difficulty === 'hard' || this.difficulty === 'nightmare';
     this.blackoutTimer = 0;
     this.blackoutActive = false;
     this.blackoutAlpha = 0;
 
-    // Add permanent darkness for Nightmare and Void with light orbs
-    this.usePermanentDarkness = this.difficulty === 'nightmare' || this.difficulty === 'void';
+    // Add permanent darkness for Nightmare with light orbs (not Void)
+    this.usePermanentDarkness = this.difficulty === 'nightmare';
 
     // Initialize light orbs for Nightmare and Void
     if (this.usePermanentDarkness) {
@@ -90,6 +90,11 @@ class GameMap {
 
       // Number of tiles to keep visible at the end
       this.tilesRemainingAtEnd = 12;
+
+      // Track void spikes
+      this.voidSpikes = [];
+      this.lastSpikeTime = 0;
+      this.spikeInterval = 2000; // New spike every 2 seconds
 
       // Initialize the void effect
       this.initializeVoidEffect();
@@ -690,6 +695,11 @@ class GameMap {
         this.updateBlackoutEffect(currentTime);
       }
 
+      // Draw void spikes for Void difficulty
+      if (this.useVoidEffect) {
+        this.drawVoidSpikes(currentTime);
+      }
+
     } catch (error) {
       console.error('Error drawing map:', error);
       // Draw a fallback green background
@@ -847,7 +857,7 @@ class GameMap {
     this.ctx.globalCompositeOperation = 'source-over';
 
     // Draw a dark overlay across the entire canvas
-    const darknessAlpha = this.difficulty === 'nightmare' ? 0.96 : 0.98; // 96% darkness for nightmare, 98% for void
+    const darknessAlpha = this.difficulty === 'nightmare' ? 0.92 : 0.98; // 92% darkness for nightmare (reduced from 96%), 98% for void
     this.ctx.fillStyle = `rgba(0, 0, 0, ${darknessAlpha})`;
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -893,6 +903,134 @@ class GameMap {
       this.ctx.arc(orb.x, orb.y, radius * 0.3, 0, Math.PI * 2);
       this.ctx.fill();
     }
+  }
+
+  // Draw void spikes coming from the borders
+  drawVoidSpikes(currentTime) {
+    // Update spikes
+    this.updateVoidSpikes(currentTime);
+
+    // Draw each spike
+    for (const spike of this.voidSpikes) {
+      // Calculate the spike path
+      const startX = spike.startX;
+      const startY = spike.startY;
+      const endX = spike.endX;
+      const endY = spike.endY;
+
+      // Calculate current position based on progress
+      const currentX = startX + (endX - startX) * spike.progress;
+      const currentY = startY + (endY - startY) * spike.progress;
+
+      // Draw the spike
+      this.ctx.beginPath();
+      this.ctx.moveTo(startX, startY);
+      this.ctx.lineTo(currentX, currentY);
+
+      // Determine color based on progress
+      let color;
+      if (spike.progress < 0.5) {
+        // Start with dark purple
+        color = '#4A148C'; // Dark purple
+      } else {
+        // Transition to black
+        const transitionProgress = (spike.progress - 0.5) * 2; // 0 to 1
+        const r = Math.floor(74 * (1 - transitionProgress)); // 74 to 0
+        const g = Math.floor(20 * (1 - transitionProgress)); // 20 to 0
+        const b = Math.floor(140 * (1 - transitionProgress)); // 140 to 0
+        color = `rgb(${r}, ${g}, ${b})`;
+      }
+
+      // Set line style
+      this.ctx.strokeStyle = color;
+      this.ctx.lineWidth = spike.width;
+      this.ctx.lineCap = 'round';
+
+      // Draw the spike
+      this.ctx.stroke();
+
+      // If spike has reached its target, draw a void circle
+      if (spike.progress >= 1) {
+        this.ctx.fillStyle = '#000';
+        this.ctx.beginPath();
+        this.ctx.arc(endX, endY, spike.width / 2, 0, Math.PI * 2);
+        this.ctx.fill();
+      }
+    }
+  }
+
+  // Update void spikes
+  updateVoidSpikes(currentTime) {
+    // Check if it's time to create a new spike
+    if (!this.lastSpikeTime) {
+      this.lastSpikeTime = currentTime;
+    }
+
+    const timeSinceLastSpike = currentTime - this.lastSpikeTime;
+
+    // Create new spikes at intervals
+    if (timeSinceLastSpike > this.spikeInterval) {
+      this.createNewVoidSpike();
+      this.lastSpikeTime = currentTime;
+    }
+
+    // Update existing spikes
+    for (let i = 0; i < this.voidSpikes.length; i++) {
+      const spike = this.voidSpikes[i];
+
+      // Update progress
+      spike.progress += 0.01; // Speed of spike movement
+
+      // Remove completed spikes
+      if (spike.progress > 1.2) { // Give a little extra time to show the void circle
+        this.voidSpikes.splice(i, 1);
+        i--;
+      }
+    }
+  }
+
+  // Create a new void spike
+  createNewVoidSpike() {
+    // Determine a random edge to start from
+    const edge = Math.floor(Math.random() * 4); // 0: top, 1: right, 2: bottom, 3: left
+
+    let startX, startY, endX, endY;
+
+    // Calculate start position (on the edge)
+    switch (edge) {
+      case 0: // Top
+        startX = Math.random() * this.canvas.width;
+        startY = 0;
+        break;
+      case 1: // Right
+        startX = this.canvas.width;
+        startY = Math.random() * this.canvas.height;
+        break;
+      case 2: // Bottom
+        startX = Math.random() * this.canvas.width;
+        startY = this.canvas.height;
+        break;
+      case 3: // Left
+        startX = 0;
+        startY = Math.random() * this.canvas.height;
+        break;
+    }
+
+    // Calculate end position (somewhere in the map)
+    // Bias towards the center for more interesting patterns
+    const centerBias = 0.7; // 0 to 1, higher means more towards center
+    endX = this.canvas.width / 2 + (Math.random() - 0.5) * this.canvas.width * (1 - centerBias);
+    endY = this.canvas.height / 2 + (Math.random() - 0.5) * this.canvas.height * (1 - centerBias);
+
+    // Create the spike
+    this.voidSpikes.push({
+      startX,
+      startY,
+      endX,
+      endY,
+      width: Math.random() * 5 + 3, // Width between 3 and 8
+      progress: 0
+    });
   }
 
   // Update the void effect - make tiles gradually disappear
