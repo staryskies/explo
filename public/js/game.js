@@ -399,23 +399,22 @@ class Game {
       enemyType = this.getBossType(this.wave);
       console.log(`Spawning ${enemyType} for wave ${this.wave} on ${this.difficulty} difficulty`);
     }
-    // Regular enemy spawning based on wave progression
-    else if (this.wave >= 4 && rand < 0.15) {
-      enemyType = 'tank';
-    } else if (this.wave >= 2 && rand < 0.25) {
-      enemyType = 'fast';
-    } else if (this.wave >= 6 && rand < 0.2) {
-      enemyType = 'flying';
-    } else if (this.wave >= 8 && rand < 0.15) {
-      enemyType = 'armored';
-    } else if (this.wave >= 10 && rand < 0.1) {
-      enemyType = 'healing';
-    } else if (this.wave >= 12 && rand < 0.1) {
-      enemyType = 'spawner';
-    } else if (this.wave >= 15 && rand < 0.1) {
-      enemyType = 'invisible';
-    } else if (this.wave >= 18 && rand < 0.1) {
-      enemyType = 'explosive';
+    // Different enemy types based on difficulty
+    else {
+      // Base probabilities for each enemy type by difficulty
+      const enemyProbabilities = this.getEnemyProbabilities();
+
+      // Determine enemy type based on random roll and probabilities
+      let roll = Math.random();
+      let cumulativeProbability = 0;
+
+      for (const [type, probability] of Object.entries(enemyProbabilities)) {
+        cumulativeProbability += probability;
+        if (roll <= cumulativeProbability) {
+          enemyType = type;
+          break;
+        }
+      }
     }
 
     // Create the enemy
@@ -641,7 +640,7 @@ class Game {
 
     // Draw map - always draw the map regardless of game state
     if (this.map) {
-      this.map.draw();
+      this.map.draw(currentTime);
     } else {
       console.error('Map is not initialized in draw()');
       // Draw a placeholder background
@@ -1006,10 +1005,10 @@ class Game {
   getDifficultyGold() {
     switch(this.difficulty) {
       case 'easy': return 90; // Reduced from 100
-      case 'medium': return 80; // Harder
-      case 'hard': return 70; // Much harder
-      case 'nightmare': return 60;
-      case 'void': return 50;
+      case 'medium': return 180; // Harder
+      case 'hard': return 270; // Much harder
+      case 'nightmare': return 360;
+      case 'void': return 500;
       default: return 100;
     }
   }
@@ -1026,6 +1025,81 @@ class Game {
       case 'nightmare': return Math.floor(baseEnemies * 1.4);
       case 'void': return Math.floor(baseEnemies * 1.5);
       default: return baseEnemies;
+    }
+  }
+
+  // Get enemy type probabilities based on difficulty and wave
+  getEnemyProbabilities() {
+    // Base probabilities that increase with wave number
+    const waveProgress = Math.min(this.wave / 20, 1); // 0-1 scale of wave progression
+
+    // Different enemy distributions based on difficulty
+    switch(this.difficulty) {
+      case 'easy':
+        return {
+          'normal': Math.max(0.6 - (waveProgress * 0.3), 0.3),
+          'fast': Math.min(0.1 + (waveProgress * 0.1), 0.2),
+          'tank': Math.min(0.1 + (waveProgress * 0.1), 0.2),
+          'flying': this.wave >= 5 ? Math.min(0.05 + (waveProgress * 0.1), 0.15) : 0,
+          'armored': this.wave >= 8 ? Math.min(0.05 + (waveProgress * 0.05), 0.1) : 0,
+          'healing': this.wave >= 12 ? 0.05 : 0
+        };
+
+      case 'medium':
+        return {
+          'normal': Math.max(0.5 - (waveProgress * 0.3), 0.2),
+          'fast': Math.min(0.15 + (waveProgress * 0.05), 0.2),
+          'tank': Math.min(0.15 + (waveProgress * 0.05), 0.2),
+          'flying': Math.min(0.1 + (waveProgress * 0.05), 0.15),
+          'armored': Math.min(0.05 + (waveProgress * 0.1), 0.15),
+          'healing': this.wave >= 8 ? 0.05 : 0,
+          'spawner': this.wave >= 15 ? 0.05 : 0
+        };
+
+      case 'hard':
+        return {
+          'normal': Math.max(0.4 - (waveProgress * 0.3), 0.1),
+          'fast': Math.min(0.15 + (waveProgress * 0.05), 0.2),
+          'tank': Math.min(0.15 + (waveProgress * 0.05), 0.2),
+          'flying': Math.min(0.1 + (waveProgress * 0.05), 0.15),
+          'armored': Math.min(0.1 + (waveProgress * 0.05), 0.15),
+          'healing': Math.min(0.05 + (waveProgress * 0.05), 0.1),
+          'spawner': this.wave >= 10 ? 0.05 : 0,
+          'invisible': this.wave >= 15 ? 0.05 : 0
+        };
+
+      case 'nightmare':
+        return {
+          'normal': Math.max(0.3 - (waveProgress * 0.2), 0.1),
+          'fast': Math.min(0.15 + (waveProgress * 0.05), 0.2),
+          'tank': Math.min(0.15 + (waveProgress * 0.05), 0.2),
+          'flying': Math.min(0.1 + (waveProgress * 0.05), 0.15),
+          'armored': Math.min(0.1 + (waveProgress * 0.05), 0.15),
+          'healing': Math.min(0.05 + (waveProgress * 0.05), 0.1),
+          'spawner': Math.min(0.05 + (waveProgress * 0.05), 0.1),
+          'invisible': Math.min(0.05 + (waveProgress * 0.05), 0.1),
+          'explosive': this.wave >= 10 ? 0.05 : 0
+        };
+
+      case 'void':
+        return {
+          'normal': Math.max(0.2 - (waveProgress * 0.1), 0.1),
+          'fast': Math.min(0.15 + (waveProgress * 0.05), 0.2),
+          'tank': Math.min(0.15 + (waveProgress * 0.05), 0.2),
+          'flying': Math.min(0.1 + (waveProgress * 0.05), 0.15),
+          'armored': Math.min(0.1 + (waveProgress * 0.05), 0.15),
+          'healing': Math.min(0.1 + (waveProgress * 0.05), 0.15),
+          'spawner': Math.min(0.05 + (waveProgress * 0.05), 0.1),
+          'invisible': Math.min(0.05 + (waveProgress * 0.05), 0.1),
+          'explosive': Math.min(0.05 + (waveProgress * 0.05), 0.1)
+        };
+
+      default:
+        return {
+          'normal': 0.7,
+          'fast': 0.2,
+          'tank': 0.1
+        };
     }
   }
 }

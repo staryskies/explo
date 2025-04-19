@@ -418,35 +418,43 @@ class Projectile {
   }
 
   drawLaserProjectile(ctx) {
-    // Draw laser beam
+    // Draw laser beam as a straight line from tower to target
+    if (!this.target || !this.target.alive) return;
+
+    // Calculate start and end points
+    const startX = this.x;
+    const startY = this.y;
+    const endX = this.target.x;
+    const endY = this.target.y;
+
+    // Draw main beam - straight line
     ctx.strokeStyle = this.color;
-    ctx.lineWidth = this.size * 2;
-
-    // Draw main beam
+    ctx.lineWidth = this.size * 1.5;
     ctx.beginPath();
-    ctx.moveTo(this.x, this.y);
-    ctx.lineTo(
-      this.x - Math.cos(this.angle) * this.size * 10,
-      this.y - Math.sin(this.angle) * this.size * 10
-    );
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
     ctx.stroke();
 
-    // Draw glow effect
-    ctx.globalAlpha = 0.5;
-    ctx.lineWidth = this.size * 4;
+    // Draw outer glow
+    ctx.globalAlpha = 0.3;
+    ctx.lineWidth = this.size * 3;
     ctx.beginPath();
-    ctx.moveTo(this.x, this.y);
-    ctx.lineTo(
-      this.x - Math.cos(this.angle) * this.size * 8,
-      this.y - Math.sin(this.angle) * this.size * 8
-    );
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
     ctx.stroke();
 
-    // Draw bright core
+    // Draw bright core at both ends
     ctx.globalAlpha = 1.0;
     ctx.fillStyle = '#fff';
+
+    // Start point glow
     ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.arc(startX, startY, this.size, 0, Math.PI * 2);
+    ctx.fill();
+
+    // End point impact
+    ctx.beginPath();
+    ctx.arc(endX, endY, this.size * 1.5, 0, Math.PI * 2);
     ctx.fill();
   }
 
@@ -651,53 +659,60 @@ class Projectile {
   }
 
   drawMissileProjectile(ctx) {
-    // Draw missile
+    // Draw a single larger missile
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
 
-    // Missile body
+    // Missile body - larger
     ctx.fillStyle = this.color;
     ctx.beginPath();
-    ctx.ellipse(0, 0, this.size * 3, this.size, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, this.size * 5, this.size * 2, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Missile nose
+    // Missile nose - larger
     ctx.fillStyle = '#C62828';
     ctx.beginPath();
-    ctx.moveTo(this.size * 3, 0);
-    ctx.lineTo(this.size, this.size);
-    ctx.lineTo(this.size, -this.size);
+    ctx.moveTo(this.size * 5, 0);
+    ctx.lineTo(this.size * 2, this.size * 2);
+    ctx.lineTo(this.size * 2, -this.size * 2);
     ctx.closePath();
     ctx.fill();
 
-    // Missile fins
+    // Missile fins - larger
     ctx.fillStyle = '#555';
     for (let i = 0; i < 4; i++) {
       const angle = (Math.PI / 2) * i;
       ctx.save();
       ctx.rotate(angle);
       ctx.beginPath();
-      ctx.moveTo(-this.size * 2, 0);
-      ctx.lineTo(-this.size * 3, this.size);
-      ctx.lineTo(-this.size * 2.5, this.size);
-      ctx.lineTo(-this.size * 1.5, 0);
+      ctx.moveTo(-this.size * 3, 0);
+      ctx.lineTo(-this.size * 5, this.size * 2);
+      ctx.lineTo(-this.size * 4, this.size * 2);
+      ctx.lineTo(-this.size * 2, 0);
       ctx.closePath();
       ctx.fill();
       ctx.restore();
     }
 
-    // Exhaust flame
+    // Exhaust flame - larger
     const time = Date.now() / 100;
     const flicker = Math.sin(time) * 0.3 + 0.7;
 
     ctx.fillStyle = '#FF9800';
     ctx.globalAlpha = 0.7 * flicker;
     ctx.beginPath();
-    ctx.moveTo(-this.size * 3, 0);
-    ctx.lineTo(-this.size * 5, this.size);
-    ctx.lineTo(-this.size * 6, 0);
-    ctx.lineTo(-this.size * 5, -this.size);
+    ctx.moveTo(-this.size * 4, 0);
+    ctx.lineTo(-this.size * 8, this.size * 2);
+    ctx.lineTo(-this.size * 10, 0);
+    ctx.lineTo(-this.size * 8, -this.size * 2);
     ctx.closePath();
+    ctx.fill();
+
+    // Add glowing effect
+    ctx.globalAlpha = 0.3 * flicker;
+    ctx.fillStyle = '#FFEB3B';
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size * 3, 0, Math.PI * 2);
     ctx.fill();
   }
 
@@ -1111,31 +1126,40 @@ class Projectile {
   }
 
   drawMissileExplosion(ctx) {
-    // Draw explosion
+    // Draw larger explosion for the bigger missile
     const gradient = ctx.createRadialGradient(
       this.x, this.y, 0,
-      this.x, this.y, this.size * 8
+      this.x, this.y, this.size * 15
     );
-    gradient.addColorStop(0, 'rgba(255, 235, 59, 0.8)');
-    gradient.addColorStop(0.3, 'rgba(255, 152, 0, 0.7)');
-    gradient.addColorStop(0.7, 'rgba(244, 67, 54, 0.3)');
+    gradient.addColorStop(0, 'rgba(255, 235, 59, 0.9)');
+    gradient.addColorStop(0.2, 'rgba(255, 152, 0, 0.8)');
+    gradient.addColorStop(0.5, 'rgba(244, 67, 54, 0.6)');
+    gradient.addColorStop(0.8, 'rgba(244, 67, 54, 0.3)');
     gradient.addColorStop(1, 'rgba(244, 67, 54, 0)');
 
-    ctx.globalAlpha = 0.8;
+    ctx.globalAlpha = 0.9;
     ctx.fillStyle = gradient;
     ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size * 8, 0, Math.PI * 2);
+    ctx.arc(this.x, this.y, this.size * 15, 0, Math.PI * 2);
     ctx.fill();
 
-    // Draw explosion rings
+    // Draw explosion rings - more and larger
     ctx.strokeStyle = '#FFF';
-    for (let i = 0; i < 3; i++) {
-      ctx.globalAlpha = 0.5 - i * 0.15;
-      ctx.lineWidth = 3 - i;
+    for (let i = 0; i < 5; i++) {
+      ctx.globalAlpha = 0.7 - i * 0.12;
+      ctx.lineWidth = 4 - i * 0.5;
       ctx.beginPath();
-      ctx.arc(this.x, this.y, this.size * (3 + i * 2), 0, Math.PI * 2);
+      ctx.arc(this.x, this.y, this.size * (5 + i * 3), 0, Math.PI * 2);
       ctx.stroke();
     }
+
+    // Add shockwave effect
+    ctx.globalAlpha = 0.3;
+    ctx.strokeStyle = '#FFEB3B';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size * 18, 0, Math.PI * 2);
+    ctx.stroke();
 
     // Draw debris
     ctx.fillStyle = '#795548';

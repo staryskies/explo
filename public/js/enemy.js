@@ -610,35 +610,35 @@ class Enemy {
     // Get the game difficulty from the global game object
     const difficulty = window.game?.difficulty || 'easy';
 
-    // Define multipliers for each difficulty and stat type
+    // Define multipliers for each difficulty and stat type - much harder scaling
     const multipliers = {
       health: {
-        easy: 1.1,     // 10% more health
-        medium: 1.3,   // 30% more health
-        hard: 1.5,     // 50% more health
-        nightmare: 2.0, // 100% more health
-        void: 2.5      // 150% more health
+        easy: 1.5,      // 50% more health
+        medium: 2.5,    // 150% more health
+        hard: 3.5,      // 250% more health
+        nightmare: 5.0, // 400% more health
+        void: 7.0       // 600% more health
       },
       speed: {
-        easy: 1.05,    // 5% faster
-        medium: 1.1,    // 10% faster
-        hard: 1.15,     // 15% faster
-        nightmare: 1.2, // 20% faster
-        void: 1.25      // 25% faster
+        easy: 1.1,      // 10% faster
+        medium: 1.2,    // 20% faster
+        hard: 1.3,      // 30% faster
+        nightmare: 1.5, // 50% faster
+        void: 1.7       // 70% faster
       },
       damage: {
-        easy: 1.1,     // 10% more damage
-        medium: 1.2,    // 20% more damage
-        hard: 1.3,      // 30% more damage
-        nightmare: 1.5, // 50% more damage
-        void: 2.0       // 100% more damage
+        easy: 1.3,      // 30% more damage
+        medium: 1.5,    // 50% more damage
+        hard: 2.0,      // 100% more damage
+        nightmare: 3.0, // 200% more damage
+        void: 4.0       // 300% more damage
       },
       armor: {
-        easy: 1.1,     // 10% more armor
-        medium: 1.2,    // 20% more armor
-        hard: 1.3,      // 30% more armor
-        nightmare: 1.4, // 40% more armor
-        void: 1.5       // 50% more armor
+        easy: 1.2,      // 20% more armor
+        medium: 1.4,    // 40% more armor
+        hard: 1.6,      // 60% more armor
+        nightmare: 1.8, // 80% more armor
+        void: 2.0       // 100% more armor
       }
     };
 

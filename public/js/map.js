@@ -46,14 +46,26 @@ class GameMap {
       WALL: 4
     };
 
-    // Set colors based on map template
-    this.tileColors = {
-      [this.TILE_TYPES.GRASS]: this.mapTemplate.backgroundColor || '#4CAF50',
-      [this.TILE_TYPES.PATH]: this.mapTemplate.pathColor || '#795548',
-      [this.TILE_TYPES.WATER]: '#2196F3',
-      [this.TILE_TYPES.OCCUPIED]: '#9E9E9E',
-      [this.TILE_TYPES.WALL]: '#424242'
-    };
+    // Get game difficulty if available
+    this.difficulty = window.game?.difficulty || 'easy';
+
+    // Set colors based on map template and difficulty
+    this.tileColors = this.getDifficultyColors();
+
+    // Add blackout effect for Hard and Nightmare difficulties
+    this.useBlackoutEffect = this.difficulty === 'hard' || this.difficulty === 'nightmare' || this.difficulty === 'void';
+    this.blackoutTimer = 0;
+    this.blackoutActive = false;
+    this.blackoutAlpha = 0;
+
+    // Add permanent darkness for Nightmare and Void with light orbs
+    this.usePermanentDarkness = this.difficulty === 'nightmare' || this.difficulty === 'void';
+
+    // Initialize light orbs for Nightmare and Void
+    if (this.usePermanentDarkness) {
+      this.lightOrbs = [];
+      this.initializeLightOrbs();
+    }
 
     // Store decoration colors for use in draw method
     this.decorationColors = this.mapTemplate.decorationColors || ["#8BC34A", "#689F38", "#33691E"];
@@ -503,8 +515,67 @@ class GameMap {
     };
   }
 
+  // Get map colors based on difficulty
+  getDifficultyColors() {
+    // Base colors from map template
+    const baseBackgroundColor = this.mapTemplate.backgroundColor || '#4CAF50';
+    const basePathColor = this.mapTemplate.pathColor || '#795548';
+
+    // Difficulty-specific colors
+    switch(this.difficulty) {
+      case 'easy':
+        return {
+          [this.TILE_TYPES.GRASS]: baseBackgroundColor,
+          [this.TILE_TYPES.PATH]: basePathColor,
+          [this.TILE_TYPES.WATER]: '#2196F3',
+          [this.TILE_TYPES.OCCUPIED]: '#9E9E9E',
+          [this.TILE_TYPES.WALL]: '#424242'
+        };
+      case 'medium':
+        return {
+          [this.TILE_TYPES.GRASS]: '#3E8E41', // Darker green
+          [this.TILE_TYPES.PATH]: '#5D4037', // Darker brown
+          [this.TILE_TYPES.WATER]: '#1976D2', // Darker blue
+          [this.TILE_TYPES.OCCUPIED]: '#757575',
+          [this.TILE_TYPES.WALL]: '#212121'
+        };
+      case 'hard':
+        return {
+          [this.TILE_TYPES.GRASS]: '#2E7D32', // Even darker green
+          [this.TILE_TYPES.PATH]: '#4E342E', // Even darker brown
+          [this.TILE_TYPES.WATER]: '#0D47A1', // Deep blue
+          [this.TILE_TYPES.OCCUPIED]: '#616161',
+          [this.TILE_TYPES.WALL]: '#212121'
+        };
+      case 'nightmare':
+        return {
+          [this.TILE_TYPES.GRASS]: '#1B5E20', // Very dark green
+          [this.TILE_TYPES.PATH]: '#3E2723', // Very dark brown
+          [this.TILE_TYPES.WATER]: '#01579B', // Very dark blue
+          [this.TILE_TYPES.OCCUPIED]: '#424242',
+          [this.TILE_TYPES.WALL]: '#000000'
+        };
+      case 'void':
+        return {
+          [this.TILE_TYPES.GRASS]: '#263238', // Almost black blue-gray
+          [this.TILE_TYPES.PATH]: '#1A237E', // Deep indigo
+          [this.TILE_TYPES.WATER]: '#311B92', // Deep purple
+          [this.TILE_TYPES.OCCUPIED]: '#212121',
+          [this.TILE_TYPES.WALL]: '#000000'
+        };
+      default:
+        return {
+          [this.TILE_TYPES.GRASS]: baseBackgroundColor,
+          [this.TILE_TYPES.PATH]: basePathColor,
+          [this.TILE_TYPES.WATER]: '#2196F3',
+          [this.TILE_TYPES.OCCUPIED]: '#9E9E9E',
+          [this.TILE_TYPES.WALL]: '#424242'
+        };
+    }
+  }
+
   // Draw the map
-  draw() {
+  draw(currentTime = performance.now()) {
     // Check if canvas and context are valid
     if (!this.canvas || !this.ctx) {
       console.error('Canvas or context is null in map.draw()');
@@ -563,10 +634,222 @@ class GameMap {
       // Draw path highlights or special effects based on map type
       this.drawPathEffects();
 
+      // Apply blackout effect for harder difficulties
+      if (this.useBlackoutEffect) {
+        this.updateBlackoutEffect(currentTime);
+      }
+
     } catch (error) {
       console.error('Error drawing map:', error);
       // Draw a fallback green background
       this.ctx.fillStyle = '#4CAF50';
+      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+  }
+
+  // Initialize light orbs for Nightmare and Void difficulties
+  initializeLightOrbs() {
+    // Clear any existing orbs
+    this.lightOrbs = [];
+
+    // Number of orbs based on map size
+    const numOrbs = Math.max(3, Math.floor((this.gridWidth * this.gridHeight) / 100));
+
+    // Create orbs
+    for (let i = 0; i < numOrbs; i++) {
+      this.lightOrbs.push({
+        x: Math.random() * this.canvas.width,
+        y: Math.random() * this.canvas.height,
+        radius: Math.random() * 20 + 30, // Light radius between 30-50 pixels
+        color: this.difficulty === 'nightmare' ? '#29B6F6' : '#7E57C2', // Blue for nightmare, purple for void
+        speedX: (Math.random() - 0.5) * 0.5, // Random speed between -0.25 and 0.25
+        speedY: (Math.random() - 0.5) * 0.5,
+        pulseSpeed: Math.random() * 0.005 + 0.002, // How fast the orb pulses
+        pulsePhase: Math.random() * Math.PI * 2, // Random starting phase
+        intensity: Math.random() * 0.2 + 0.6 // Light intensity between 0.6 and 0.8
+      });
+    }
+
+    // Add a player light orb that follows the mouse
+    this.playerLightOrb = {
+      x: this.canvas.width / 2,
+      y: this.canvas.height / 2,
+      radius: 80, // Larger radius for player's light
+      color: this.difficulty === 'nightmare' ? '#FFFFFF' : '#E1BEE7', // White for nightmare, light purple for void
+      intensity: 0.9 // Brighter than other orbs
+    };
+
+    // Add the player orb to the list
+    this.lightOrbs.push(this.playerLightOrb);
+  }
+
+  // Update light orbs positions and properties
+  updateLightOrbs(currentTime) {
+    // Update each orb
+    for (let i = 0; i < this.lightOrbs.length - 1; i++) { // Skip the last one (player orb)
+      const orb = this.lightOrbs[i];
+
+      // Move the orb
+      orb.x += orb.speedX;
+      orb.y += orb.speedY;
+
+      // Bounce off edges
+      if (orb.x < 0 || orb.x > this.canvas.width) {
+        orb.speedX *= -1;
+      }
+      if (orb.y < 0 || orb.y > this.canvas.height) {
+        orb.speedY *= -1;
+      }
+
+      // Keep within bounds
+      orb.x = Math.max(0, Math.min(this.canvas.width, orb.x));
+      orb.y = Math.max(0, Math.min(this.canvas.height, orb.y));
+
+      // Pulse the radius
+      const pulse = Math.sin(currentTime * orb.pulseSpeed + orb.pulsePhase);
+      orb.currentRadius = orb.radius * (1 + pulse * 0.2); // Pulse by 20%
+    }
+
+    // Update player light orb position to follow mouse if available
+    if (window.game && window.game.mouseX && window.game.mouseY) {
+      this.playerLightOrb.x = window.game.mouseX;
+      this.playerLightOrb.y = window.game.mouseY;
+    }
+  }
+
+  // Draw the light orbs and darkness overlay
+  drawDarknessWithLightOrbs(currentTime) {
+    // Skip if not using permanent darkness
+    if (!this.usePermanentDarkness) return;
+
+    // Update orb positions and properties
+    this.updateLightOrbs(currentTime);
+
+    // Create a composite operation to show only the lit areas
+    this.ctx.globalCompositeOperation = 'source-over';
+
+    // Draw a dark overlay across the entire canvas
+    const darknessAlpha = this.difficulty === 'nightmare' ? 0.92 : 0.95; // 92% darkness for nightmare, 95% for void
+    this.ctx.fillStyle = `rgba(0, 0, 0, ${darknessAlpha})`;
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // Switch to 'destination-out' to cut holes in the darkness
+    this.ctx.globalCompositeOperation = 'destination-out';
+
+    // Draw each light orb as a radial gradient
+    for (const orb of this.lightOrbs) {
+      const radius = orb.currentRadius || orb.radius;
+      const gradient = this.ctx.createRadialGradient(
+        orb.x, orb.y, 0,
+        orb.x, orb.y, radius
+      );
+
+      gradient.addColorStop(0, `rgba(255, 255, 255, ${orb.intensity})`);
+      gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.1)');
+      gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+      this.ctx.fillStyle = gradient;
+      this.ctx.beginPath();
+      this.ctx.arc(orb.x, orb.y, radius, 0, Math.PI * 2);
+      this.ctx.fill();
+    }
+
+    // Reset composite operation
+    this.ctx.globalCompositeOperation = 'source-over';
+
+    // Draw orb glows (visual effect only)
+    for (const orb of this.lightOrbs) {
+      const radius = orb.currentRadius || orb.radius;
+
+      // Draw the orb glow
+      const glowGradient = this.ctx.createRadialGradient(
+        orb.x, orb.y, 0,
+        orb.x, orb.y, radius * 0.3
+      );
+
+      glowGradient.addColorStop(0, orb.color);
+      glowGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+      this.ctx.fillStyle = glowGradient;
+      this.ctx.beginPath();
+      this.ctx.arc(orb.x, orb.y, radius * 0.3, 0, Math.PI * 2);
+      this.ctx.fill();
+    }
+  }
+
+  // Update and draw the blackout effect
+  updateBlackoutEffect(currentTime) {
+    // If using permanent darkness, use that instead of blackout
+    if (this.usePermanentDarkness) {
+      this.drawDarknessWithLightOrbs(currentTime);
+      return;
+    }
+
+    // Update blackout timer
+    if (!this.lastBlackoutTime) {
+      this.lastBlackoutTime = currentTime;
+    }
+
+    // Calculate time since last update
+    const timeDelta = currentTime - this.lastBlackoutTime;
+    this.blackoutTimer += timeDelta;
+    this.lastBlackoutTime = currentTime;
+
+    // Determine blackout frequency and duration based on difficulty
+    let blackoutFrequency, blackoutDuration, maxAlpha;
+
+    switch(this.difficulty) {
+      case 'hard':
+        blackoutFrequency = 30000; // Every 30 seconds
+        blackoutDuration = 1000;   // 1 second duration
+        maxAlpha = 0.7;            // 70% darkness
+        break;
+      case 'nightmare':
+        blackoutFrequency = 20000; // Every 20 seconds
+        blackoutDuration = 2000;   // 2 seconds duration
+        maxAlpha = 0.85;           // 85% darkness
+        break;
+      case 'void':
+        blackoutFrequency = 15000; // Every 15 seconds
+        blackoutDuration = 3000;   // 3 seconds duration
+        maxAlpha = 0.95;           // 95% darkness
+        break;
+      default:
+        blackoutFrequency = 45000; // Every 45 seconds
+        blackoutDuration = 500;    // 0.5 second duration
+        maxAlpha = 0.5;            // 50% darkness
+    }
+
+    // Check if it's time for a blackout
+    if (!this.blackoutActive && this.blackoutTimer > blackoutFrequency) {
+      this.blackoutActive = true;
+      this.blackoutTimer = 0;
+      this.blackoutStartTime = currentTime;
+    }
+
+    // Handle active blackout
+    if (this.blackoutActive) {
+      const blackoutProgress = Math.min((currentTime - this.blackoutStartTime) / blackoutDuration, 1);
+
+      // Fade in and out
+      if (blackoutProgress < 0.5) {
+        // Fade in (0 to max)
+        this.blackoutAlpha = maxAlpha * (blackoutProgress * 2);
+      } else {
+        // Fade out (max to 0)
+        this.blackoutAlpha = maxAlpha * (1 - (blackoutProgress - 0.5) * 2);
+      }
+
+      // End blackout when complete
+      if (blackoutProgress >= 1) {
+        this.blackoutActive = false;
+        this.blackoutAlpha = 0;
+      }
+    }
+
+    // Draw blackout overlay if active
+    if (this.blackoutAlpha > 0) {
+      this.ctx.fillStyle = `rgba(0, 0, 0, ${this.blackoutAlpha})`;
       this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
   }
@@ -761,6 +1044,11 @@ class GameMap {
       });
 
       this.findBuildableTiles();
+
+      // Reinitialize light orbs if using permanent darkness
+      if (this.usePermanentDarkness) {
+        this.initializeLightOrbs();
+      }
     } else {
       // If game has started, just update the tile size to scale the map
       console.log(`Game already started - scaling map without regenerating`);
@@ -773,6 +1061,15 @@ class GameMap {
         x: point.x * this.tileSize + this.tileSize / 2,
         y: point.y * this.tileSize + this.tileSize / 2
       }));
+
+      // Adjust light orbs for new canvas size if using permanent darkness
+      if (this.usePermanentDarkness) {
+        // Keep orbs within bounds
+        for (const orb of this.lightOrbs) {
+          orb.x = Math.min(orb.x, this.canvas.width);
+          orb.y = Math.min(orb.y, this.canvas.height);
+        }
+      }
     }
   }
 }
