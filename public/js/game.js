@@ -17,7 +17,8 @@ class Game {
     this.difficulty = sessionStorage.getItem('selectedDifficulty') || 'easy';
     this.waveLimit = getWaveLimit(this.difficulty); // Get wave limit based on difficulty
     this.silverMultiplier = getSilverMultiplier(this.difficulty); // Get silver multiplier
-    console.log(`Game difficulty: ${this.difficulty}, Wave limit: ${this.waveLimit}, Silver multiplier: ${this.silverMultiplier}x`);
+    this.bossWaves = this.generateBossWaves(); // Initialize boss waves based on difficulty
+    console.log(`Game difficulty: ${this.difficulty}, Wave limit: ${this.waveLimit}, Silver multiplier: ${this.silverMultiplier}x, Boss waves: ${this.bossWaves}`);
 
     // Make the game instance globally accessible
     window.game = this;
