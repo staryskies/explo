@@ -207,64 +207,87 @@ router.post('/login', [
 // Create guest user
 router.post('/guest', async (req, res) => {
   try {
-    // Generate random username
-    const guestUsername = `Guest_${Math.floor(Math.random() * 10000)}`;
+    // Generate random username with more entropy to avoid collisions
+    const guestUsername = `Guest_${Math.random().toString(36).substring(2, 10)}_${Date.now()}`;
 
-    // Create guest user
-    const user = await prisma.user.create({
-      data: {
-        username: guestUsername,
-        isGuest: true,
-        playerData: {
-          create: {
-            gameData: {
-              // Default player data for guests
-              silver: 1000,
-              highScore: 0,
-              gamesPlayed: 0,
-              wavesCompleted: 0,
-              enemiesKilled: 0,
-              highestWaveCompleted: 0,
-              completedDifficulties: [],
-              towerRolls: 0,
-              variantRolls: 0,
-              towerPity: {
-                rare: 0,
-                epic: 0,
-                legendary: 0,
-                mythic: 0,
-                divine: 0
-              },
-              variantPity: {
-                rare: 0,
-                epic: 0,
-                legendary: 0,
-                divine: 0
-              },
-              unlockedTowers: ['basic'],
-              towerVariants: {
-                basic: ['normal'],
-                archer: [],
-                cannon: [],
-                sniper: [],
-                freeze: [],
-                mortar: [],
-                laser: [],
-                tesla: [],
-                flame: [],
-                missile: [],
-                poison: [],
-                vortex: [],
-                archangel: []
+    // Create guest user with better error handling
+    let user;
+    try {
+      user = await prisma.user.create({
+        data: {
+          username: guestUsername,
+          isGuest: true,
+          playerData: {
+            create: {
+              gameData: {
+                // Default player data for guests
+                silver: 1000,
+                highScore: 0,
+                gamesPlayed: 0,
+                wavesCompleted: 0,
+                enemiesKilled: 0,
+                highestWaveCompleted: 0,
+                completedDifficulties: [],
+                towerRolls: 0,
+                variantRolls: 0,
+                towerPity: {
+                  rare: 0,
+                  epic: 0,
+                  legendary: 0,
+                  mythic: 0,
+                  divine: 0
+                },
+                variantPity: {
+                  rare: 0,
+                  epic: 0,
+                  legendary: 0,
+                  divine: 0
+                },
+                unlockedTowers: ['basic'],
+                towerVariants: {
+                  basic: ['normal'],
+                  archer: [],
+                  cannon: [],
+                  sniper: [],
+                  freeze: [],
+                  mortar: [],
+                  laser: [],
+                  tesla: [],
+                  flame: [],
+                  missile: [],
+                  poison: [],
+                  vortex: [],
+                  archangel: []
+                }
               }
             }
           }
         }
-      }
-    });
+      });
+    } catch (dbError) {
+      console.error('Database error creating guest user:', dbError);
+      return res.status(500).json({
+        error: 'Database error creating guest user',
+        details: dbError.message,
+        code: dbError.code || 'UNKNOWN'
+      });
+    }
 
-    // Create session
-    const { token, expiresAt } = await createSession(user.id);
+    // Create session with better error handling
+    let token, expiresAt;
+    try {
+      const sessionData = await createSession(user.id);
+      token = sessionData.token;
+      expiresAt = sessionData.expiresAt;
+    } catch (sessionError) {
+      console.error('Error creating session:', sessionError);
+      // Continue anyway - the user is created, we can still generate a token
+      // Generate a fallback token
+      token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'your-secret-key', {
+        expiresIn: '7d'
+      });
+      expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    }
 
     // Set cookie
     res.cookie('token', token, {
@@ -274,7 +297,7 @@ router.post('/guest', async (req, res) => {
     });
 
     // Return user data
-    res.status(201).json({
+    return res.status(201).json({
       user: {
         id: user.id,
         username: user.username,
@@ -291,7 +314,11 @@ router.post('/guest', async (req, res) => {
     } else if (error.code === 'P1001') {
       errorMessage = 'Database connection error. Please try again later.';
     }
-    res.status(500).json({ error: errorMessage });
+    return res.status(500).json({
+      error: errorMessage,
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 

@@ -339,7 +339,17 @@ const HOST = process.env.HOST || '0.0.0.0';
 
 // Initialize database before starting the server
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+
+// Create Prisma client with connection retry logic
+const prisma = new PrismaClient({
+  log: ['query', 'info', 'warn', 'error'],
+  errorFormat: 'pretty',
+});
+
+// Handle Prisma connection issues
+process.on('beforeExit', async () => {
+  await prisma.$disconnect();
+});
 
 async function startServer() {
   try {

@@ -157,9 +157,18 @@ class AuthService {
 
       // Check if response is ok before trying to parse JSON
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Server error response:', errorText);
-        throw new Error('Server error: ' + (errorText.substring(0, 100) || 'Failed to create guest user'));
+        let errorData;
+        try {
+          // Try to parse as JSON first
+          errorData = await response.json();
+          console.error('Server error response:', errorData);
+          throw new Error(errorData.error || 'Failed to create guest user');
+        } catch (jsonError) {
+          // If not JSON, get as text
+          const errorText = await response.text();
+          console.error('Server error response (text):', errorText);
+          throw new Error('Server error: ' + (errorText.substring(0, 100) || 'Failed to create guest user'));
+        }
       }
 
       // Try to parse JSON response
