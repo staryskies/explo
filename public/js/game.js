@@ -181,9 +181,9 @@ class Game {
       this.trackMouseMovement(e);
     });
 
-    // Tower selection buttons
+    // Tower selection buttons (if any exist)
     document.querySelectorAll('.tower-btn').forEach(button => {
-      button.addEventListener('click', (e) => {
+      button.addEventListener('click', () => {
         // Get the tower type from the button's data attribute
         // Use the button itself rather than the event target (which could be a child element)
         const towerType = button.dataset.type;
@@ -205,10 +205,8 @@ class Game {
       this.toggleSpeed();
     });
 
-    // Show range checkbox
-    document.getElementById('showRange').addEventListener('change', (e) => {
-      this.showTowerRanges = e.target.checked;
-    });
+    // Tower ranges are now always shown
+    this.showTowerRanges = true;
 
     // Restart button
     document.getElementById('restart').addEventListener('click', () => {
@@ -1273,8 +1271,7 @@ class Game {
     document.getElementById('game-over').classList.remove('active');
     document.getElementById('startWave').textContent = 'Start Wave';
     document.getElementById('speedUp').textContent = 'Speed Up';
-    document.getElementById('showRange').checked = false;
-    this.showTowerRanges = false;
+    this.showTowerRanges = true;
 
     // Recreate the tower selection bar
     this.createTowerSelectionBar();
