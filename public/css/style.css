@@ -106,6 +106,47 @@ body {
   overflow: hidden;
 }
 
+/* Game Info Styles */
+#game-info {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 15px;
+  padding: 10px;
+  background: rgba(210, 180, 140, 0.2);
+  border-radius: 8px;
+  border: 1px solid rgba(210, 180, 140, 0.3);
+}
+
+.info-section {
+  background: rgba(255, 248, 231, 0.8);
+  padding: 12px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(160, 120, 80, 0.2);
+  border: 1px solid rgba(210, 180, 140, 0.4);
+}
+
+.info-section h4 {
+  margin: 0 0 8px 0;
+  color: #000000;
+  font-size: 16px;
+  border-bottom: 1px solid rgba(210, 180, 140, 0.5);
+  padding-bottom: 5px;
+}
+
+.info-section p {
+  margin: 5px 0;
+  font-size: 14px;
+  color: #000000;
+  display: flex;
+  justify-content: space-between;
+}
+
+.info-section p span {
+  font-weight: 600;
+  color: #000000;
+}
+
 .tower-btn, #fixed-controls button {
   padding: 10px 8px;
   background: linear-gradient(45deg, #D2B48C, #CD853F); /* Tan to Peru - cream theme */
@@ -140,7 +181,7 @@ body {
   background: rgba(210, 180, 140, 0.5);
   padding: 2px 5px;
   border-radius: 10px;
-  color: #8B4513; /* SaddleBrown */
+  color: #000000;
   font-weight: bold;
 }
 
@@ -184,10 +225,10 @@ body {
 }
 
 .modal-content {
-  background: rgba(240, 240, 245, 0.95);
+  background: rgba(255, 248, 231, 0.95); /* Cream background */
   border-radius: 10px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(200, 220, 255, 0.3);
+  box-shadow: 0 8px 20px rgba(160, 120, 80, 0.3);
+  border: 1px solid rgba(210, 180, 140, 0.3);
   overflow-y: auto;
   margin: auto;
   position: relative;
@@ -222,7 +263,7 @@ body {
 .upgrade-header h3 {
   margin: 0;
   font-size: 20px; /* Reduced from 24px */
-  color: #8B4513; /* SaddleBrown */
+  color: #000000;
   text-shadow: 0 0 5px rgba(210, 180, 140, 0.5);
   font-weight: 600;
 }
@@ -248,13 +289,13 @@ body {
 .tower-stats p {
   margin: 10px 0;
   font-size: 15px;
-  color: #8B4513; /* SaddleBrown */
+  color: #000000;
   display: flex;
   justify-content: space-between;
 }
 
 .tower-stats p span {
-  color: #A0522D; /* Sienna */
+  color: #000000;
   font-weight: 600;
 }
 
@@ -303,7 +344,7 @@ body {
 
 .upgrade-path h4 {
   margin: 0 0 6px 0;
-  color: #8B4513; /* SaddleBrown */
+  color: #000000;
   font-size: 16px; /* Reduced from 18px */
   font-weight: 600;
   text-shadow: 0 0 3px rgba(210, 180, 140, 0.5);
@@ -312,7 +353,7 @@ body {
 .upgrade-path p {
   margin: 0 0 12px 0;
   font-size: 13px; /* Reduced from 14px */
-  color: #A0522D; /* Sienna */
+  color: #000000;
   line-height: 1.3;
 }
 
@@ -429,17 +470,17 @@ body {
 }
 
 .tutorial-content {
-  background: rgba(240, 240, 245, 0.95);
+  background: rgba(255, 248, 231, 0.95); /* Cream background */
   border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 0 20px rgba(100, 180, 255, 0.4);
-  border: 2px solid rgba(200, 220, 255, 0.5);
+  box-shadow: 0 10px 30px rgba(160, 120, 80, 0.3), 0 0 20px rgba(210, 180, 140, 0.4);
+  border: 2px solid rgba(210, 180, 140, 0.5);
   width: 600px;
   max-width: 90vw;
   max-height: 80vh;
   overflow-y: auto;
   position: relative;
   padding: 25px;
-  color: #2c3e50;
+  color: #000000;
 }
 
 .tutorial-header {
@@ -447,15 +488,15 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
-  border-bottom: 2px solid rgba(100, 180, 255, 0.3);
+  border-bottom: 2px solid rgba(210, 180, 140, 0.5);
   padding-bottom: 15px;
 }
 
 .tutorial-header h2 {
   margin: 0;
   font-size: 28px;
-  color: #2980b9;
-  text-shadow: 0 0 10px rgba(100, 180, 255, 0.3);
+  color: #000000;
+  text-shadow: 0 0 10px rgba(210, 180, 140, 0.3);
 }
 
 .tutorial-close {
@@ -496,7 +537,7 @@ body {
 
 .tutorial-step h3 {
   margin: 0 0 15px 0;
-  color: #3498db;
+  color: #000000;
   font-size: 22px;
 }
 
@@ -504,7 +545,7 @@ body {
   margin: 0 0 15px 0;
   font-size: 16px;
   line-height: 1.6;
-  color: #34495e;
+  color: #000000;
 }
 
 .tutorial-image {
@@ -527,7 +568,7 @@ body {
   display: flex;
   justify-content: space-between;
   margin-top: 25px;
-  border-top: 1px solid rgba(100, 180, 255, 0.3);
+  border-top: 1px solid rgba(210, 180, 140, 0.5);
   padding-top: 20px;
 }
 
@@ -543,36 +584,36 @@ body {
 }
 
 .tutorial-prev {
-  background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+  background: linear-gradient(45deg, #D2B48C, #CD853F); /* Tan to Peru */
   color: white;
 }
 
 .tutorial-prev:hover {
-  background: linear-gradient(45deg, #7f8c8d, #6c7a7d);
+  background: linear-gradient(45deg, #DEB887, #D2691E); /* BurlyWood to Chocolate */
   transform: translateY(-2px);
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 15px rgba(160, 120, 80, 0.3);
 }
 
 .tutorial-next {
-  background: linear-gradient(45deg, #3498db, #2980b9);
+  background: linear-gradient(45deg, #D2B48C, #CD853F); /* Tan to Peru */
   color: white;
 }
 
 .tutorial-next:hover {
-  background: linear-gradient(45deg, #2980b9, #1a5276);
+  background: linear-gradient(45deg, #DEB887, #D2691E); /* BurlyWood to Chocolate */
   transform: translateY(-2px);
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 15px rgba(160, 120, 80, 0.3);
 }
 
 .tutorial-skip {
-  background: linear-gradient(45deg, #e74c3c, #c0392b);
+  background: linear-gradient(45deg, #A0522D, #8B4513); /* Sienna to SaddleBrown */
   color: white;
 }
 
 .tutorial-skip:hover {
-  background: linear-gradient(45deg, #c0392b, #922b21);
+  background: linear-gradient(45deg, #8B4513, #654321); /* SaddleBrown to DarkBrown */
   transform: translateY(-2px);
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 15px rgba(160, 120, 80, 0.3);
 }
 
 .tutorial-progress {
@@ -586,12 +627,12 @@ body {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: #bdc3c7;
+  background: rgba(210, 180, 140, 0.5);
   transition: all 0.3s ease;
 }
 
 .progress-dot.active {
-  background: #3498db;
+  background: #CD853F; /* Peru */
   transform: scale(1.2);
 }
 
@@ -810,14 +851,14 @@ body {
 
 .modal-content h2 {
   margin-top: 0;
-  color: #2c3e50; /* Dark blue-gray instead of white */
+  color: #000000;
   font-size: 24px; /* Reduced from 28px */
 }
 
 .modal-content p {
   font-size: 16px; /* Reduced from 18px */
   margin-bottom: 15px; /* Reduced from 20px */
-  color: #34495e; /* Dark blue-gray */
+  color: #000000;
 }
 
 .game-over-buttons {
@@ -836,26 +877,19 @@ body {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
+  background: linear-gradient(45deg, #D2B48C, #CD853F); /* Tan to Peru */
+  box-shadow: 0 4px 15px rgba(160, 120, 80, 0.3);
 }
 
-#restart {
-  background: linear-gradient(45deg, #00b0ff, #0091ea);
-}
-
-#restart:hover {
-  background: linear-gradient(45deg, #0091ea, #0277bd);
+#restart:hover, #return-to-menu:hover {
+  background: linear-gradient(45deg, #DEB887, #D2691E); /* BurlyWood to Chocolate */
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 6px 20px rgba(160, 120, 80, 0.4);
 }
 
-#return-to-menu {
-  background: linear-gradient(45deg, #ff9800, #f57c00);
-}
-
-#return-to-menu:hover {
-  background: linear-gradient(45deg, #f57c00, #e65100);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+/* Game over modal styles */
+.modal-content h2, .modal-content p {
+  color: #000000;
 }
 
 /* Responsive Design */

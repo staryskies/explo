@@ -848,6 +848,22 @@ class Game {
 
     // Update wave counter
     document.getElementById('wave-counter').innerHTML = 'Wave: <span id="wave">' + this.wave + '</span>';
+
+    // Update sidebar game info
+    const enemiesRemaining = this.waveInProgress ?
+      (this.totalEnemiesInWave - this.enemiesSpawned) + this.enemies.length : 0;
+    document.getElementById('enemies-remaining').textContent = enemiesRemaining;
+
+    // Calculate wave progress percentage
+    let waveProgress = 0;
+    if (this.totalEnemiesInWave > 0 && this.waveInProgress) {
+      waveProgress = Math.floor(((this.enemiesKilled + this.enemiesLeaked) / this.totalEnemiesInWave) * 100);
+    }
+    document.getElementById('wave-progress').textContent = waveProgress + '%';
+
+    // Update game stats
+    document.getElementById('enemies-killed').textContent = this.enemiesKilled;
+    document.getElementById('towers-built').textContent = this.towers.length;
   }
 
   // Create the tower selection bar at the bottom
@@ -1186,8 +1202,8 @@ class Game {
     this.effects = [];
 
     // Reset player stats
-    this.lives = 10;
-    this.gold = 100;
+    this.lives = this.getDifficultyLives();
+    this.gold = this.getDifficultyGold();
     this.score = 0;
     this.wave = 1;
 
@@ -1201,8 +1217,8 @@ class Game {
 
     // Reset tower placement
     this.selectedTowerType = null;
-    document.querySelectorAll('.tower-btn').forEach(btn => {
-      btn.classList.remove('selected');
+    document.querySelectorAll('.tower-option').forEach(option => {
+      option.classList.remove('selected');
     });
 
     // Reset UI
@@ -1211,6 +1227,9 @@ class Game {
     document.getElementById('speedUp').textContent = 'Speed Up';
     document.getElementById('showRange').checked = false;
     this.showTowerRanges = false;
+
+    // Recreate the tower selection bar
+    this.createTowerSelectionBar();
 
     // Update UI
     this.updateUI();
