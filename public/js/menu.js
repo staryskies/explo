@@ -200,15 +200,15 @@ function setupEventListeners() {
     document.getElementById('map-selection-modal').classList.add('active');
   });
 
-  // Start game button (after difficulty selection)
-  document.getElementById('start-game-btn').addEventListener('click', () => {
+  // Select loadout button (after difficulty selection)
+  document.getElementById('select-loadout-btn').addEventListener('click', () => {
     const selectedDifficulty = document.querySelector('.difficulty-option.selected');
     if (selectedDifficulty) {
       const difficulty = selectedDifficulty.dataset.difficulty;
       // Store selected difficulty in session storage
       sessionStorage.setItem('selectedDifficulty', difficulty);
-      // Navigate to game.html
-      window.location.href = 'game.html';
+      // Navigate to loadout.html
+      window.location.href = 'loadout.html';
     } else {
       alert('Please select a difficulty level first');
     }

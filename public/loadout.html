@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tower Defense - Loadout Selection</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/loadout.css">
+</head>
+<body>
+  <div id="loadout-container">
+    <h1>Select Your Loadout</h1>
+    <p class="loadout-description">Choose up to 4 towers for your battle</p>
+    
+    <div id="selected-towers">
+      <div class="selected-slot empty" data-slot="0"></div>
+      <div class="selected-slot empty" data-slot="1"></div>
+      <div class="selected-slot empty" data-slot="2"></div>
+      <div class="selected-slot empty" data-slot="3"></div>
+    </div>
+    
+    <div id="available-towers">
+      <!-- Towers will be populated dynamically -->
+    </div>
+    
+    <div class="loadout-buttons">
+      <button id="back-btn">Back</button>
+      <button id="start-btn" disabled>Start Game</button>
+    </div>
+  </div>
+  
+  <div id="tower-preview" class="hidden">
+    <h3 id="preview-name">Tower Name</h3>
+    <div id="preview-stats">
+      <p>Damage: <span id="preview-damage">0</span></p>
+      <p>Range: <span id="preview-range">0</span></p>
+      <p>Fire Rate: <span id="preview-fire-rate">0</span></p>
+      <p>Special: <span id="preview-special">None</span></p>
+      <div class="targeting-info">
+        <p>Can Target:</p>
+        <p>Ground: <span id="preview-target-ground" class="target-yes">Yes</span></p>
+        <p>Flying: <span id="preview-target-flying" class="target-no">No</span></p>
+        <p>Shadow: <span id="preview-target-shadow" class="target-no">No</span></p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Scripts -->
+  <script src="js/playerData.js"></script>
+  <script src="js/towerData.js"></script>
+  <script src="js/loadout.js"></script>
+</body>
+</html>

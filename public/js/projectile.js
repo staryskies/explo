@@ -129,6 +129,24 @@ class Projectile {
       return;
     }
 
+    // Special handling for laser projectiles - they hit instantly
+    if (this.type === 'laser') {
+      // Laser beams hit instantly
+      this.hit = true;
+
+      // Keep the projectile active for one frame to draw the beam
+      // then deactivate it
+      if (this.frameCount === undefined) {
+        this.frameCount = 0;
+      } else {
+        this.frameCount++;
+        if (this.frameCount > 1) {
+          this.active = false;
+        }
+      }
+      return;
+    }
+
     // Calculate distance to target
     const dist = distance(this.x, this.y, this.target.x, this.target.y);
 
@@ -159,8 +177,6 @@ class Projectile {
     // Increase tracking for certain projectile types
     if (this.type === 'missile') {
       trackingStrength = 0.3;
-    } else if (this.type === 'laser') {
-      trackingStrength = 0.5; // Lasers track perfectly
     }
 
     // Apply tracking adjustment
@@ -421,7 +437,7 @@ class Projectile {
     // Draw laser beam as a straight line from tower to target
     if (!this.target || !this.target.alive) return;
 
-    // Calculate start and end points
+    // Get the tower position (this.x and this.y are the starting points)
     const startX = this.x;
     const startY = this.y;
     const endX = this.target.x;

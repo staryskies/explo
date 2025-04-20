@@ -13,6 +13,16 @@ class Game {
     this.speedMultiplier = 1;
     this.maxSpeedMultiplier = 2.3; // Changed from 5 to 2.3 as requested
 
+    // Get the selected towers from session storage
+    const selectedTowers = sessionStorage.getItem('selectedTowers');
+    if (selectedTowers) {
+      this.availableTowers = JSON.parse(selectedTowers);
+      console.log('Loadout towers:', this.availableTowers);
+    } else {
+      // Default towers if none selected
+      this.availableTowers = ['basic', 'cannon', 'archer', 'freeze'];
+    }
+
     // Difficulty settings
     this.difficulty = sessionStorage.getItem('selectedDifficulty') || 'easy';
     this.waveLimit = getWaveLimit(this.difficulty); // Get wave limit based on difficulty
@@ -70,6 +80,9 @@ class Game {
 
     // Initialize upgrade system
     this.initializeUpgradeSystem();
+
+    // Create the tower selection bar at the bottom
+    this.createTowerSelectionBar();
 
     // Update UI
     this.updateUI();
@@ -239,9 +252,9 @@ class Game {
 
   // Select tower type for placement
   selectTowerType(type) {
-    // Deselect all tower buttons
-    document.querySelectorAll('.tower-btn').forEach(btn => {
-      btn.classList.remove('selected');
+    // Deselect all tower options
+    document.querySelectorAll('.tower-option').forEach(option => {
+      option.classList.remove('selected');
     });
 
     // If clicking the same tower type, deselect it
@@ -261,12 +274,12 @@ class Game {
     // Select the tower
     this.selectedTowerType = type;
 
-    // Find the button and add the selected class
-    const towerButton = document.querySelector(`.tower-btn[data-type="${type}"]`);
-    if (towerButton) {
-      towerButton.classList.add('selected');
+    // Find the option and add the selected class
+    const towerOption = document.querySelector(`.tower-option[data-type="${type}"]`);
+    if (towerOption) {
+      towerOption.classList.add('selected');
     } else {
-      console.error(`Tower button for type ${type} not found`);
+      console.error(`Tower option for type ${type} not found`);
     }
   }
 
@@ -835,6 +848,224 @@ class Game {
 
     // Update wave counter
     document.getElementById('wave-counter').innerHTML = 'Wave: <span id="wave">' + this.wave + '</span>';
+  }
+
+  // Create the tower selection bar at the bottom
+  createTowerSelectionBar() {
+    // Remove the existing sidebar
+    const existingSidebar = document.getElementById('tower-selection');
+    if (existingSidebar) {
+      existingSidebar.remove();
+    }
+
+    // Create the tower selection bar container
+    const towerBar = document.createElement('div');
+    towerBar.id = 'tower-bar';
+    document.getElementById('game-container').appendChild(towerBar);
+
+    // Add CSS for the tower bar
+    const style = document.createElement('style');
+    style.textContent = `
+      #tower-bar {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 15px;
+        padding: 10px 20px;
+        background: rgba(255, 248, 231, 0.9);
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        z-index: 100;
+      }
+
+      .tower-option {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(45deg, #D2B48C, #CD853F);
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+      }
+
+      .tower-option:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(160, 120, 80, 0.4);
+      }
+
+      .tower-option.selected {
+        background: linear-gradient(45deg, #A0522D, #8B4513);
+        box-shadow: 0 0 10px rgba(160, 120, 80, 0.7);
+      }
+
+      .tower-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        margin-bottom: 5px;
+      }
+
+      .tower-name {
+        font-size: 12px;
+        color: white;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+      }
+
+      .tower-cost {
+        position: absolute;
+        bottom: -5px;
+        right: -5px;
+        background: #4CAF50;
+        color: white;
+        border-radius: 10px;
+        padding: 2px 5px;
+        font-size: 10px;
+        font-weight: bold;
+      }
+
+      #tower-preview {
+        position: fixed;
+        bottom: 120px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 300px;
+        background: rgba(255, 248, 231, 0.95);
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        z-index: 101;
+        display: none;
+      }
+
+      #tower-preview.visible {
+        display: block;
+      }
+
+      #preview-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      #preview-stats p {
+        margin: 5px 0;
+        font-size: 14px;
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Create tower preview element
+    const towerPreview = document.createElement('div');
+    towerPreview.id = 'tower-preview';
+    towerPreview.innerHTML = `
+      <h3 id="preview-name">Tower Name</h3>
+      <div id="preview-stats">
+        <p>Damage: <span id="preview-damage">0</span></p>
+        <p>Range: <span id="preview-range">0</span></p>
+        <p>Fire Rate: <span id="preview-fire-rate">0</span></p>
+        <p>Special: <span id="preview-special">None</span></p>
+        <div class="targeting-info">
+          <p>Can Target:</p>
+          <p>Ground: <span id="preview-target-ground" class="target-yes">Yes</span></p>
+          <p>Flying: <span id="preview-target-flying" class="target-no">No</span></p>
+          <p>Shadow: <span id="preview-target-shadow" class="target-no">No</span></p>
+        </div>
+      </div>
+    `;
+    document.getElementById('game-container').appendChild(towerPreview);
+
+    // Add towers to the bar based on the available towers
+    this.availableTowers.forEach(towerType => {
+      const towerData = towerStats[towerType];
+      if (!towerData) return;
+
+      const towerOption = document.createElement('div');
+      towerOption.className = 'tower-option';
+      towerOption.dataset.type = towerType;
+
+      const towerIcon = document.createElement('div');
+      towerIcon.className = 'tower-icon';
+      towerIcon.style.backgroundColor = towerData.color || '#4CAF50';
+
+      const towerName = document.createElement('div');
+      towerName.className = 'tower-name';
+      towerName.textContent = towerData.name || towerType;
+
+      const towerCost = document.createElement('div');
+      towerCost.className = 'tower-cost';
+      towerCost.textContent = towerData.cost || 100;
+
+      towerOption.appendChild(towerIcon);
+      towerOption.appendChild(towerName);
+      towerOption.appendChild(towerCost);
+
+      // Add click event to select tower
+      towerOption.addEventListener('click', () => {
+        this.selectTowerType(towerType);
+      });
+
+      // Add hover event to show tower preview
+      towerOption.addEventListener('mouseenter', () => {
+        this.showTowerPreview(towerType, towerData);
+      });
+
+      towerOption.addEventListener('mouseleave', () => {
+        this.hideTowerPreview();
+      });
+
+      towerBar.appendChild(towerOption);
+    });
+  }
+
+  // Show tower preview
+  showTowerPreview(towerType, towerData) {
+    const previewElement = document.getElementById('tower-preview');
+
+    // Set tower name
+    document.getElementById('preview-name').textContent = towerData.name || towerType;
+
+    // Set tower stats
+    document.getElementById('preview-damage').textContent = towerData.damage || 0;
+    document.getElementById('preview-range').textContent = towerData.range || 0;
+    document.getElementById('preview-fire-rate').textContent = towerData.fireRate?.toFixed(1) || 0;
+    document.getElementById('preview-special').textContent = towerData.ability || 'None';
+
+    // Set targeting capabilities
+    document.getElementById('preview-target-ground').textContent = 'Yes';
+    document.getElementById('preview-target-ground').className = 'target-yes';
+
+    // Flying targeting
+    if (towerData.canTargetFlying) {
+      document.getElementById('preview-target-flying').textContent = 'Yes';
+      document.getElementById('preview-target-flying').className = 'target-yes';
+    } else {
+      document.getElementById('preview-target-flying').textContent = 'No';
+      document.getElementById('preview-target-flying').className = 'target-no';
+    }
+
+    // Shadow targeting (only certain tower types)
+    const shadowTargetingTowers = ['tesla', 'laser', 'flame'];
+    if (shadowTargetingTowers.includes(towerType)) {
+      document.getElementById('preview-target-shadow').textContent = 'Yes';
+      document.getElementById('preview-target-shadow').className = 'target-yes';
+    } else {
+      document.getElementById('preview-target-shadow').textContent = 'No';
+      document.getElementById('preview-target-shadow').className = 'target-no';
+    }
+
+    // Show the preview
+    previewElement.classList.add('visible');
+  }
+
+  // Hide tower preview
+  hideTowerPreview() {
+    document.getElementById('tower-preview').classList.remove('visible');
   }
 
   // Resize canvas to fit the screen

@@ -1150,31 +1150,30 @@ class GameMap {
     // Skip if not using void effect
     if (!this.useVoidEffect) return;
 
-    // Check if it's time to update
-    if (!this.lastVoidUpdateTime) {
-      this.lastVoidUpdateTime = currentTime;
+    // Only update once per wave
+    if (window.game && window.game.waveInProgress) {
+      // Don't update during a wave
       return;
     }
 
-    // Calculate time since last update
-    const timeDelta = currentTime - this.lastVoidUpdateTime;
+    // Check if we've already updated for this wave
+    if (this.lastUpdatedWave === window.game?.wave) {
+      return;
+    }
 
-    // Only update at certain intervals
-    if (timeDelta < this.voidUpdateInterval) return;
+    // Mark that we've updated for this wave
+    this.lastUpdatedWave = window.game?.wave;
 
-    // Update the last update time
-    this.lastVoidUpdateTime = currentTime;
+    // Update important tiles list to include any new occupied tiles (towers)
+    this.updateImportantTiles();
 
     // Increase the void progress
-    this.voidProgress += 0.05; // 5% more tiles disappear each update
+    this.voidProgress += 0.05; // 5% more tiles disappear each wave
 
     // Cap at 1.0 (100% complete)
     if (this.voidProgress > 1.0) {
       this.voidProgress = 1.0;
     }
-
-    // Update important tiles list to include any new occupied tiles (towers)
-    this.updateImportantTiles();
 
     // Calculate how many tiles should be visible
     const totalTiles = this.gridWidth * this.gridHeight;
@@ -1183,23 +1182,40 @@ class GameMap {
       Math.floor(totalTiles * (1 - this.voidProgress))
     );
 
-    // Reset visibility
+    // Get all non-important tiles
+    const nonImportantTiles = [];
     for (let y = 0; y < this.gridHeight; y++) {
       for (let x = 0; x < this.gridWidth; x++) {
         // Check if this is an important tile that should always remain visible
         const isImportantTile = this.importantTiles.some(tile => tile.x === x && tile.y === y);
 
-        if (isImportantTile) {
-          // Important tiles always stay visible
-          this.visibleTiles[y][x] = true;
-        } else {
-          // Non-important tiles have a chance to disappear based on void progress
-          const disappearChance = this.voidProgress * 1.2; // Slightly higher chance to create a more dramatic effect
-          this.visibleTiles[y][x] = Math.random() > disappearChance;
+        // Check if this is a path tile
+        const isPathTile = this.path.some(pathTile => pathTile.x === x && pathTile.y === y);
+
+        // Check if this is an occupied tile (has a tower)
+        const isOccupiedTile = this.grid[y][x] === this.TILE_TYPES.OCCUPIED;
+
+        // If it's not important, not a path, and not occupied, add to non-important tiles
+        if (!isImportantTile && !isPathTile && !isOccupiedTile) {
+          nonImportantTiles.push({x, y});
         }
       }
     }
 
+    // Shuffle the non-important tiles to randomize which ones disappear
+    this.shuffleArray(nonImportantTiles);
+
+    // Calculate how many tiles to remove this wave
+    const tilesToRemove = Math.min(
+      nonImportantTiles.length,
+      Math.floor(nonImportantTiles.length * this.voidProgress * 0.2) // Remove up to 20% of remaining non-important tiles per wave
+    );
+
+    // Remove the calculated number of tiles
+    for (let i = 0; i < tilesToRemove; i++) {
+      const tile = nonImportantTiles[i];
+      this.visibleTiles[tile.y][tile.x] = false;
+    }
     // If we have too many visible tiles, hide some random ones (except important ones)
     let visibleCount = 0;
     for (let y = 0; y < this.gridHeight; y++) {
@@ -1258,6 +1274,15 @@ class GameMap {
         }
       }
     }
+  }
+
+  // Shuffle array using Fisher-Yates algorithm
+  shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
   }
 
   // Update and draw the blackout effect
