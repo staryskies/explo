@@ -205,8 +205,8 @@ const towerStats = {
     persistentCost: 600,
     ability: "Divine Judgment",
     range: 300, // Excellent range
-    damage: 300, // High base damage
-    fireRate: 2.0, // Fast fire rate
+    damage: 400, // High base damage
+    fireRate: 3.0, // Fast fire rate
     projectileSpeed: 30, // Very fast projectiles
     canTargetFlying: true,
     pierceCount: 3, // Pierces through multiple enemies
@@ -214,7 +214,7 @@ const towerStats = {
     critMultiplier: 3.0, // High crit multiplier
     aoeRadius: 50, // Area damage
     chainCount: 3, // Can chain to nearby enemies
-    chainRange: 100, // Good chain range
+    chainRange: 300, // Good chain range
     buffRadius: 150, // Radius for buffing nearby towers
     buffDamage: 0.2, // 20% damage buff to nearby towers
     buffRange: 0.1, // 10% range buff to nearby towers
