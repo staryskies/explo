@@ -459,6 +459,37 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Handle global chat messages
+  socket.on('global-message', (data) => {
+    try {
+      const { message } = data;
+
+      // Validate input
+      if (!message) {
+        socket.emit('error', { message: 'Invalid message data' });
+        return;
+      }
+
+      // Check if user is authenticated
+      if (!socket.user || !socket.user.id) {
+        socket.emit('error', { message: 'Authentication required' });
+        return;
+      }
+
+      // Broadcast message to all connected clients
+      io.emit('global-message', {
+        id: Date.now().toString(),
+        userId: socket.user.id,
+        username: socket.user.username,
+        message,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Global message error:', error);
+      socket.emit('error', { message: 'Failed to send message' });
+    }
+  });
+
   // Handle errors
   socket.on('error', (error) => {
     console.error('Socket error:', error);

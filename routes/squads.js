@@ -311,6 +311,34 @@ router.post('/:id/leave', requireAuth, async (req, res) => {
   }
 });
 
+// Get public squads list
+router.get('/public', requireAuth, async (req, res) => {
+  try {
+    if (!pool) {
+      return res.status(500).json({ error: 'Database connection not available' });
+    }
+
+    // Get squads with member count
+    const squadsResult = await pool.query(
+      `SELECT s.id, s.code, s.leader_id as "leaderId", s.created_at as "createdAt",
+              COUNT(sm.id) as "memberCount"
+       FROM squads s
+       JOIN squad_members sm ON s.id = sm.squad_id
+       GROUP BY s.id
+       HAVING COUNT(sm.id) < 4
+       ORDER BY s.created_at DESC
+       LIMIT 10`
+    );
+
+    const squads = squadsResult.rows;
+
+    return res.json({ squads });
+  } catch (error) {
+    console.error('Get public squads error:', error);
+    return res.status(500).json({ error: 'Failed to get squads' });
+  }
+});
+
 // Get user's current squad
 router.get('/my-squad', requireAuth, async (req, res) => {
   try {
