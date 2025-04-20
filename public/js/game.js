@@ -1003,6 +1003,13 @@ class Game {
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         z-index: 101;
         display: none;
+        color: #000000;
+      }
+
+      #tower-preview h3 {
+        color: #000000;
+        margin-top: 0;
+        margin-bottom: 10px;
       }
 
       #tower-preview.visible {
@@ -1018,6 +1025,35 @@ class Game {
       #preview-stats p {
         margin: 5px 0;
         font-size: 14px;
+        color: #000000;
+      }
+
+      #preview-stats span {
+        color: #000000;
+        font-weight: 600;
+      }
+
+      #tower-preview .targeting-info {
+        margin-top: 15px;
+        padding-top: 10px;
+        border-top: 1px dashed rgba(210, 180, 140, 0.5);
+        grid-column: span 2;
+      }
+
+      #tower-preview .targeting-info p {
+        margin: 5px 0;
+        font-size: 13px;
+        color: #000000;
+      }
+
+      #tower-preview .target-yes {
+        color: #4CAF50 !important; /* Green */
+        font-weight: bold;
+      }
+
+      #tower-preview .target-no {
+        color: #F44336 !important; /* Red */
+        font-weight: bold;
       }
     `;
     document.head.appendChild(style);
