@@ -1026,13 +1026,13 @@ class Projectile {
     const time = Date.now() / 100;
 
     // Get base unit for scaling
-    const baseUnit = getBaseUnit();
+    const baseUnit = window.getBaseUnit ? window.getBaseUnit() : 5;
     const scaledSize = this.size * baseUnit / 3; // Scale size based on screen dimensions
 
     // Draw trail
     if (this.trailLength > 0) {
       // Scale trail length based on screen size
-      const scaledTrailLength = toPixels(this.trailLength / 5);
+      const scaledTrailLength = window.toPixels ? window.toPixels(this.trailLength / 5) : this.trailLength;
 
       // Create gradient for trail
       const trailGradient = ctx.createLinearGradient(
@@ -1062,7 +1062,7 @@ class Projectile {
     if (this.aoeRadius) {
       const pulse = Math.sin(time * 0.1) * 0.2 + 0.8;
       // Scale AOE radius based on screen size
-      const scaledAoeRadius = toPixels(this.aoeRadius / 10);
+      const scaledAoeRadius = window.toPixels ? window.toPixels(this.aoeRadius / 10) : this.aoeRadius / 2;
 
       ctx.globalAlpha = 0.2 * pulse;
       ctx.fillStyle = '#FFEB3B';
@@ -1845,9 +1845,9 @@ class Projectile {
     const time = Date.now() / 100;
 
     // Get base unit for scaling
-    const baseUnit = getBaseUnit();
+    const baseUnit = window.getBaseUnit ? window.getBaseUnit() : 5;
     const scaledSize = this.size * baseUnit / 3; // Scale size based on screen dimensions
-    const radius = this.aoeRadius ? toPixels(this.aoeRadius / 10) : scaledSize * 10;
+    const radius = this.aoeRadius ? (window.toPixels ? window.toPixels(this.aoeRadius / 10) : this.aoeRadius / 2) : scaledSize * 10;
 
     // Create a pulsing effect
     const pulse = 0.8 + Math.sin(time * 0.1) * 0.2;

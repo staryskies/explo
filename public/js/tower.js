@@ -2018,7 +2018,7 @@ class Tower {
       case 'archangel':
         // Archangel tower with divine effects
         // Get base unit for scaling
-        const baseUnit = getBaseUnit();
+        const baseUnit = window.getBaseUnit ? window.getBaseUnit() : 5;
         const scaleFactor = baseUnit / 5; // Scale factor for all dimensions
 
         // Base tower body with enhanced design
