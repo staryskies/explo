@@ -7,7 +7,7 @@ console.log('Player data loaded');
 // Player data structure
 const playerData = {
   // Currency
-  silver: 0,
+  silver: 1000, // Start with some silver for testing
 
   // Game stats
   highScore: 0,
@@ -17,8 +17,38 @@ const playerData = {
   highestWaveCompleted: 0,
   completedDifficulties: [],
 
+  // Gacha system stats
+  towerRolls: 0,
+  variantRolls: 0,
+  towerPity: {
+    rare: 0,
+    epic: 0,
+    legendary: 0
+  },
+  variantPity: {
+    rare: 0,
+    epic: 0,
+    legendary: 0
+  },
+
   // Unlocked towers (basic is always unlocked)
   unlockedTowers: ['basic'],
+
+  // Tower variants for each tower
+  towerVariants: {
+    basic: ['normal'],
+    archer: [],
+    cannon: [],
+    sniper: [],
+    freeze: [],
+    mortar: [],
+    laser: [],
+    tesla: [],
+    flame: [],
+    missile: [],
+    poison: [],
+    vortex: []
+  },
 
   // Towers that require completing specific difficulties
   lockedTowers: {

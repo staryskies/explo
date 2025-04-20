@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Add event listeners
   setupEventListeners();
 
+  // Setup gacha system event listeners
+  setupGachaEventListeners();
+
   // Generate map options
   generateMapOptions();
 
@@ -155,15 +158,13 @@ function setupEventListeners() {
     document.getElementById('map-selection-modal').classList.add('active');
   });
 
-  // Shop button
-  document.getElementById('shop-button').addEventListener('click', () => {
-    document.getElementById('tower-shop-modal').classList.add('active');
+  // Gacha button
+  document.getElementById('gacha-button').addEventListener('click', () => {
+    document.getElementById('tower-gacha-modal').classList.add('active');
   });
 
-  // Upgrades button
-  document.getElementById('upgrades-button').addEventListener('click', () => {
-    document.getElementById('tower-upgrades-modal').classList.add('active');
-  });
+  // Update silver display in gacha modal
+  document.getElementById('gacha-silver-amount').textContent = playerData.silver;
 
   // Close buttons
   document.querySelectorAll('.close-btn').forEach(button => {
@@ -679,6 +680,98 @@ function generateShopOptions() {
 }
 
 // Generate upgrade options
+// Spend silver and return true if successful
+function spendSilver(amount) {
+  if (playerData.silver >= amount) {
+    playerData.silver -= amount;
+    savePlayerData();
+    updateSilverDisplay();
+    return true;
+  }
+  return false;
+}
+
+// Setup gacha system event listeners
+function setupGachaEventListeners() {
+  // Tower roll buttons
+  document.getElementById('roll-tower-1').addEventListener('click', () => {
+    if (spendSilver(gachaSystem.costs.tower.single)) {
+      gachaSystem.rollTowers(1);
+      updateSilverDisplay();
+    } else {
+      alert('Not enough silver!');
+    }
+  });
+
+  document.getElementById('roll-tower-10').addEventListener('click', () => {
+    if (spendSilver(gachaSystem.costs.tower.ten)) {
+      gachaSystem.rollTowers(10);
+      updateSilverDisplay();
+    } else {
+      alert('Not enough silver!');
+    }
+  });
+
+  document.getElementById('roll-tower-100').addEventListener('click', () => {
+    if (spendSilver(gachaSystem.costs.tower.hundred)) {
+      gachaSystem.rollTowers(100);
+      updateSilverDisplay();
+    } else {
+      alert('Not enough silver!');
+    }
+  });
+
+  // Populate tower select dropdown for variants
+  const towerSelect = document.getElementById('variant-tower-select');
+  towerSelect.innerHTML = '';
+
+  playerData.unlockedTowers.forEach(towerType => {
+    const option = document.createElement('option');
+    option.value = towerType;
+    option.textContent = towerStats[towerType]?.name || towerType;
+    towerSelect.appendChild(option);
+  });
+
+  // Variant roll buttons
+  document.getElementById('roll-variant-1').addEventListener('click', () => {
+    const selectedTower = document.getElementById('variant-tower-select').value;
+    if (spendSilver(gachaSystem.costs.variant.single)) {
+      gachaSystem.rollVariant(selectedTower);
+      updateSilverDisplay();
+    } else {
+      alert('Not enough silver!');
+    }
+  });
+
+  document.getElementById('roll-variant-10').addEventListener('click', () => {
+    const selectedTower = document.getElementById('variant-tower-select').value;
+    if (spendSilver(gachaSystem.costs.variant.ten)) {
+      gachaSystem.rollVariants(10, selectedTower);
+      updateSilverDisplay();
+    } else {
+      alert('Not enough silver!');
+    }
+  });
+
+  document.getElementById('roll-variant-100').addEventListener('click', () => {
+    const selectedTower = document.getElementById('variant-tower-select').value;
+    if (spendSilver(gachaSystem.costs.variant.hundred)) {
+      gachaSystem.rollVariants(100, selectedTower);
+      updateSilverDisplay();
+    } else {
+      alert('Not enough silver!');
+    }
+  });
+
+  // Close button
+  document.getElementById('close-tower-gacha').addEventListener('click', () => {
+    document.getElementById('tower-gacha-modal').classList.remove('active');
+  });
+
+  // Update silver display
+  document.getElementById('gacha-silver-amount').textContent = playerData.silver;
+}
+
 function generateUpgradeOptions() {
   const upgradesContainer = document.getElementById('tower-upgrades-options');
 

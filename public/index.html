@@ -14,8 +14,7 @@
       <h1>Tower Defense</h1>
       <div class="menu-buttons">
         <button id="play-button" class="menu-btn">Play Game</button>
-        <button id="shop-button" class="menu-btn">Tower Shop</button>
-        <button id="upgrades-button" class="menu-btn">Upgrades</button>
+        <button id="gacha-button" class="menu-btn">Tower Gacha</button>
       </div>
 
       <div class="player-stats">
@@ -109,39 +108,47 @@
       </div>
     </div>
 
-    <!-- Tower Shop Modal -->
-    <div id="tower-shop-modal" class="modal">
+    <!-- Tower Gacha Modal -->
+    <div id="tower-gacha-modal" class="modal">
       <div class="modal-content shop-content">
         <div class="modal-header">
-          <h2>Tower Shop</h2>
-          <span class="close-btn" id="close-tower-shop">&times;</span>
+          <h2>Tower Gacha</h2>
+          <span class="close-btn" id="close-tower-gacha">&times;</span>
         </div>
-        <div class="shop-grid" id="tower-shop-options">
-          <!-- Tower options will be generated here -->
-        </div>
-        <div class="modal-footer">
-          <div class="silver-display">
-            <span>Silver: </span>
-            <span id="shop-silver-amount">0</span>
+
+        <!-- Simple Gacha Interface -->
+        <div class="gacha-simple">
+          <div class="gacha-section">
+            <h3>Tower Gacha</h3>
+            <p>Roll for new towers to use in your game!</p>
+            <div class="gacha-buttons">
+              <button id="roll-tower-1" class="gacha-btn">Roll 1 Tower (100 Silver)</button>
+              <button id="roll-tower-10" class="gacha-btn">Roll 10 Towers (900 Silver)</button>
+              <button id="roll-tower-100" class="gacha-btn">Roll 100 Towers (8000 Silver)</button>
+            </div>
+          </div>
+
+          <div class="gacha-section">
+            <h3>Variant Gacha</h3>
+            <p>Roll for tower variants to customize your towers!</p>
+            <div class="tower-selector">
+              <label for="variant-tower-select">Select Tower:</label>
+              <select id="variant-tower-select">
+                <!-- Tower options will be generated here -->
+              </select>
+            </div>
+            <div class="gacha-buttons">
+              <button id="roll-variant-1" class="gacha-btn">Roll 1 Variant (150 Silver)</button>
+              <button id="roll-variant-10" class="gacha-btn">Roll 10 Variants (1350 Silver)</button>
+              <button id="roll-variant-100" class="gacha-btn">Roll 100 Variants (12000 Silver)</button>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Tower Upgrades Modal -->
-    <div id="tower-upgrades-modal" class="modal">
-      <div class="modal-content upgrades-content">
-        <div class="modal-header">
-          <h2>Tower Upgrades</h2>
-          <span class="close-btn" id="close-tower-upgrades">&times;</span>
-        </div>
-        <div class="upgrades-grid" id="tower-upgrades-options">
-          <!-- Tower upgrade options will be generated here -->
-        </div>
         <div class="modal-footer">
           <div class="silver-display">
             <span>Silver: </span>
-            <span id="upgrades-silver-amount">0</span>
+            <span id="gacha-silver-amount">0</span>
           </div>
         </div>
       </div>
@@ -150,7 +157,9 @@
 
   <!-- Load game scripts -->
   <script src="js/towerData.js"></script>
+  <script src="js/towerVariants.js"></script>
   <script src="js/playerData.js"></script>
+  <script src="js/gacha.js"></script>
   <script src="js/menu.js"></script>
 </body>
 </html>

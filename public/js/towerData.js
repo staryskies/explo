@@ -16,7 +16,8 @@ const towerStats = {
     fireRate: 0.6, // Slower fire rate
     projectileSpeed: 8, // Slower projectiles
     canTargetFlying: true, // Allow targeting flying enemies
-    color: '#4CAF50'
+    color: '#4CAF50',
+    tier: 'common'
   },
   archer: {
     name: "Archer Tower",
@@ -29,7 +30,8 @@ const towerStats = {
     projectileSpeed: 18, // Faster projectiles
     canTargetFlying: true,
     multiShot: 3, // Now fires 3 arrows by default
-    color: '#8BC34A'
+    color: '#8BC34A',
+    tier: 'common'
   },
   cannon: {
     name: "Cannon Tower",
@@ -43,7 +45,8 @@ const towerStats = {
     canTargetFlying: true, // Allow targeting flying enemies
     aoeRadius: 60, // Larger splash radius
     stunChance: 0.15, // Added stun chance
-    color: '#795548'
+    color: '#795548',
+    tier: 'common'
   },
   sniper: {
     name: "Sniper Tower",
@@ -58,7 +61,8 @@ const towerStats = {
     critChance: 0.4, // Double crit chance
     critMultiplier: 3.5, // Higher crit multiplier
     pierceCount: 1, // Added pierce ability
-    color: '#2196F3'
+    color: '#2196F3',
+    tier: 'rare'
   },
   freeze: {
     name: "Freeze Tower",
@@ -73,7 +77,8 @@ const towerStats = {
     slowFactor: 0.7, // Stronger slow effect
     slowDuration: 3500, // Longer slow duration
     aoeRadius: 40, // Added area effect
-    color: '#00BCD4'
+    color: '#00BCD4',
+    tier: 'rare'
   },
   mortar: {
     name: "Mortar Tower",
@@ -88,7 +93,8 @@ const towerStats = {
     aoeRadius: 100, // Much larger splash radius
     stunChance: 0.25, // Added stun chance
     stunDuration: 1000, // Added stun duration
-    color: '#607D8B'
+    color: '#607D8B',
+    tier: 'rare'
   },
   laser: {
     name: "Laser Tower",
@@ -103,7 +109,8 @@ const towerStats = {
     pierceCount: 3, // Can hit multiple enemies in a line
     rampUpRate: 0.1, // Damage increases the longer it fires
     maxRampUp: 1.0, // Up to double damage
-    color: '#E91E63'
+    color: '#E91E63',
+    tier: 'epic'
   },
   tesla: {
     name: "Tesla Tower",
@@ -119,7 +126,8 @@ const towerStats = {
     chainRange: 120, // Longer chain range
     stunChance: 0.3, // Added stun chance
     stunDuration: 800, // Added stun duration
-    color: '#673AB7'
+    color: '#673AB7',
+    tier: 'epic'
   },
   flame: {
     name: "Flame Tower",
@@ -136,7 +144,8 @@ const towerStats = {
     aoeRadius: 30, // Added splash damage
     spreadChance: 0.2, // Chance to spread to nearby enemies
     spreadRadius: 40, // Radius for spreading
-    color: '#FF5722'
+    color: '#FF5722',
+    tier: 'epic'
   },
   missile: {
     name: "Missile Tower",
@@ -151,7 +160,8 @@ const towerStats = {
     aoeRadius: 80, // Much larger splash radius
     trackingStrength: 0.4, // Added tracking ability
     multiHit: 1, // Hits twice
-    color: '#F44336'
+    color: '#F44336',
+    tier: 'legendary'
   },
   poison: {
     name: "Poison Tower",
@@ -168,7 +178,8 @@ const towerStats = {
     aoeRadius: 70, // Much larger splash radius
     armorReduction: 0.3, // Reduces enemy armor
     speedReduction: 0.2, // Slows enemies
-    color: '#9C27B0'
+    color: '#9C27B0',
+    tier: 'legendary'
   },
   vortex: {
     name: "Vortex Tower",
@@ -185,7 +196,8 @@ const towerStats = {
     damagePerSecond: 20, // Added damage over time while pulling
     slowFactor: 0.3, // Added slow effect
     aoeRadius: 60, // Added area effect
-    color: '#009688'
+    color: '#009688',
+    tier: 'legendary'
   }
 };
 
