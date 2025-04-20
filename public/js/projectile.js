@@ -1204,6 +1204,9 @@ class Projectile {
       case 'vortex':
         this.drawVortexExplosion(ctx);
         break;
+      case 'divine':
+        this.drawDivineExplosion(ctx);
+        break;
       case 'sniper':
         this.drawSniperExplosion(ctx);
         break;
@@ -1810,5 +1813,116 @@ class Projectile {
       );
       ctx.fill();
     }
+  }
+
+  drawDivineExplosion(ctx) {
+    // Draw divine explosion with spectacular holy light effects
+    const time = Date.now() / 100;
+    const radius = this.aoeRadius || this.size * 10;
+
+    // Create a pulsing effect
+    const pulse = 0.8 + Math.sin(time * 0.1) * 0.2;
+
+    // Draw main explosion area
+    const gradient = ctx.createRadialGradient(
+      this.x, this.y, 0,
+      this.x, this.y, radius * pulse
+    );
+
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+    gradient.addColorStop(0.3, 'rgba(255, 235, 59, 0.7)');
+    gradient.addColorStop(0.6, 'rgba(255, 235, 59, 0.4)');
+    gradient.addColorStop(1, 'rgba(255, 235, 59, 0)');
+
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, radius * pulse, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw multiple concentric rings
+    for (let i = 0; i < 4; i++) {
+      const ringRadius = radius * (0.4 + i * 0.2) * pulse;
+      const opacity = 0.8 - i * 0.15;
+
+      ctx.globalAlpha = opacity;
+      ctx.strokeStyle = '#FFEB3B';
+      ctx.lineWidth = 3 - i * 0.5;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, ringRadius, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // Draw light rays emanating from center
+    ctx.globalAlpha = 0.7;
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 2;
+
+    for (let i = 0; i < 16; i++) {
+      const angle = (Math.PI * 2 / 16) * i + time * 0.01;
+      const length = radius * 1.2 * (0.8 + Math.sin(time * 0.05 + i) * 0.2);
+
+      ctx.globalAlpha = 0.5 + Math.sin(time * 0.1 + i) * 0.3;
+      ctx.beginPath();
+      ctx.moveTo(this.x, this.y);
+      ctx.lineTo(
+        this.x + Math.cos(angle) * length,
+        this.y + Math.sin(angle) * length
+      );
+      ctx.stroke();
+    }
+
+    // Draw light particles
+    ctx.fillStyle = '#FFFFFF';
+
+    for (let i = 0; i < 30; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const distance = radius * Math.random();
+      const size = this.size * (0.5 + Math.random() * 0.5);
+
+      ctx.globalAlpha = 0.6 * Math.random();
+      ctx.beginPath();
+      ctx.arc(
+        this.x + Math.cos(angle) * distance,
+        this.y + Math.sin(angle) * distance,
+        size,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+    }
+
+    // Draw central burst
+    const burstGradient = ctx.createRadialGradient(
+      this.x, this.y, 0,
+      this.x, this.y, this.size * 5 * pulse
+    );
+
+    burstGradient.addColorStop(0, 'rgba(255, 255, 255, 1.0)');
+    burstGradient.addColorStop(0.5, 'rgba(255, 235, 59, 0.8)');
+    burstGradient.addColorStop(1, 'rgba(255, 235, 59, 0)');
+
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = burstGradient;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size * 5 * pulse, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw cross symbol in the center
+    ctx.globalAlpha = 0.9;
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 3;
+
+    // Vertical line
+    ctx.beginPath();
+    ctx.moveTo(this.x, this.y - this.size * 3);
+    ctx.lineTo(this.x, this.y + this.size * 3);
+    ctx.stroke();
+
+    // Horizontal line
+    ctx.beginPath();
+    ctx.moveTo(this.x - this.size * 2, this.y);
+    ctx.lineTo(this.x + this.size * 2, this.y);
+    ctx.stroke();
   }
 }

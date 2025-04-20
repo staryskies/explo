@@ -205,7 +205,7 @@ const towerStats = {
     persistentCost: 600,
     ability: "Divine Judgment",
     range: 300, // Excellent range
-    damage: 100, // High base damage
+    damage: 300, // High base damage
     fireRate: 2.0, // Fast fire rate
     projectileSpeed: 30, // Very fast projectiles
     canTargetFlying: true,
