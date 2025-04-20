@@ -182,6 +182,29 @@ function setupEventListeners() {
     console.error('Gacha button not found');
   }
 
+  // Inventory button
+  const inventoryButton = document.getElementById('inventory-button');
+  if (inventoryButton) {
+    inventoryButton.addEventListener('click', () => {
+      const inventoryModal = document.getElementById('inventory-modal');
+      if (inventoryModal) {
+        // Generate inventory content before showing the modal
+        generateInventoryContent();
+
+        inventoryModal.classList.add('active');
+        // Update silver display when opening the modal
+        const inventorySilverAmount = document.getElementById('inventory-silver-amount');
+        if (inventorySilverAmount) {
+          inventorySilverAmount.textContent = playerData.silver;
+        }
+      } else {
+        console.error('Inventory modal not found');
+      }
+    });
+  } else {
+    console.error('Inventory button not found');
+  }
+
   // Close buttons
   document.querySelectorAll('.close-btn').forEach(button => {
     button.addEventListener('click', (e) => {
@@ -720,6 +743,12 @@ function updateSilverDisplay() {
   if (gachaSilverAmount) {
     gachaSilverAmount.textContent = playerData.silver;
   }
+
+  // Update inventory silver display
+  const inventorySilverAmount = document.getElementById('inventory-silver-amount');
+  if (inventorySilverAmount) {
+    inventorySilverAmount.textContent = playerData.silver;
+  }
 }
 
 // Get the number of unlocked towers
@@ -730,6 +759,256 @@ function getUnlockedTowerCount() {
 // Get the total number of towers
 function getTotalTowerCount() {
   return Object.keys(playerData.towerPrices).length;
+}
+
+// Generate inventory content
+function generateInventoryContent() {
+  // Generate towers inventory
+  generateTowersInventory();
+
+  // Populate tower select dropdown for variants inventory
+  const inventoryTowerSelect = document.getElementById('inventory-tower-select');
+  if (inventoryTowerSelect) {
+    inventoryTowerSelect.innerHTML = '';
+
+    // Only show unlocked towers
+    playerData.unlockedTowers.forEach(towerType => {
+      const option = document.createElement('option');
+      option.value = towerType;
+      option.textContent = towerStats[towerType]?.name || towerType;
+      inventoryTowerSelect.appendChild(option);
+    });
+
+    // Add change event listener
+    inventoryTowerSelect.addEventListener('change', updateVariantsInventory);
+
+    // Generate variants for the first tower
+    updateVariantsInventory();
+  }
+}
+
+// Generate towers inventory
+function generateTowersInventory() {
+  const towersInventory = document.getElementById('towers-inventory');
+  if (!towersInventory) return;
+
+  // Clear existing content
+  towersInventory.innerHTML = '';
+
+  // Add all towers (both unlocked and locked)
+  Object.keys(towerStats).forEach(towerType => {
+    const isUnlocked = playerData.unlockedTowers.includes(towerType);
+    const towerData = towerStats[towerType];
+
+    // Create inventory item
+    const inventoryItem = document.createElement('div');
+    inventoryItem.className = `inventory-item ${isUnlocked ? towerData.tier : 'locked'}`;
+
+    // Create tower image container
+    const imageContainer = document.createElement('div');
+    imageContainer.className = `inventory-item-image ${isUnlocked ? towerData.tier : 'locked'}`;
+
+    // Create canvas for tower image
+    const towerCanvas = document.createElement('canvas');
+    towerCanvas.width = 60;
+    towerCanvas.height = 60;
+    const ctx = towerCanvas.getContext('2d');
+
+    // Draw tower
+    if (isUnlocked) {
+      // Draw unlocked tower
+      drawTower(ctx, towerType, towerData);
+    } else {
+      // Draw locked tower silhouette
+      drawLockedTower(ctx);
+    }
+
+    imageContainer.appendChild(towerCanvas);
+
+    // Create tower name
+    const towerName = document.createElement('div');
+    towerName.className = 'inventory-item-name';
+    towerName.textContent = towerData.name || towerType;
+
+    // Create tower tier
+    const towerTier = document.createElement('div');
+    towerTier.className = `inventory-item-tier ${isUnlocked ? towerData.tier : 'locked'}`;
+    towerTier.textContent = isUnlocked ? capitalizeFirstLetter(towerData.tier) : 'Locked';
+
+    // Create tower description
+    const towerDesc = document.createElement('div');
+    towerDesc.className = 'inventory-item-description';
+    towerDesc.textContent = isUnlocked ? towerData.description : 'Unlock this tower through gacha or shop';
+
+    // Add elements to inventory item
+    inventoryItem.appendChild(imageContainer);
+    inventoryItem.appendChild(towerName);
+    inventoryItem.appendChild(towerTier);
+    inventoryItem.appendChild(towerDesc);
+
+    // Add to inventory grid
+    towersInventory.appendChild(inventoryItem);
+  });
+}
+
+// Update variants inventory based on selected tower
+function updateVariantsInventory() {
+  const variantsInventory = document.getElementById('variants-inventory');
+  const inventoryTowerSelect = document.getElementById('inventory-tower-select');
+  if (!variantsInventory || !inventoryTowerSelect) return;
+
+  // Get selected tower
+  const selectedTower = inventoryTowerSelect.value;
+  if (!selectedTower) return;
+
+  // Clear existing content
+  variantsInventory.innerHTML = '';
+
+  // Get unlocked variants for this tower
+  const unlockedVariants = playerData.towerVariants[selectedTower] || [];
+
+  // Add all variants (both unlocked and locked)
+  Object.keys(towerVariants).forEach(variantType => {
+    const isUnlocked = unlockedVariants.includes(variantType);
+    const variantData = towerVariants[variantType];
+
+    // Create inventory item
+    const inventoryItem = document.createElement('div');
+    inventoryItem.className = `inventory-item ${isUnlocked ? variantData.tier : 'locked'}`;
+
+    // Create variant image container
+    const imageContainer = document.createElement('div');
+    imageContainer.className = `inventory-item-image ${isUnlocked ? variantData.tier : 'locked'}`;
+
+    // Create canvas for variant image
+    const variantCanvas = document.createElement('canvas');
+    variantCanvas.width = 60;
+    variantCanvas.height = 60;
+    const ctx = variantCanvas.getContext('2d');
+
+    // Draw variant
+    if (isUnlocked) {
+      // Draw unlocked variant
+      drawTowerWithVariant(ctx, selectedTower, towerStats[selectedTower], variantType, variantData);
+    } else {
+      // Draw locked variant silhouette
+      drawLockedVariant(ctx);
+    }
+
+    imageContainer.appendChild(variantCanvas);
+
+    // Create variant name
+    const variantName = document.createElement('div');
+    variantName.className = 'inventory-item-name';
+    variantName.textContent = variantData.name || variantType;
+
+    // Create variant tier
+    const variantTier = document.createElement('div');
+    variantTier.className = `inventory-item-tier ${isUnlocked ? variantData.tier : 'locked'}`;
+    variantTier.textContent = isUnlocked ? capitalizeFirstLetter(variantData.tier) : 'Locked';
+
+    // Create variant description
+    const variantDesc = document.createElement('div');
+    variantDesc.className = 'inventory-item-description';
+    variantDesc.textContent = isUnlocked ? variantData.description : 'Unlock this variant through gacha';
+
+    // Add elements to inventory item
+    inventoryItem.appendChild(imageContainer);
+    inventoryItem.appendChild(variantName);
+    inventoryItem.appendChild(variantTier);
+    inventoryItem.appendChild(variantDesc);
+
+    // Add to inventory grid
+    variantsInventory.appendChild(inventoryItem);
+  });
+}
+
+// Helper function to draw a tower on canvas
+function drawTower(ctx, _towerType, towerData) {
+  // Base
+  ctx.fillStyle = '#555';
+  ctx.beginPath();
+  ctx.arc(30, 40, 10, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Tower body
+  ctx.fillStyle = towerData.color || '#4CAF50';
+  ctx.fillRect(22, 15, 16, 25);
+
+  // Tower top
+  ctx.beginPath();
+  ctx.arc(30, 15, 8, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// Helper function to draw a locked tower silhouette
+function drawLockedTower(ctx) {
+  // Draw silhouette
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+  ctx.beginPath();
+  ctx.arc(30, 40, 10, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillRect(22, 15, 16, 25);
+  ctx.beginPath();
+  ctx.arc(30, 15, 8, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Draw lock
+  ctx.strokeStyle = '#aaa';
+  ctx.lineWidth = 2;
+
+  // Lock body
+  ctx.fillStyle = '#ccc';
+  ctx.fillRect(25, 25, 10, 8);
+
+  // Lock shackle
+  ctx.beginPath();
+  ctx.arc(30, 25, 5, Math.PI, Math.PI * 2);
+  ctx.stroke();
+}
+
+// Helper function to draw a tower with variant
+function drawTowerWithVariant(ctx, _towerType, towerData, _variantType, variantData) {
+  // Base
+  ctx.fillStyle = '#555';
+  ctx.beginPath();
+  ctx.arc(30, 40, 10, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Tower body
+  ctx.fillStyle = towerData.color || '#4CAF50';
+  ctx.fillRect(22, 15, 16, 25);
+
+  // Tower top with variant color
+  ctx.fillStyle = variantData.color || '#FFD700';
+  ctx.beginPath();
+  ctx.arc(30, 15, 8, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// Helper function to draw a locked variant silhouette
+function drawLockedVariant(ctx) {
+  // Draw silhouette
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+  ctx.beginPath();
+  ctx.arc(30, 40, 10, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillRect(22, 15, 16, 25);
+  ctx.beginPath();
+  ctx.arc(30, 15, 8, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Draw question mark
+  ctx.fillStyle = '#ccc';
+  ctx.font = 'bold 20px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('?', 30, 30);
+}
+
+// Helper function to capitalize first letter
+function capitalizeFirstLetter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
 // Setup gacha system event listeners
@@ -834,6 +1113,47 @@ function setupGachaEventListeners() {
       if (gachaModal) {
         gachaModal.classList.remove('active');
       }
+    });
+  }
+
+  // Close inventory button
+  const closeInventory = document.getElementById('close-inventory');
+  if (closeInventory) {
+    closeInventory.addEventListener('click', () => {
+      const inventoryModal = document.getElementById('inventory-modal');
+      if (inventoryModal) {
+        inventoryModal.classList.remove('active');
+      }
+    });
+  }
+
+  // Inventory tab switching
+  const inventoryTabs = document.querySelectorAll('.inventory-tab');
+  if (inventoryTabs.length > 0) {
+    inventoryTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Remove active class from all tabs
+        inventoryTabs.forEach(t => t.classList.remove('active'));
+        // Add active class to clicked tab
+        tab.classList.add('active');
+
+        // Hide all tab content
+        document.querySelectorAll('.inventory-tab-content').forEach(content => {
+          content.classList.remove('active');
+        });
+
+        // Show the corresponding tab content
+        const tabId = tab.dataset.tab;
+        const tabContent = document.getElementById(tabId);
+        if (tabContent) {
+          tabContent.classList.add('active');
+
+          // If variants tab is selected, update the variants display
+          if (tabId === 'variants-tab') {
+            updateVariantsInventory();
+          }
+        }
+      });
     });
   }
 

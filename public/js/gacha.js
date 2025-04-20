@@ -69,6 +69,12 @@ const gachaSystem = {
 
   // Roll a single variant
   rollVariant: function(towerType) {
+    // Check if the tower is unlocked
+    if (!playerData.unlockedTowers.includes(towerType)) {
+      alert(`You need to unlock the ${towerStats[towerType]?.name || towerType} tower first!`);
+      return null;
+    }
+
     // Determine tier based on random chance
     const rand = Math.random();
     let tier;
@@ -101,14 +107,25 @@ const gachaSystem = {
 
   // Roll multiple variants
   rollVariants: function(count, towerType) {
+    // Check if the tower is unlocked
+    if (!playerData.unlockedTowers.includes(towerType)) {
+      alert(`You need to unlock the ${towerStats[towerType]?.name || towerType} tower first!`);
+      return [];
+    }
+
     const results = [];
 
     for (let i = 0; i < count; i++) {
-      results.push(this.rollVariant(towerType));
+      const variant = this.rollVariant(towerType);
+      if (variant) {
+        results.push(variant);
+      }
     }
 
-    // Show the results
-    alert(`You got variants: ${results.map(variant => towerVariants[variant].name).join(', ')}`);
+    if (results.length > 0) {
+      // Show the results
+      alert(`You got variants: ${results.map(variant => towerVariants[variant].name).join(', ')}`);
+    }
 
     return results;
   }

@@ -15,6 +15,7 @@
       <div class="menu-buttons">
         <button id="play-button" class="menu-btn">Play Game</button>
         <button id="gacha-button" class="menu-btn">Tower Gacha</button>
+        <button id="inventory-button" class="menu-btn">Inventory</button>
       </div>
 
       <div class="player-stats">
@@ -149,6 +150,49 @@
           <div class="silver-display">
             <span>Silver: </span>
             <span id="gacha-silver-amount">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inventory Modal -->
+    <div id="inventory-modal" class="modal">
+      <div class="modal-content inventory-content">
+        <div class="modal-header">
+          <h2>Tower Inventory</h2>
+          <span class="close-btn" id="close-inventory">&times;</span>
+        </div>
+
+        <!-- Inventory Tabs -->
+        <div class="inventory-tabs">
+          <button class="inventory-tab active" data-tab="towers-tab">Towers</button>
+          <button class="inventory-tab" data-tab="variants-tab">Variants</button>
+        </div>
+
+        <!-- Towers Tab Content -->
+        <div class="inventory-tab-content active" id="towers-tab">
+          <div class="inventory-grid" id="towers-inventory">
+            <!-- Tower inventory will be generated here -->
+          </div>
+        </div>
+
+        <!-- Variants Tab Content -->
+        <div class="inventory-tab-content" id="variants-tab">
+          <div class="tower-selector">
+            <label for="inventory-tower-select">Select Tower:</label>
+            <select id="inventory-tower-select">
+              <!-- Tower options will be generated here -->
+            </select>
+          </div>
+          <div class="inventory-grid" id="variants-inventory">
+            <!-- Variant inventory will be generated here -->
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <div class="silver-display">
+            <span>Silver: </span>
+            <span id="inventory-silver-amount">0</span>
           </div>
         </div>
       </div>
