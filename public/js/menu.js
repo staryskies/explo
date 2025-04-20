@@ -1095,11 +1095,33 @@ function setupGachaEventListeners() {
   // Tower roll buttons
   if (rollTower1) {
     rollTower1.addEventListener('click', () => {
+      // Check if button is on cooldown
+      if (rollTower1.classList.contains('cooldown')) return;
+
       if (spendSilver(gachaSystem.costs.tower.single)) {
+        // Start cooldown
+        gachaSystem.startCooldown('tower', 1);
+
+        // Roll tower
         const tower = gachaSystem.rollTower();
-        displayTowerResult(tower, towerResult);
-        updateSilverDisplay();
-        updatePityProgressBars('tower');
+        const tier = towerStats[tower].tier;
+
+        // Play animation for rare and above
+        if (tier !== 'common') {
+          const animationDuration = gachaSystem.playAnimation(tier, towerResult);
+
+          // Delay displaying result until animation is complete
+          setTimeout(() => {
+            displayTowerResult(tower, towerResult);
+            updateSilverDisplay();
+            updatePityProgressBars('tower');
+          }, animationDuration);
+        } else {
+          // Display result immediately for common
+          displayTowerResult(tower, towerResult);
+          updateSilverDisplay();
+          updatePityProgressBars('tower');
+        }
       } else {
         alert('Not enough silver!');
       }
@@ -1108,11 +1130,43 @@ function setupGachaEventListeners() {
 
   if (rollTower10) {
     rollTower10.addEventListener('click', () => {
+      // Check if button is on cooldown
+      if (rollTower10.classList.contains('cooldown')) return;
+
       if (spendSilver(gachaSystem.costs.tower.ten)) {
+        // Start cooldown
+        gachaSystem.startCooldown('tower', 10);
+
+        // Roll towers
         const towers = gachaSystem.rollTowers(10);
-        displayTowerResults(towers, towerResult);
-        updateSilverDisplay();
-        updatePityProgressBars('tower');
+
+        // Find highest tier
+        let highestTier = 'common';
+        const tierOrder = ['common', 'rare', 'epic', 'legendary', 'mythic'];
+
+        towers.forEach(tower => {
+          const tier = towerStats[tower].tier;
+          if (tierOrder.indexOf(tier) > tierOrder.indexOf(highestTier)) {
+            highestTier = tier;
+          }
+        });
+
+        // Play animation for rare and above
+        if (highestTier !== 'common') {
+          const animationDuration = gachaSystem.playAnimation(highestTier, towerResult);
+
+          // Delay displaying results until animation is complete
+          setTimeout(() => {
+            displayTowerResults(towers, towerResult);
+            updateSilverDisplay();
+            updatePityProgressBars('tower');
+          }, animationDuration);
+        } else {
+          // Display results immediately for common
+          displayTowerResults(towers, towerResult);
+          updateSilverDisplay();
+          updatePityProgressBars('tower');
+        }
       } else {
         alert('Not enough silver!');
       }
@@ -1121,11 +1175,43 @@ function setupGachaEventListeners() {
 
   if (rollTower100) {
     rollTower100.addEventListener('click', () => {
+      // Check if button is on cooldown
+      if (rollTower100.classList.contains('cooldown')) return;
+
       if (spendSilver(gachaSystem.costs.tower.hundred)) {
+        // Start cooldown
+        gachaSystem.startCooldown('tower', 100);
+
+        // Roll towers
         const towers = gachaSystem.rollTowers(100);
-        displayTowerResults(towers, towerResult);
-        updateSilverDisplay();
-        updatePityProgressBars('tower');
+
+        // Find highest tier
+        let highestTier = 'common';
+        const tierOrder = ['common', 'rare', 'epic', 'legendary', 'mythic'];
+
+        towers.forEach(tower => {
+          const tier = towerStats[tower].tier;
+          if (tierOrder.indexOf(tier) > tierOrder.indexOf(highestTier)) {
+            highestTier = tier;
+          }
+        });
+
+        // Play animation for rare and above
+        if (highestTier !== 'common') {
+          const animationDuration = gachaSystem.playAnimation(highestTier, towerResult);
+
+          // Delay displaying results until animation is complete
+          setTimeout(() => {
+            displayTowerResults(towers, towerResult);
+            updateSilverDisplay();
+            updatePityProgressBars('tower');
+          }, animationDuration);
+        } else {
+          // Display results immediately for common
+          displayTowerResults(towers, towerResult);
+          updateSilverDisplay();
+          updatePityProgressBars('tower');
+        }
       } else {
         alert('Not enough silver!');
       }
@@ -1135,13 +1221,35 @@ function setupGachaEventListeners() {
   // Variant roll buttons
   if (rollVariant1) {
     rollVariant1.addEventListener('click', () => {
+      // Check if button is on cooldown
+      if (rollVariant1.classList.contains('cooldown')) return;
+
       const selectedTower = document.getElementById('variant-tower-select')?.value || 'basic';
       if (spendSilver(gachaSystem.costs.variant.single)) {
+        // Start cooldown
+        gachaSystem.startCooldown('variant', 1);
+
+        // Roll variant
         const variant = gachaSystem.rollVariant(selectedTower);
         if (variant) {
-          displayVariantResult(variant, selectedTower, variantResult);
-          updateSilverDisplay();
-          updatePityProgressBars('variant');
+          const tier = towerVariants[variant].tier;
+
+          // Play animation for rare and above
+          if (tier !== 'common') {
+            const animationDuration = gachaSystem.playAnimation(tier, variantResult);
+
+            // Delay displaying result until animation is complete
+            setTimeout(() => {
+              displayVariantResult(variant, selectedTower, variantResult);
+              updateSilverDisplay();
+              updatePityProgressBars('variant');
+            }, animationDuration);
+          } else {
+            // Display result immediately for common
+            displayVariantResult(variant, selectedTower, variantResult);
+            updateSilverDisplay();
+            updatePityProgressBars('variant');
+          }
         }
       } else {
         alert('Not enough silver!');
@@ -1151,13 +1259,44 @@ function setupGachaEventListeners() {
 
   if (rollVariant10) {
     rollVariant10.addEventListener('click', () => {
+      // Check if button is on cooldown
+      if (rollVariant10.classList.contains('cooldown')) return;
+
       const selectedTower = document.getElementById('variant-tower-select')?.value || 'basic';
       if (spendSilver(gachaSystem.costs.variant.ten)) {
+        // Start cooldown
+        gachaSystem.startCooldown('variant', 10);
+
+        // Roll variants
         const variants = gachaSystem.rollVariants(10, selectedTower);
         if (variants.length > 0) {
-          displayVariantResults(variants, selectedTower, variantResult);
-          updateSilverDisplay();
-          updatePityProgressBars('variant');
+          // Find highest tier
+          let highestTier = 'common';
+          const tierOrder = ['common', 'rare', 'epic', 'legendary'];
+
+          variants.forEach(variant => {
+            const tier = towerVariants[variant].tier;
+            if (tierOrder.indexOf(tier) > tierOrder.indexOf(highestTier)) {
+              highestTier = tier;
+            }
+          });
+
+          // Play animation for rare and above
+          if (highestTier !== 'common') {
+            const animationDuration = gachaSystem.playAnimation(highestTier, variantResult);
+
+            // Delay displaying results until animation is complete
+            setTimeout(() => {
+              displayVariantResults(variants, selectedTower, variantResult);
+              updateSilverDisplay();
+              updatePityProgressBars('variant');
+            }, animationDuration);
+          } else {
+            // Display results immediately for common
+            displayVariantResults(variants, selectedTower, variantResult);
+            updateSilverDisplay();
+            updatePityProgressBars('variant');
+          }
         }
       } else {
         alert('Not enough silver!');
@@ -1167,13 +1306,44 @@ function setupGachaEventListeners() {
 
   if (rollVariant100) {
     rollVariant100.addEventListener('click', () => {
+      // Check if button is on cooldown
+      if (rollVariant100.classList.contains('cooldown')) return;
+
       const selectedTower = document.getElementById('variant-tower-select')?.value || 'basic';
       if (spendSilver(gachaSystem.costs.variant.hundred)) {
+        // Start cooldown
+        gachaSystem.startCooldown('variant', 100);
+
+        // Roll variants
         const variants = gachaSystem.rollVariants(100, selectedTower);
         if (variants.length > 0) {
-          displayVariantResults(variants, selectedTower, variantResult);
-          updateSilverDisplay();
-          updatePityProgressBars('variant');
+          // Find highest tier
+          let highestTier = 'common';
+          const tierOrder = ['common', 'rare', 'epic', 'legendary'];
+
+          variants.forEach(variant => {
+            const tier = towerVariants[variant].tier;
+            if (tierOrder.indexOf(tier) > tierOrder.indexOf(highestTier)) {
+              highestTier = tier;
+            }
+          });
+
+          // Play animation for rare and above
+          if (highestTier !== 'common') {
+            const animationDuration = gachaSystem.playAnimation(highestTier, variantResult);
+
+            // Delay displaying results until animation is complete
+            setTimeout(() => {
+              displayVariantResults(variants, selectedTower, variantResult);
+              updateSilverDisplay();
+              updatePityProgressBars('variant');
+            }, animationDuration);
+          } else {
+            // Display results immediately for common
+            displayVariantResults(variants, selectedTower, variantResult);
+            updateSilverDisplay();
+            updatePityProgressBars('variant');
+          }
         }
       } else {
         alert('Not enough silver!');

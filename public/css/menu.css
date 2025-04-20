@@ -896,6 +896,255 @@ h1 {
   color: #555;
 }
 
+/* Gacha Animation Styles */
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes sparkle {
+  0% { opacity: 0; transform: scale(0.8) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1.2) rotate(180deg); }
+  100% { opacity: 0; transform: scale(0.8) rotate(360deg); }
+}
+
+@keyframes mythicReveal {
+  0% { transform: scale(0.5); opacity: 0; filter: blur(10px); }
+  50% { transform: scale(1.2); opacity: 0.8; filter: blur(5px); }
+  75% { transform: scale(0.9); opacity: 0.9; filter: blur(0); }
+  100% { transform: scale(1); opacity: 1; filter: blur(0); }
+}
+
+@keyframes legendaryReveal {
+  0% { transform: scale(0.6); opacity: 0; filter: blur(8px); }
+  60% { transform: scale(1.1); opacity: 0.9; filter: blur(2px); }
+  100% { transform: scale(1); opacity: 1; filter: blur(0); }
+}
+
+@keyframes epicReveal {
+  0% { transform: scale(0.7); opacity: 0; filter: blur(5px); }
+  70% { transform: scale(1.05); opacity: 0.95; filter: blur(1px); }
+  100% { transform: scale(1); opacity: 1; filter: blur(0); }
+}
+
+@keyframes rareReveal {
+  0% { transform: scale(0.8); opacity: 0; }
+  80% { transform: scale(1.02); opacity: 0.98; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes commonReveal {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.gacha-animation-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.gacha-animation {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.gacha-animation.mythic {
+  animation: mythicReveal 1.5s ease-out forwards;
+}
+
+.gacha-animation.legendary {
+  animation: legendaryReveal 1.2s ease-out forwards;
+}
+
+.gacha-animation.epic {
+  animation: epicReveal 1s ease-out forwards;
+}
+
+.gacha-animation.rare {
+  animation: rareReveal 0.8s ease-out forwards;
+}
+
+.gacha-animation.common {
+  animation: commonReveal 0.5s ease-out forwards;
+}
+
+.gacha-animation-bg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  opacity: 0.7;
+}
+
+.gacha-animation-bg.mythic {
+  background: radial-gradient(circle, #E1BEE7 0%, #9C27B0 70%, transparent 100%);
+  box-shadow: 0 0 30px #9C27B0;
+  animation: pulse 2s infinite;
+}
+
+.gacha-animation-bg.legendary {
+  background: radial-gradient(circle, #FFF9C4 0%, #FFC107 70%, transparent 100%);
+  box-shadow: 0 0 25px #FFC107;
+  animation: pulse 1.8s infinite;
+}
+
+.gacha-animation-bg.epic {
+  background: radial-gradient(circle, #D1C4E9 0%, #673AB7 70%, transparent 100%);
+  box-shadow: 0 0 20px #673AB7;
+  animation: pulse 1.6s infinite;
+}
+
+.gacha-animation-bg.rare {
+  background: radial-gradient(circle, #BBDEFB 0%, #2196F3 70%, transparent 100%);
+  box-shadow: 0 0 15px #2196F3;
+  animation: pulse 1.4s infinite;
+}
+
+.gacha-animation-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid transparent;
+}
+
+.gacha-animation-ring.mythic {
+  width: 180px;
+  height: 180px;
+  border-color: #9C27B0;
+  animation: rotate 4s linear infinite;
+}
+
+.gacha-animation-ring.legendary {
+  width: 160px;
+  height: 160px;
+  border-color: #FFC107;
+  animation: rotate 3.5s linear infinite reverse;
+}
+
+.gacha-animation-ring.epic {
+  width: 140px;
+  height: 140px;
+  border-color: #673AB7;
+  animation: rotate 3s linear infinite;
+}
+
+.gacha-animation-ring.rare {
+  width: 120px;
+  height: 120px;
+  border-color: #2196F3;
+  animation: rotate 2.5s linear infinite reverse;
+}
+
+.gacha-animation-sparkle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: white;
+  border-radius: 50%;
+  opacity: 0;
+}
+
+.gacha-animation-sparkle.s1 {
+  top: 20%;
+  left: 20%;
+  animation: sparkle 2s infinite 0.2s;
+}
+
+.gacha-animation-sparkle.s2 {
+  top: 20%;
+  right: 20%;
+  animation: sparkle 2s infinite 0.5s;
+}
+
+.gacha-animation-sparkle.s3 {
+  bottom: 20%;
+  left: 20%;
+  animation: sparkle 2s infinite 0.8s;
+}
+
+.gacha-animation-sparkle.s4 {
+  bottom: 20%;
+  right: 20%;
+  animation: sparkle 2s infinite 1.1s;
+}
+
+.gacha-animation-sparkle.s5 {
+  top: 50%;
+  left: 10%;
+  animation: sparkle 2s infinite 1.4s;
+}
+
+.gacha-animation-sparkle.s6 {
+  top: 50%;
+  right: 10%;
+  animation: sparkle 2s infinite 1.7s;
+}
+
+.gacha-animation-sparkle.mythic {
+  background: #E040FB;
+  box-shadow: 0 0 10px #9C27B0;
+}
+
+.gacha-animation-sparkle.legendary {
+  background: #FFD700;
+  box-shadow: 0 0 8px #FFC107;
+}
+
+.gacha-animation-sparkle.epic {
+  background: #B39DDB;
+  box-shadow: 0 0 6px #673AB7;
+}
+
+.gacha-animation-sparkle.rare {
+  background: #64B5F6;
+  box-shadow: 0 0 4px #2196F3;
+}
+
+/* Cooldown Styles */
+.gacha-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.gacha-btn.cooldown::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1;
+}
+
+.gacha-btn.cooldown::after {
+  content: attr(data-cooldown);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-weight: bold;
+  z-index: 2;
+}
+
 .tower-selector {
   margin-bottom: 20px;
 }

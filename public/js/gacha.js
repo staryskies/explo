@@ -21,6 +21,43 @@ const gachaSystem = {
     }
   },
 
+  // Cooldown settings (in milliseconds)
+  cooldowns: {
+    tower: {
+      single: 2000,   // 2 seconds
+      ten: 5000,      // 5 seconds
+      hundred: 10000  // 10 seconds
+    },
+    variant: {
+      single: 2000,   // 2 seconds
+      ten: 5000,      // 5 seconds
+      hundred: 10000  // 10 seconds
+    }
+  },
+
+  // Animation durations (in milliseconds)
+  animationDurations: {
+    mythic: 5000,     // 5 seconds
+    legendary: 4000,  // 4 seconds
+    epic: 3000,       // 3 seconds
+    rare: 2000,       // 2 seconds
+    common: 1000      // 1 second
+  },
+
+  // Current cooldown timers
+  cooldownTimers: {
+    tower: {
+      single: null,
+      ten: null,
+      hundred: null
+    },
+    variant: {
+      single: null,
+      ten: null,
+      hundred: null
+    }
+  },
+
   // Tower drop rates
   dropRates: {
     tower: {
@@ -283,6 +320,104 @@ const gachaSystem = {
     }
 
     return result;
+  },
+
+  // Start cooldown for a button
+  startCooldown: function(type, amount) {
+    const button = document.getElementById(`roll-${type}-${amount}`);
+    if (!button) return;
+
+    // Get cooldown duration
+    let duration;
+    switch(amount) {
+      case 1: duration = this.cooldowns[type].single; break;
+      case 10: duration = this.cooldowns[type].ten; break;
+      case 100: duration = this.cooldowns[type].hundred; break;
+      default: duration = 2000; // Default 2 seconds
+    }
+
+    // Add cooldown class and set data attribute
+    button.classList.add('cooldown');
+    button.disabled = true;
+
+    // Start countdown
+    let remaining = Math.ceil(duration / 1000);
+    button.setAttribute('data-cooldown', `${remaining}s`);
+
+    // Clear any existing timer
+    if (this.cooldownTimers[type][amount === 1 ? 'single' : amount === 10 ? 'ten' : 'hundred']) {
+      clearInterval(this.cooldownTimers[type][amount === 1 ? 'single' : amount === 10 ? 'ten' : 'hundred']);
+    }
+
+    // Set interval to update countdown
+    const timerKey = amount === 1 ? 'single' : amount === 10 ? 'ten' : 'hundred';
+    this.cooldownTimers[type][timerKey] = setInterval(() => {
+      remaining--;
+      if (remaining <= 0) {
+        // End cooldown
+        clearInterval(this.cooldownTimers[type][timerKey]);
+        this.cooldownTimers[type][timerKey] = null;
+        button.classList.remove('cooldown');
+        button.disabled = false;
+        button.removeAttribute('data-cooldown');
+      } else {
+        // Update countdown
+        button.setAttribute('data-cooldown', `${remaining}s`);
+      }
+    }, 1000);
+  },
+
+  // Play animation for a gacha result
+  playAnimation: function(tier, resultElement) {
+    if (!resultElement) return;
+
+    // Only play animation for rare and above
+    if (tier === 'common') return;
+
+    // Create animation container
+    const animationContainer = document.createElement('div');
+    animationContainer.className = 'gacha-animation-container';
+
+    // Create animation
+    const animation = document.createElement('div');
+    animation.className = `gacha-animation ${tier}`;
+
+    // Create background
+    const bg = document.createElement('div');
+    bg.className = `gacha-animation-bg ${tier}`;
+    animation.appendChild(bg);
+
+    // Create rings
+    if (tier !== 'common') {
+      const ring = document.createElement('div');
+      ring.className = `gacha-animation-ring ${tier}`;
+      animation.appendChild(ring);
+    }
+
+    // Create sparkles for epic and above
+    if (tier === 'mythic' || tier === 'legendary' || tier === 'epic') {
+      for (let i = 1; i <= 6; i++) {
+        const sparkle = document.createElement('div');
+        sparkle.className = `gacha-animation-sparkle ${tier} s${i}`;
+        animation.appendChild(sparkle);
+      }
+    }
+
+    // Add animation to container
+    animationContainer.appendChild(animation);
+
+    // Add container to result element
+    resultElement.appendChild(animationContainer);
+
+    // Remove animation after duration
+    setTimeout(() => {
+      if (animationContainer.parentNode === resultElement) {
+        resultElement.removeChild(animationContainer);
+      }
+    }, this.animationDurations[tier]);
+
+    // Return animation duration
+    return this.animationDurations[tier];
   }
 };
 
