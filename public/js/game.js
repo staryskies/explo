@@ -138,9 +138,9 @@ class Game {
             // Convert grid coordinates to pixel coordinates (center of tile)
             const pixelPos = this.map.gridToPixel(gridPos.x, gridPos.y);
 
-            // Get the selected tower button to check for variant
-            const towerButton = document.querySelector(`.tower-btn[data-type="${this.selectedTowerType}"]`);
-            const variant = towerButton?.dataset.variant;
+            // Get the selected tower option to check for variant
+            const towerOption = document.querySelector(`.tower-option[data-type="${this.selectedTowerType}"]`);
+            const variant = towerOption?.dataset.variant;
 
             // Create the tower with grid coordinates and variant if available
             try {
@@ -152,6 +152,12 @@ class Game {
 
               // Deduct gold
               this.gold -= towerCost;
+
+              // Update towers-built count immediately
+              const towersBuiltElement = document.getElementById('towers-built');
+              if (towersBuiltElement) {
+                towersBuiltElement.textContent = this.towers.length;
+              }
 
               // Update UI
               this.updateUI();
@@ -553,6 +559,12 @@ class Game {
             this.gold += enemy.reward;
             this.score += enemy.reward * 10;
             this.enemiesKilled++;
+
+            // Update UI immediately when an enemy is killed
+            const enemiesKilledElement = document.getElementById('enemies-killed');
+            if (enemiesKilledElement) {
+              enemiesKilledElement.textContent = this.enemiesKilled;
+            }
           }
         });
       }
@@ -734,8 +746,8 @@ class Game {
     let color;
 
     // Check if there's a variant selected
-    const towerButton = document.querySelector(`.tower-btn[data-type="${this.selectedTowerType}"]`);
-    const variant = towerButton?.dataset.variant;
+    const towerOption = document.querySelector(`.tower-option[data-type="${this.selectedTowerType}"]`);
+    const variant = towerOption?.dataset.variant;
 
     // Define variant colors
     const variantColors = {
@@ -849,21 +861,39 @@ class Game {
     // Update wave counter
     document.getElementById('wave-counter').innerHTML = 'Wave: <span id="wave">' + this.wave + '</span>';
 
-    // Update sidebar game info
-    const enemiesRemaining = this.waveInProgress ?
-      (this.totalEnemiesInWave - this.enemiesSpawned) + this.enemies.length : 0;
-    document.getElementById('enemies-remaining').textContent = enemiesRemaining;
+    // Update sidebar game info - enemies remaining
+    let enemiesRemaining = 0;
+    if (this.waveInProgress) {
+      // Calculate remaining enemies as those not yet spawned plus those still alive
+      enemiesRemaining = (this.totalEnemiesInWave - this.enemiesSpawned) + this.enemies.length;
+    }
+    const enemiesRemainingElement = document.getElementById('enemies-remaining');
+    if (enemiesRemainingElement) {
+      enemiesRemainingElement.textContent = enemiesRemaining;
+    }
 
     // Calculate wave progress percentage
     let waveProgress = 0;
     if (this.totalEnemiesInWave > 0 && this.waveInProgress) {
       waveProgress = Math.floor(((this.enemiesKilled + this.enemiesLeaked) / this.totalEnemiesInWave) * 100);
+      // Cap at 100%
+      waveProgress = Math.min(waveProgress, 100);
     }
-    document.getElementById('wave-progress').textContent = waveProgress + '%';
+    const waveProgressElement = document.getElementById('wave-progress');
+    if (waveProgressElement) {
+      waveProgressElement.textContent = waveProgress + '%';
+    }
 
     // Update game stats
-    document.getElementById('enemies-killed').textContent = this.enemiesKilled;
-    document.getElementById('towers-built').textContent = this.towers.length;
+    const enemiesKilledElement = document.getElementById('enemies-killed');
+    if (enemiesKilledElement) {
+      enemiesKilledElement.textContent = this.enemiesKilled;
+    }
+
+    const towersBuiltElement = document.getElementById('towers-built');
+    if (towersBuiltElement) {
+      towersBuiltElement.textContent = this.towers.length;
+    }
   }
 
   // Create the tower selection bar at the bottom
