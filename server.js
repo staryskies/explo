@@ -87,7 +87,13 @@ app.use('/api/player-data', playerDataRoutes);
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('API Error:', err);
-  res.status(500).send('A server error occurred. Please try again later.');
+
+  // Send JSON response for API requests
+  if (req.path.startsWith('/api/')) {
+    res.status(500).json({ error: 'A server error occurred. Please try again later.' });
+  } else {
+    res.status(500).send('A server error occurred. Please try again later.');
+  }
 });
 
 // Route for the game

@@ -59,23 +59,6 @@ const playerData = {
     'vortex': 'nightmare' // Unlocked after completing Nightmare difficulty
   },
 
-  // Tower variants unlocked
-  towerVariants: {
-    basic: ['basic'],
-    archer: [],
-    cannon: [],
-    sniper: [],
-    freeze: [],
-    mortar: [],
-    laser: [],
-    tesla: [],
-    flame: [],
-    missile: [],
-    poison: [],
-    vortex: [],
-    archangel: []
-  },
-
   // Tower prices in silver
   towerPrices: {
     basic: 0, // Already unlocked
@@ -160,7 +143,7 @@ const playerData = {
 
   // Selected tower variants
   selectedVariants: {
-    basic: 'basic',
+    basic: 'normal',
     archer: null,
     cannon: null,
     sniper: null,
@@ -236,9 +219,9 @@ function isTowerUnlocked(towerType) {
 function unlockTower(towerType) {
   if (!isTowerUnlocked(towerType)) {
     playerData.unlockedTowers.push(towerType);
-    // Unlock the basic variant
-    playerData.towerVariants[towerType].push(towerType);
-    playerData.selectedVariants[towerType] = towerType;
+    // Unlock the normal variant
+    playerData.towerVariants[towerType].push('normal');
+    playerData.selectedVariants[towerType] = 'normal';
     savePlayerData();
     return true;
   }

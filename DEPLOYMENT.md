@@ -42,8 +42,8 @@ This guide explains how to deploy the Tower Defense game to Vercel with a Render
    - Click "Environment Variables"
    - Add the following variables:
      - `DATABASE_URL`: `postgresql://towers_user:makdqw1e5ABKJKjdxC4Ztz3e0levadWE@dpg-d02l6s3e5dus73bttd5g-a.oregon-postgres.render.com/towers`
-     - `JWT_SECRET`: Generate a secure random string (e.g., using https://randomkeygen.com/)
-     - `COOKIE_SECRET`: Generate another secure random string
+     - `JWT_SECRET`: bobyiscrazy
+     - `COOKIE_SECRET`: bobyiscrazy
      - `NODE_ENV`: `production`
 
 5. Deploy the project:

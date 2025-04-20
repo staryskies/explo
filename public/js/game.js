@@ -690,7 +690,15 @@ class Game {
     // Always draw towers regardless of game state
     if (this.towers && this.towers.length > 0) {
       this.towers.forEach(tower => {
-        tower.draw(this.ctx, false, currentTime); // Never show range circles
+        // Check if mouse is hovering over this tower
+        const isHovered = this.mouseX && this.mouseY &&
+          Math.sqrt(
+            Math.pow(this.mouseX - tower.x, 2) +
+            Math.pow(this.mouseY - tower.y, 2)
+          ) < tower.tileSize / 2;
+
+        // Show range circle if tower is hovered
+        tower.draw(this.ctx, isHovered, currentTime);
       });
     }
 
@@ -825,21 +833,41 @@ class Game {
       color = variantColors[variant];
     }
 
-    // Range circle has been removed as requested
+    // Get the map's tile size for scaling
+    const tileSize = this.map.tileSize || 40;
+    const scaleFactor = tileSize / 40;
+
+    // Draw range circle
+    if (canPlace) {
+      const range = towerStats[this.selectedTowerType].range || 200;
+      const scaledRange = range * scaleFactor;
+
+      this.ctx.beginPath();
+      this.ctx.arc(pixelPos.x, pixelPos.y, scaledRange, 0, Math.PI * 2);
+      this.ctx.fillStyle = 'rgba(100, 100, 255, 0.1)';
+      this.ctx.fill();
+      this.ctx.strokeStyle = 'rgba(100, 100, 255, 0.3)';
+      this.ctx.stroke();
+    }
 
     // Draw tower base
     this.ctx.fillStyle = canPlace ? '#555' : '#F44336';
     this.ctx.beginPath();
-    this.ctx.arc(pixelPos.x, pixelPos.y, 20, 0, Math.PI * 2);
+    this.ctx.arc(pixelPos.x, pixelPos.y, 20 * scaleFactor, 0, Math.PI * 2);
     this.ctx.fill();
 
     // Draw tower body
     this.ctx.fillStyle = canPlace ? color : '#F44336';
-    this.ctx.fillRect(pixelPos.x - 8, pixelPos.y - 25, 16, 25);
+    this.ctx.fillRect(
+      pixelPos.x - 8 * scaleFactor,
+      pixelPos.y - 25 * scaleFactor,
+      16 * scaleFactor,
+      25 * scaleFactor
+    );
 
     // Draw tower head
     this.ctx.beginPath();
-    this.ctx.arc(pixelPos.x, pixelPos.y - 25, 8, 0, Math.PI * 2);
+    this.ctx.arc(pixelPos.x, pixelPos.y - 25 * scaleFactor, 8 * scaleFactor, 0, Math.PI * 2);
     this.ctx.fill();
 
     this.ctx.globalAlpha = 1;

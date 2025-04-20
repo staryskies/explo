@@ -17,6 +17,9 @@ class Tower {
     this.angle = 0;
     this.lastShot = 0;
 
+    // Get the map's tile size for scaling
+    this.tileSize = window.game?.map?.tileSize || 40; // Default to 40 if not available
+
     // Upgrade paths
     this.pathALevel = 0;
     this.pathBLevel = 0;
@@ -1106,10 +1109,27 @@ class Tower {
 
   // Draw the tower
   draw(ctx, showRange = false, currentTime = Date.now()) {
-    // Range indicators have been removed as requested
+    // Update tile size in case it changed
+    this.tileSize = window.game?.map?.tileSize || 40;
+
+    // Calculate scale factor based on tile size (40 is the reference size)
+    const scaleFactor = this.tileSize / 40;
+
+    // Draw range indicator if requested
+    if (showRange) {
+      // Scale the range based on the tile size
+      const scaledRange = this.range * scaleFactor;
+
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, scaledRange, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(100, 100, 255, 0.1)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(100, 100, 255, 0.3)';
+      ctx.stroke();
+    }
 
     // Draw 2D futuristic tower base (flat hexagonal)
-    const baseSize = 20;
+    const baseSize = 20 * scaleFactor;
     const hexPoints = [];
 
     // Create hexagon points
@@ -1160,30 +1180,30 @@ class Tower {
     // Add flat colored center instead of glow for more 2D look
     ctx.fillStyle = this.color;
     ctx.beginPath();
-    ctx.arc(this.x, this.y, 6, 0, Math.PI * 2);
+    ctx.arc(this.x, this.y, 6 * scaleFactor, 0, Math.PI * 2);
     ctx.fill();
 
     // Add tech circuit pattern
     ctx.strokeStyle = '#3498db'; // Blue accent
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 1 * scaleFactor;
     ctx.beginPath();
-    ctx.moveTo(this.x - 10, this.y);
-    ctx.lineTo(this.x - 5, this.y);
+    ctx.moveTo(this.x - 10 * scaleFactor, this.y);
+    ctx.lineTo(this.x - 5 * scaleFactor, this.y);
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.moveTo(this.x + 5, this.y);
-    ctx.lineTo(this.x + 10, this.y);
+    ctx.moveTo(this.x + 5 * scaleFactor, this.y);
+    ctx.lineTo(this.x + 10 * scaleFactor, this.y);
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.moveTo(this.x, this.y - 10);
-    ctx.lineTo(this.x, this.y - 5);
+    ctx.moveTo(this.x, this.y - 10 * scaleFactor);
+    ctx.lineTo(this.x, this.y - 5 * scaleFactor);
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.moveTo(this.x, this.y + 5);
-    ctx.lineTo(this.x, this.y + 10);
+    ctx.moveTo(this.x, this.y + 5 * scaleFactor);
+    ctx.lineTo(this.x, this.y + 10 * scaleFactor);
     ctx.stroke();
 
     // Draw tower body based on type and upgrades - more 2D and futuristic style
@@ -1195,7 +1215,7 @@ class Tower {
     let recoilOffset = 0;
     if (this.recoilAnimation > 0) {
       // Calculate recoil offset based on remaining animation frames
-      recoilOffset = Math.sin(Math.PI * (this.recoilAnimation / 5)) * 5;
+      recoilOffset = Math.sin(Math.PI * (this.recoilAnimation / 5)) * 5 * scaleFactor;
       this.recoilAnimation--;
     }
 
@@ -1213,7 +1233,7 @@ class Tower {
       ctx.fillStyle = hasPathAUpgrades ? '#FFA000' : '#9C27B0';
       ctx.globalAlpha = pulseIntensity;
       ctx.beginPath();
-      ctx.arc(0, -15, 12, 0, Math.PI * 2);
+      ctx.arc(0, -15 * scaleFactor, 12 * scaleFactor, 0, Math.PI * 2);
       ctx.fill();
       ctx.globalAlpha = 1.0;
     }
@@ -1225,47 +1245,47 @@ class Tower {
 
         // Draw a flat rectangular tower body
         ctx.fillStyle = '#ecf0f1'; // Light gray base
-        ctx.fillRect(-8, -25, 16, 25);
+        ctx.fillRect(-8 * scaleFactor, -25 * scaleFactor, 16 * scaleFactor, 25 * scaleFactor);
 
         // Add colored accent based on tower color
         ctx.fillStyle = towerColor;
-        ctx.fillRect(-8, -25, 3, 25); // Left stripe
+        ctx.fillRect(-8 * scaleFactor, -25 * scaleFactor, 3 * scaleFactor, 25 * scaleFactor); // Left stripe
 
         // Add tech details - circuit pattern
         ctx.strokeStyle = '#3498db'; // Blue accent
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 1 * scaleFactor;
 
         // Horizontal lines
         for (let i = 1; i <= 3; i++) {
           ctx.beginPath();
-          ctx.moveTo(-5, -5 * i);
-          ctx.lineTo(8, -5 * i);
+          ctx.moveTo(-5 * scaleFactor, -5 * i * scaleFactor);
+          ctx.lineTo(8 * scaleFactor, -5 * i * scaleFactor);
           ctx.stroke();
         }
 
         // Vertical line
         ctx.beginPath();
-        ctx.moveTo(0, -5);
-        ctx.lineTo(0, -20);
+        ctx.moveTo(0, -5 * scaleFactor);
+        ctx.lineTo(0, -20 * scaleFactor);
         ctx.stroke();
 
         // Draw flat circular tower head
         ctx.fillStyle = '#bdc3c7'; // Light gray
         ctx.beginPath();
-        ctx.arc(0, -25, 8, 0, Math.PI * 2);
+        ctx.arc(0, -25 * scaleFactor, 8 * scaleFactor, 0, Math.PI * 2);
         ctx.fill();
 
         // Add colored center to tower head
         ctx.fillStyle = towerColor;
         ctx.beginPath();
-        ctx.arc(0, -25, 4, 0, Math.PI * 2);
+        ctx.arc(0, -25 * scaleFactor, 4 * scaleFactor, 0, Math.PI * 2);
         ctx.fill();
 
         // Add tech ring
         ctx.strokeStyle = '#3498db'; // Blue accent
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 1 * scaleFactor;
         ctx.beginPath();
-        ctx.arc(0, -25, 6, 0, Math.PI * 2);
+        ctx.arc(0, -25 * scaleFactor, 6 * scaleFactor, 0, Math.PI * 2);
         ctx.stroke();
 
         // Add variant-specific effects if a variant is applied
@@ -1274,34 +1294,34 @@ class Tower {
             case 'gold':
               // Add gold trim with tech pattern
               ctx.strokeStyle = '#FFD700';
-              ctx.lineWidth = 1.5;
+              ctx.lineWidth = 1.5 * scaleFactor;
               ctx.beginPath();
-              ctx.moveTo(-10, 0);
-              ctx.lineTo(10, 0);
-              ctx.lineTo(8, -25);
-              ctx.lineTo(-8, -25);
+              ctx.moveTo(-10 * scaleFactor, 0);
+              ctx.lineTo(10 * scaleFactor, 0);
+              ctx.lineTo(8 * scaleFactor, -25 * scaleFactor);
+              ctx.lineTo(-8 * scaleFactor, -25 * scaleFactor);
               ctx.closePath();
               ctx.stroke();
 
               // Add gold circuit pattern
               ctx.beginPath();
-              ctx.moveTo(-5, 0);
-              ctx.lineTo(-5, -15);
-              ctx.lineTo(0, -15);
-              ctx.lineTo(0, -25);
+              ctx.moveTo(-5 * scaleFactor, 0);
+              ctx.lineTo(-5 * scaleFactor, -15 * scaleFactor);
+              ctx.lineTo(0, -15 * scaleFactor);
+              ctx.lineTo(0, -25 * scaleFactor);
               ctx.stroke();
 
               ctx.beginPath();
-              ctx.moveTo(5, 0);
-              ctx.lineTo(5, -10);
-              ctx.lineTo(0, -10);
+              ctx.moveTo(5 * scaleFactor, 0);
+              ctx.lineTo(5 * scaleFactor, -10 * scaleFactor);
+              ctx.lineTo(0, -10 * scaleFactor);
               ctx.stroke();
 
               // Add gold glow
               ctx.fillStyle = '#FFD700';
               ctx.globalAlpha = 0.3;
               ctx.beginPath();
-              ctx.arc(0, -25, 10, 0, Math.PI * 2);
+              ctx.arc(0, -25 * scaleFactor, 10 * scaleFactor, 0, Math.PI * 2);
               ctx.fill();
               ctx.globalAlpha = 1.0;
               break;
@@ -1309,22 +1329,22 @@ class Tower {
             case 'crystal':
               // Add crystal effect with geometric pattern
               ctx.strokeStyle = '#88CCEE';
-              ctx.lineWidth = 1;
+              ctx.lineWidth = 1 * scaleFactor;
 
               // Draw crystal facets as geometric pattern
               for (let i = 0; i < 3; i++) {
-                const y = -25 + i * 8;
+                const y = -25 * scaleFactor + i * 8 * scaleFactor;
                 ctx.beginPath();
-                ctx.moveTo(-8 + i, y);
-                ctx.lineTo(8 - i, y);
+                ctx.moveTo((-8 + i) * scaleFactor, y);
+                ctx.lineTo((8 - i) * scaleFactor, y);
                 ctx.stroke();
               }
 
               // Add diagonal lines for crystal effect
               ctx.beginPath();
-              ctx.moveTo(-8, -25);
+              ctx.moveTo(-8 * scaleFactor, -25 * scaleFactor);
               ctx.lineTo(0, 0);
-              ctx.lineTo(8, -25);
+              ctx.lineTo(8 * scaleFactor, -25 * scaleFactor);
               ctx.stroke();
 
               // Add crystal glow with pulsing effect
@@ -1332,7 +1352,7 @@ class Tower {
               ctx.fillStyle = '#88CCEE';
               ctx.globalAlpha = crystalPulse;
               ctx.beginPath();
-              ctx.arc(0, -25, 10, 0, Math.PI * 2);
+              ctx.arc(0, -25 * scaleFactor, 10 * scaleFactor, 0, Math.PI * 2);
               ctx.fill();
               ctx.globalAlpha = 1.0;
               break;
@@ -1342,7 +1362,7 @@ class Tower {
               ctx.fillStyle = '#000000';
               ctx.globalAlpha = 0.5;
               ctx.beginPath();
-              ctx.arc(0, -25, 10, 0, Math.PI * 2);
+              ctx.arc(0, -25 * scaleFactor, 10 * scaleFactor, 0, Math.PI * 2);
               ctx.fill();
 
               // Add smoky particles with more tech feel
@@ -1353,10 +1373,10 @@ class Tower {
 
               for (let i = 0; i < 5; i++) {
                 const angle = timeInSec + i * Math.PI * 2 / 5;
-                const distance = 6 + Math.sin(timeInSec * 3 + i) * 3;
+                const distance = (6 + Math.sin(timeInSec * 3 + i) * 3) * scaleFactor;
                 const x = Math.cos(angle) * distance;
-                const y = Math.sin(angle) * distance - 15;
-                const size = 1.5 + Math.sin(timeInSec * 2 + i) * 0.5;
+                const y = Math.sin(angle) * distance - 15 * scaleFactor;
+                const size = (1.5 + Math.sin(timeInSec * 2 + i) * 0.5) * scaleFactor;
 
                 // Draw square particles instead of circles for tech feel
                 ctx.fillRect(x - size, y - size, size * 2, size * 2);
@@ -1370,13 +1390,13 @@ class Tower {
         // Path A upgrades - Enhanced power
         if (hasPathAUpgrades) {
           ctx.fillStyle = '#FFA000';
-          ctx.fillRect(-8, -25, 16, 25);
+          ctx.fillRect(-8 * scaleFactor, -25 * scaleFactor, 16 * scaleFactor, 25 * scaleFactor);
 
           // Add power indicators
           ctx.fillStyle = '#FFECB3';
           for (let i = 0; i < this.pathALevel; i++) {
             ctx.beginPath();
-            ctx.arc(0, -15 - i * 5, 3, 0, Math.PI * 2);
+            ctx.arc(0, (-15 - i * 5) * scaleFactor, 3 * scaleFactor, 0, Math.PI * 2);
             ctx.fill();
           }
         }
@@ -1384,16 +1404,16 @@ class Tower {
         // Path B upgrades - Rapid fire
         if (hasPathBUpgrades) {
           ctx.fillStyle = '#7B1FA2';
-          ctx.fillRect(-8, -25, 16, 25);
+          ctx.fillRect(-8 * scaleFactor, -25 * scaleFactor, 16 * scaleFactor, 25 * scaleFactor);
 
           // Add speed indicators
           ctx.strokeStyle = '#E1BEE7';
-          ctx.lineWidth = 1;
+          ctx.lineWidth = 1 * scaleFactor;
           for (let i = 0; i < this.pathBLevel; i++) {
-            const offset = 5 + i * 3;
+            const offset = (5 + i * 3) * scaleFactor;
             ctx.beginPath();
-            ctx.moveTo(-offset, -15);
-            ctx.lineTo(offset, -15);
+            ctx.moveTo(-offset, -15 * scaleFactor);
+            ctx.lineTo(offset, -15 * scaleFactor);
             ctx.stroke();
           }
         }
