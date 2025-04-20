@@ -531,10 +531,10 @@ const towerUpgrades = {
       name: "Divine Wrath",
       description: "Enhances the tower's offensive capabilities",
       upgrades: [
-        { level: 1, cost: 350, damageBonus: 50, critChanceBonus: 0.1, description: "+50 damage, +10% crit chance" },
-        { level: 2, cost: 700, damageBonus: 100, critChanceBonus: 0.15, description: "+100 damage, +15% crit chance" },
-        { level: 3, cost: 1400, damageBonus: 200, critChanceBonus: 0.2, description: "+200 damage, +20% crit chance" },
-        { level: 4, cost: 2800, damageBonus: 400, critChanceBonus: 0.3, description: "+400 damage, +30% crit chance" }
+        { level: 1, cost: 350, damageBonus: 250, critChanceBonus: 0.1, description: "+50 damage, +10% crit chance" },
+        { level: 2, cost: 700, damageBonus: 500, critChanceBonus: 0.15, description: "+100 damage, +15% crit chance" },
+        { level: 3, cost: 1400, damageBonus: 800, critChanceBonus: 0.2, description: "+200 damage, +20% crit chance" },
+        { level: 4, cost: 2800, damageBonus: 1700, critChanceBonus: 0.3, description: "+400 damage, +30% crit chance" }
       ]
     },
     // Path B: Blessing Aura

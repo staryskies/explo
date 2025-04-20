@@ -4,10 +4,34 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { body, validationResult } = require('express-validator');
-const { db } = require('../lib/db');
-const { users, sessions, playerData } = require('../db/schema');
-const { eq, and } = require('drizzle-orm');
+const { Pool } = require('pg');
 const { requireAuth } = require('../middleware/auth');
+
+// Create a connection pool
+let pool;
+
+// Parse the connection string
+if (process.env.DATABASE_URL) {
+  const url = new URL(process.env.DATABASE_URL);
+  const connectionConfig = {
+    host: url.hostname,
+    port: url.port,
+    database: url.pathname.split('/')[1],
+    user: url.username,
+    password: url.password,
+    ssl: {
+      rejectUnauthorized: false,
+      sslmode: 'require'
+    },
+    connectionTimeoutMillis: 10000 // 10 seconds
+  };
+
+  // Create a new pool
+  pool = new Pool(connectionConfig);
+} else {
+  console.error('DATABASE_URL environment variable is not set');
+  pool = null;
+}
 
 const router = express.Router();
 
@@ -21,13 +45,13 @@ const createSession = async (userId) => {
   const token = jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
   // Create session in database
-  await db.insert(sessions).values({
-    id: uuidv4(),
-    userId,
-    token,
-    expiresAt,
-    createdAt: new Date()
-  });
+  if (pool) {
+    await pool.query(
+      `INSERT INTO sessions (id, user_id, token, expires_at, created_at)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [uuidv4(), userId, token, expiresAt, new Date()]
+    );
+  }
 
   return { token, expiresAt };
 };
@@ -47,22 +71,28 @@ router.post('/signup', [
 
     const { username, email, password } = req.body;
 
-    // Check if username already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { username }
-    });
+    if (!pool) {
+      return res.status(500).json({ error: 'Database connection not available' });
+    }
 
-    if (existingUser) {
+    // Check if username already exists
+    const existingUserResult = await pool.query(
+      'SELECT * FROM users WHERE username = $1 LIMIT 1',
+      [username]
+    );
+
+    if (existingUserResult.rows.length > 0) {
       return res.status(400).json({ error: 'Username already taken' });
     }
 
     // Check if email already exists (if provided)
     if (email) {
-      const existingEmail = await prisma.user.findUnique({
-        where: { email }
-      });
+      const existingEmailResult = await pool.query(
+        'SELECT * FROM users WHERE email = $1 LIMIT 1',
+        [email]
+      );
 
-      if (existingEmail) {
+      if (existingEmailResult.rows.length > 0) {
         return res.status(400).json({ error: 'Email already registered' });
       }
     }
@@ -71,59 +101,87 @@ router.post('/signup', [
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        username,
-        email,
-        passwordHash,
-        playerData: {
-          create: {
-            gameData: {
-              // Default player data
-              silver: 1000,
-              highScore: 0,
-              gamesPlayed: 0,
-              wavesCompleted: 0,
-              enemiesKilled: 0,
-              highestWaveCompleted: 0,
-              completedDifficulties: [],
-              towerRolls: 0,
-              variantRolls: 0,
-              towerPity: {
-                rare: 0,
-                epic: 0,
-                legendary: 0,
-                mythic: 0,
-                divine: 0
-              },
-              variantPity: {
-                rare: 0,
-                epic: 0,
-                legendary: 0,
-                divine: 0
-              },
-              unlockedTowers: ['basic'],
-              towerVariants: {
-                basic: ['normal'],
-                archer: [],
-                cannon: [],
-                sniper: [],
-                freeze: [],
-                mortar: [],
-                laser: [],
-                tesla: [],
-                flame: [],
-                missile: [],
-                poison: [],
-                vortex: [],
-                archangel: []
-              }
-            }
-          }
-        }
+    // Generate IDs
+    const userId = uuidv4();
+    const playerDataId = uuidv4();
+
+    // Default game data
+    const gameData = {
+      silver: 1000,
+      highScore: 0,
+      gamesPlayed: 0,
+      wavesCompleted: 0,
+      enemiesKilled: 0,
+      highestWaveCompleted: 0,
+      completedDifficulties: [],
+      towerRolls: 0,
+      variantRolls: 0,
+      towerPity: {
+        rare: 0,
+        epic: 0,
+        legendary: 0,
+        mythic: 0,
+        divine: 0
+      },
+      variantPity: {
+        rare: 0,
+        epic: 0,
+        legendary: 0,
+        divine: 0
+      },
+      unlockedTowers: ['basic'],
+      towerVariants: {
+        basic: ['normal'],
+        archer: [],
+        cannon: [],
+        sniper: [],
+        freeze: [],
+        mortar: [],
+        laser: [],
+        tesla: [],
+        flame: [],
+        missile: [],
+        poison: [],
+        vortex: [],
+        archangel: []
       }
-    });
+    };
+
+    // Create user in a transaction
+    const client = await pool.connect();
+    let user;
+    try {
+      await client.query('BEGIN');
+
+      // Insert user
+      await client.query(
+        `INSERT INTO users (id, username, email, password_hash, is_guest, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [userId, username, email, passwordHash, false, new Date(), new Date()]
+      );
+
+      // Insert player data
+      await client.query(
+        `INSERT INTO player_data (id, user_id, game_data, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [playerDataId, userId, JSON.stringify(gameData), new Date(), new Date()]
+      );
+
+      await client.query('COMMIT');
+
+      // Get the created user
+      const userResult = await client.query(
+        'SELECT * FROM users WHERE id = $1',
+        [userId]
+      );
+
+      user = userResult.rows[0];
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
 
     // Create session
     const { token, expiresAt } = await createSession(user.id);
@@ -165,17 +223,24 @@ router.post('/login', [
 
     const { username, password } = req.body;
 
-    // Find user
-    const user = await prisma.user.findUnique({
-      where: { username }
-    });
+    if (!pool) {
+      return res.status(500).json({ error: 'Database connection not available' });
+    }
 
-    if (!user || user.isGuest) {
+    // Find user
+    const userResult = await pool.query(
+      'SELECT * FROM users WHERE username = $1 LIMIT 1',
+      [username]
+    );
+
+    if (userResult.rows.length === 0 || userResult.rows[0].is_guest) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    const user = userResult.rows[0];
+
     // Check password
-    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -218,20 +283,19 @@ router.post('/guest', async (req, res) => {
       // Generate user ID
       const userId = uuidv4();
 
+      if (!pool) {
+        throw new Error('Database connection not available');
+      }
+
       // Insert user
-      await db.insert(users).values({
-        id: userId,
-        username: guestUsername,
-        isGuest: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
+      await pool.query(
+        `INSERT INTO users (id, username, is_guest, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [userId, guestUsername, true, new Date(), new Date()]
+      );
 
       // Insert player data
-      await db.insert(playerData).values({
-        id: uuidv4(),
-        userId: userId,
-        gameData: {
+      const gameData = {
                 // Default player data for guests
                 silver: 1000,
                 highScore: 0,
@@ -271,14 +335,22 @@ router.post('/guest', async (req, res) => {
                   vortex: [],
                   archangel: []
                 }
-              },
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
+              };
+
+      // Insert player data
+      await pool.query(
+        `INSERT INTO player_data (id, user_id, game_data, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [uuidv4(), userId, JSON.stringify(gameData), new Date(), new Date()]
+      );
 
       // Get the user for the response
-      const [userRecord] = await db.select().from(users).where(eq(users.id, userId));
-      user = userRecord;
+      const userResult = await pool.query(
+        'SELECT * FROM users WHERE id = $1',
+        [userId]
+      );
+
+      user = userResult.rows[0];
     } catch (dbError) {
       console.error('Database error creating guest user:', dbError);
       return res.status(500).json({
@@ -344,11 +416,12 @@ router.post('/logout', async (req, res) => {
     const token = req.cookies.token ||
                  (req.headers.authorization && req.headers.authorization.split(' ')[1]);
 
-    if (token) {
+    if (token && pool) {
       // Delete session from database
-      await prisma.session.deleteMany({
-        where: { token }
-      });
+      await pool.query(
+        'DELETE FROM sessions WHERE token = $1',
+        [token]
+      );
     }
 
     // Clear cookie
@@ -364,10 +437,17 @@ router.post('/logout', async (req, res) => {
 // Get current user
 router.get('/me', requireAuth, async (req, res) => {
   try {
+    if (!pool) {
+      return res.status(500).json({ error: 'Database connection not available' });
+    }
+
     // Get player data
-    const playerData = await prisma.playerData.findUnique({
-      where: { userId: req.user.id }
-    });
+    const playerDataResult = await pool.query(
+      'SELECT * FROM player_data WHERE user_id = $1 LIMIT 1',
+      [req.user.id]
+    );
+
+    const playerData = playerDataResult.rows[0];
 
     res.json({
       user: {
@@ -376,7 +456,7 @@ router.get('/me', requireAuth, async (req, res) => {
         email: req.user.email,
         isGuest: req.user.isGuest
       },
-      playerData: playerData ? playerData.gameData : null
+      playerData: playerData ? playerData.game_data : null
     });
   } catch (error) {
     console.error('Get user error:', error);
@@ -404,22 +484,28 @@ router.post('/convert-guest', requireAuth, [
 
     const { username, email, password } = req.body;
 
-    // Check if username already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { username }
-    });
+    if (!pool) {
+      return res.status(500).json({ error: 'Database connection not available' });
+    }
 
-    if (existingUser && existingUser.id !== req.user.id) {
+    // Check if username already exists
+    const existingUserResult = await pool.query(
+      'SELECT * FROM users WHERE username = $1 LIMIT 1',
+      [username]
+    );
+
+    if (existingUserResult.rows.length > 0 && existingUserResult.rows[0].id !== req.user.id) {
       return res.status(400).json({ error: 'Username already taken' });
     }
 
     // Check if email already exists (if provided)
     if (email) {
-      const existingEmail = await prisma.user.findUnique({
-        where: { email }
-      });
+      const existingEmailResult = await pool.query(
+        'SELECT * FROM users WHERE email = $1 LIMIT 1',
+        [email]
+      );
 
-      if (existingEmail && existingEmail.id !== req.user.id) {
+      if (existingEmailResult.rows.length > 0 && existingEmailResult.rows[0].id !== req.user.id) {
         return res.status(400).json({ error: 'Email already registered' });
       }
     }
@@ -429,22 +515,22 @@ router.post('/convert-guest', requireAuth, [
     const passwordHash = await bcrypt.hash(password, salt);
 
     // Update user
-    const updatedUser = await prisma.user.update({
-      where: { id: req.user.id },
-      data: {
-        username,
-        email,
-        passwordHash,
-        isGuest: false
-      }
-    });
+    const updateResult = await pool.query(
+      `UPDATE users
+       SET username = $1, email = $2, password_hash = $3, is_guest = $4, updated_at = $5
+       WHERE id = $6
+       RETURNING *`,
+      [username, email, passwordHash, false, new Date(), req.user.id]
+    );
+
+    const updatedUser = updateResult.rows[0];
 
     res.json({
       user: {
         id: updatedUser.id,
         username: updatedUser.username,
         email: updatedUser.email,
-        isGuest: updatedUser.isGuest
+        isGuest: updatedUser.is_guest
       }
     });
   } catch (error) {

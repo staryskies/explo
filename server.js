@@ -121,24 +121,33 @@ io.use(async (socket, next) => {
 
     // Verify token using JWT
     const jwt = require('jsonwebtoken');
-    const prisma = require('./lib/prisma');
 
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
       // Find session in database
-      const session = await prisma.session.findUnique({
-        where: { token },
-        include: { user: true }
-      });
+      const sessionResult = await pool.query(
+        `SELECT s.*, u.id as user_id, u.username, u.email, u.is_guest as "isGuest"
+         FROM sessions s
+         JOIN users u ON s.user_id = u.id
+         WHERE s.token = $1`,
+        [token]
+      );
+
+      const session = sessionResult.rows[0];
 
       // Check if session exists and is not expired
-      if (!session || new Date() > session.expiresAt) {
+      if (!session || new Date() > new Date(session.expires_at)) {
         return next(new Error('Invalid session'));
       }
 
       // Set user in socket
-      socket.user = session.user;
+      socket.user = {
+        id: session.user_id,
+        username: session.username,
+        email: session.email,
+        isGuest: session.isGuest
+      };
       next();
     } catch (error) {
       return next(new Error('Invalid token'));
@@ -160,13 +169,12 @@ io.on('connection', (socket) => {
   socket.on('join-squad', async (squadId) => {
     try {
       // Check if user is a member of the squad
-      const prisma = require('./lib/prisma');
-      const membership = await prisma.squadMember.findFirst({
-        where: {
-          squadId,
-          userId: socket.user.id
-        }
-      });
+      const membershipResult = await pool.query(
+        `SELECT * FROM squad_members WHERE squad_id = $1 AND user_id = $2 LIMIT 1`,
+        [squadId, socket.user.id]
+      );
+
+      const membership = membershipResult.rows[0];
 
       if (!membership) {
         socket.emit('error', { message: 'You are not a member of this squad' });
@@ -193,22 +201,26 @@ io.on('connection', (socket) => {
       });
 
       // Get squad members
-      const squad = await prisma.squad.findUnique({
-        where: { id: squadId },
-        include: {
-          members: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  username: true,
-                  isGuest: true
-                }
-              }
-            }
-          }
-        }
-      });
+      const squadResult = await pool.query(
+        `SELECT s.id, s.code, s.leader_id as "leaderId"
+         FROM squads s
+         WHERE s.id = $1`,
+        [squadId]
+      );
+
+      const squad = squadResult.rows[0];
+
+      // Get squad members
+      const membersResult = await pool.query(
+        `SELECT sm.joined_at as "joinedAt", u.id, u.username, u.is_guest as "isGuest"
+         FROM squad_members sm
+         JOIN users u ON sm.user_id = u.id
+         WHERE sm.squad_id = $1`,
+        [squadId]
+      );
+
+      // Add members to squad object
+      squad.members = membersResult.rows;
 
       // Send squad data to user
       socket.emit('squad-joined', {
@@ -234,13 +246,12 @@ io.on('connection', (socket) => {
       const { squadId, message } = data;
 
       // Check if user is a member of the squad
-      const prisma = require('./lib/prisma');
-      const membership = await prisma.squadMember.findFirst({
-        where: {
-          squadId,
-          userId: socket.user.id
-        }
-      });
+      const membershipResult = await pool.query(
+        `SELECT * FROM squad_members WHERE squad_id = $1 AND user_id = $2 LIMIT 1`,
+        [squadId, socket.user.id]
+      );
+
+      const membership = membershipResult.rows[0];
 
       if (!membership) {
         socket.emit('error', { message: 'You are not a member of this squad' });
@@ -267,13 +278,12 @@ io.on('connection', (socket) => {
       const { squadId, gameState } = data;
 
       // Check if user is a member of the squad
-      const prisma = require('./lib/prisma');
-      const membership = await prisma.squadMember.findFirst({
-        where: {
-          squadId,
-          userId: socket.user.id
-        }
-      });
+      const membershipResult = await pool.query(
+        `SELECT * FROM squad_members WHERE squad_id = $1 AND user_id = $2 LIMIT 1`,
+        [squadId, socket.user.id]
+      );
+
+      const membership = membershipResult.rows[0];
 
       if (!membership) {
         socket.emit('error', { message: 'You are not a member of this squad' });
@@ -338,51 +348,87 @@ const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
 
 // Initialize database connection
-const { db, pool } = require('./db');
+const { Pool } = require('pg');
+
+// Create a direct connection to the database
+let pool;
+
+// Parse the connection string
+if (process.env.DATABASE_URL) {
+  const url = new URL(process.env.DATABASE_URL);
+  const connectionConfig = {
+    host: url.hostname,
+    port: url.port,
+    database: url.pathname.split('/')[1],
+    user: url.username,
+    password: url.password,
+    ssl: {
+      rejectUnauthorized: false,
+      sslmode: 'require'
+    },
+    connectionTimeoutMillis: 10000 // 10 seconds
+  };
+
+  // Create a new pool
+  pool = new Pool(connectionConfig);
+  console.log(`Database connection configured for ${url.hostname}:${url.port}${url.pathname}`);
+} else {
+  console.error('DATABASE_URL environment variable is not set');
+}
 
 // Handle database connection cleanup
 process.on('beforeExit', async () => {
-  await pool.end();
+  if (pool) {
+    await pool.end();
+  }
 });
 
 async function startServer() {
   try {
     // Check database connection
     console.log('Checking database connection...');
-    try {
-      // Test the database connection with a simple query
-      await pool.query('SELECT NOW()');
-      console.log('Database connection successful');
-    } catch (dbError) {
-      console.error('Database connection failed:', dbError);
+    if (!pool) {
+      console.error('Database connection not configured');
       console.log('Starting server without database connection...');
-      // Continue starting the server even if database connection fails
-      // This allows the static files to be served even if the database is down
+    } else {
+      try {
+        // Test the database connection with a simple query
+        const result = await pool.query('SELECT NOW()');
+        console.log('Database connection successful, current time:', result.rows[0].now);
+      } catch (dbError) {
+        console.error('Database connection failed:', dbError);
+        console.log('Starting server without database connection...');
+        // Continue starting the server even if database connection fails
+        // This allows the static files to be served even if the database is down
+      }
     }
 
     // Check if database needs initialization
     console.log('Checking if database needs initialization...');
-    try {
-      // Create schema first to ensure tables exist
-      const createSchema = require('./scripts/create-schema');
-      await createSchema();
-      console.log('Schema creation completed');
-
-      // Try to query the users table
-      const { users } = require('./db/schema');
-      const result = await db.select().from(users).limit(1);
-      console.log('Database already initialized');
-    } catch (error) {
-      // If there's an error, try to initialize the database
-      console.log('Database needs initialization, running init script...');
+    if (!pool) {
+      console.error('Database connection not configured, skipping initialization');
+    } else {
       try {
-        const initDb = require('./scripts/init-db');
-        await initDb();
-        console.log('Database initialization completed successfully');
-      } catch (initError) {
-        console.error('Database initialization failed:', initError);
-        console.log('Starting server without database initialization...');
-        // Continue starting the server even if database initialization fails
+        // Create schema first to ensure tables exist
+        const createSchema = require('./scripts/create-schema');
+        await createSchema();
+        console.log('Schema creation completed');
+
+        // Try to query the users table
+        const result = await pool.query("SELECT * FROM users LIMIT 1");
+        console.log('Database already initialized, found', result.rows.length, 'users');
+      } catch (error) {
+        // If there's an error, try to initialize the database
+        console.log('Database needs initialization, running init script...');
+        try {
+          const initDb = require('./scripts/init-db');
+          await initDb();
+          console.log('Database initialization completed successfully');
+        } catch (initError) {
+          console.error('Database initialization failed:', initError);
+          console.log('Starting server without database initialization...');
+          // Continue starting the server even if database initialization fails
+        }
       }
     }
 
@@ -394,8 +440,6 @@ async function startServer() {
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);
-  } finally {
-    await prisma.$disconnect();
   }
 }
 

@@ -1,11 +1,37 @@
 // scripts/init-db.js
-// Script to initialize the database with Drizzle ORM
+// Script to initialize the database with direct PostgreSQL connection
 require('dotenv').config();
 const { v4: uuidv4 } = require('uuid');
 const bcrypt = require('bcryptjs');
-const { db, pool } = require('../db');
-const { users, playerData } = require('../db/schema');
-const { eq } = require('drizzle-orm');
+const { Pool } = require('pg');
+
+// Create a direct connection to the database for initialization
+let pool;
+
+// Parse the connection string
+if (!process.env.DATABASE_URL) {
+  console.error('DATABASE_URL environment variable is not set');
+  process.exit(1);
+}
+
+const url = new URL(process.env.DATABASE_URL);
+const connectionConfig = {
+  host: url.hostname,
+  port: url.port,
+  database: url.pathname.split('/')[1],
+  user: url.username,
+  password: url.password,
+  ssl: {
+    rejectUnauthorized: false,
+    sslmode: 'require'
+  },
+  connectionTimeoutMillis: 10000 // 10 seconds
+};
+
+// Create a new pool
+pool = new Pool(connectionConfig);
+
+// Import the schema creation function
 const createSchema = require('./create-schema');
 
 async function initializeDatabase() {
@@ -24,9 +50,11 @@ async function initializeDatabase() {
 
     // Check if admin user exists
     console.log('Checking if database is already initialized...');
-    const adminUser = await db.select().from(users).where(eq(users.username, 'admin')).limit(1);
+    const adminCheckResult = await pool.query(
+      "SELECT * FROM users WHERE username = 'admin' LIMIT 1"
+    );
 
-    if (adminUser.length > 0) {
+    if (adminCheckResult.rows.length > 0) {
       console.log('Admin user already exists, skipping initialization');
       return;
     }
@@ -37,64 +65,61 @@ async function initializeDatabase() {
     const passwordHash = await bcrypt.hash('admin123', salt);
     const adminId = uuidv4();
 
-    // Insert admin user
-    await db.insert(users).values({
-      id: adminId,
-      username: 'admin',
-      email: 'admin@example.com',
-      passwordHash: passwordHash,
-      isGuest: false,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    });
+    // Insert admin user with direct SQL
+    await pool.query(
+      `INSERT INTO users (id, username, email, password_hash, is_guest, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [adminId, 'admin', 'admin@example.com', passwordHash, false, new Date(), new Date()]
+    );
 
-    // Insert admin player data
-    await db.insert(playerData).values({
-      id: uuidv4(),
-      userId: adminId,
-      gameData: {
-        silver: 10000,
-        highScore: 0,
-        gamesPlayed: 0,
-        wavesCompleted: 0,
-        enemiesKilled: 0,
-        highestWaveCompleted: 0,
-        completedDifficulties: [],
-        towerRolls: 0,
-        variantRolls: 0,
-        towerPity: {
-          rare: 0,
-          epic: 0,
-          legendary: 0,
-          mythic: 0,
-          divine: 0
-        },
-        variantPity: {
-          rare: 0,
-          epic: 0,
-          legendary: 0,
-          divine: 0
-        },
-        unlockedTowers: ['basic', 'archer', 'cannon', 'sniper', 'freeze', 'mortar', 'laser', 'tesla', 'flame', 'missile', 'poison', 'vortex', 'archangel'],
-        towerVariants: {
-          basic: ['normal', 'gold', 'crystal', 'shadow'],
-          archer: ['normal', 'ice', 'fire', 'poison', 'dragon'],
-          cannon: ['normal'],
-          sniper: ['normal'],
-          freeze: ['normal'],
-          mortar: ['normal'],
-          laser: ['normal'],
-          tesla: ['normal'],
-          flame: ['normal'],
-          missile: ['normal'],
-          poison: ['normal'],
-          vortex: ['normal'],
-          archangel: ['normal']
-        }
+    // Game data for admin
+    const gameData = {
+      silver: 10000,
+      highScore: 0,
+      gamesPlayed: 0,
+      wavesCompleted: 0,
+      enemiesKilled: 0,
+      highestWaveCompleted: 0,
+      completedDifficulties: [],
+      towerRolls: 0,
+      variantRolls: 0,
+      towerPity: {
+        rare: 0,
+        epic: 0,
+        legendary: 0,
+        mythic: 0,
+        divine: 0
       },
-      createdAt: new Date(),
-      updatedAt: new Date()
-    });
+      variantPity: {
+        rare: 0,
+        epic: 0,
+        legendary: 0,
+        divine: 0
+      },
+      unlockedTowers: ['basic', 'archer', 'cannon', 'sniper', 'freeze', 'mortar', 'laser', 'tesla', 'flame', 'missile', 'poison', 'vortex', 'archangel'],
+      towerVariants: {
+        basic: ['normal', 'gold', 'crystal', 'shadow'],
+        archer: ['normal', 'ice', 'fire', 'poison', 'dragon'],
+        cannon: ['normal'],
+        sniper: ['normal'],
+        freeze: ['normal'],
+        mortar: ['normal'],
+        laser: ['normal'],
+        tesla: ['normal'],
+        flame: ['normal'],
+        missile: ['normal'],
+        poison: ['normal'],
+        vortex: ['normal'],
+        archangel: ['normal']
+      }
+    };
+
+    // Insert admin player data with direct SQL
+    await pool.query(
+      `INSERT INTO player_data (id, user_id, game_data, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [uuidv4(), adminId, JSON.stringify(gameData), new Date(), new Date()]
+    );
 
     console.log('Admin user created successfully');
     console.log('Database initialization completed successfully');

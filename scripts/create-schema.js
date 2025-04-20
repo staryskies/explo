@@ -1,8 +1,33 @@
 // scripts/create-schema.js
 require('dotenv').config();
-const { db, pool } = require('../db');
-const { users, sessions, playerData, squads, squadMembers } = require('../db/schema');
+const { Pool } = require('pg');
 const { sql } = require('drizzle-orm');
+
+// Create a direct connection to the database for schema creation
+let pool;
+
+// Parse the connection string
+if (!process.env.DATABASE_URL) {
+  console.error('DATABASE_URL environment variable is not set');
+  process.exit(1);
+}
+
+const url = new URL(process.env.DATABASE_URL);
+const connectionConfig = {
+  host: url.hostname,
+  port: url.port,
+  database: url.pathname.split('/')[1],
+  user: url.username,
+  password: url.password,
+  ssl: {
+    rejectUnauthorized: false,
+    sslmode: 'require'
+  },
+  connectionTimeoutMillis: 10000 // 10 seconds
+};
+
+// Create a new pool
+pool = new Pool(connectionConfig);
 
 async function createSchema() {
   console.log('Creating database schema...');

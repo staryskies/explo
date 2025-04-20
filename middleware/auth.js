@@ -1,8 +1,32 @@
 // middleware/auth.js
 const jwt = require('jsonwebtoken');
-const { db } = require('../lib/db');
-const { users, sessions } = require('../db/schema');
-const { eq, and, gt } = require('drizzle-orm');
+const { Pool } = require('pg');
+
+// Create a connection pool
+let pool;
+
+// Parse the connection string
+if (process.env.DATABASE_URL) {
+  const url = new URL(process.env.DATABASE_URL);
+  const connectionConfig = {
+    host: url.hostname,
+    port: url.port,
+    database: url.pathname.split('/')[1],
+    user: url.username,
+    password: url.password,
+    ssl: {
+      rejectUnauthorized: false,
+      sslmode: 'require'
+    },
+    connectionTimeoutMillis: 10000 // 10 seconds
+  };
+
+  // Create a new pool
+  pool = new Pool(connectionConfig);
+} else {
+  console.error('DATABASE_URL environment variable is not set');
+  pool = null;
+}
 
 // Middleware to authenticate users via JWT
 const authenticate = async (req, res, next) => {
@@ -20,26 +44,34 @@ const authenticate = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // Find session in database
-    const sessionResults = await db
-      .select()
-      .from(sessions)
-      .where(eq(sessions.token, token));
-
-    const session = sessionResults[0];
-
-    // Check if session exists and is not expired
-    if (!session || new Date() > session.expiresAt) {
+    if (!pool) {
       req.user = null;
       return next();
     }
 
-    // Get user from database
-    const userResults = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, session.userId));
+    const sessionResult = await pool.query(
+      `SELECT s.*, u.id as user_id, u.username, u.email, u.is_guest as "isGuest"
+       FROM sessions s
+       JOIN users u ON s.user_id = u.id
+       WHERE s.token = $1`,
+      [token]
+    );
 
-    const user = userResults[0];
+    const session = sessionResult.rows[0];
+
+    // Check if session exists and is not expired
+    if (!session || new Date() > new Date(session.expires_at)) {
+      req.user = null;
+      return next();
+    }
+
+    // Create user object from session result
+    const user = {
+      id: session.user_id,
+      username: session.username,
+      email: session.email,
+      isGuest: session.isGuest
+    };
 
     if (!user) {
       req.user = null;
