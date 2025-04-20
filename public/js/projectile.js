@@ -102,7 +102,8 @@ class Projectile {
         this.trailLength = 10; // Long trail
         this.speed *= 5.0; // Very fast
         this.pierceCount = 3; // Pierce through multiple enemies
-        this.aoeRadius = 30; // Area effect
+        this.aoeRadius = 50; // Larger area effect
+        this.tracking = 0.15; // Strong tracking for divine projectiles
         break;
       case 'vortex':
         this.size = 2;
@@ -192,6 +193,8 @@ class Projectile {
     // Increase tracking for certain projectile types
     if (this.type === 'missile') {
       trackingStrength = 0.3;
+    } else if (this.type === 'divine') {
+      trackingStrength = 0.5; // Divine projectiles have excellent tracking
     }
 
     // Apply tracking adjustment
@@ -215,7 +218,9 @@ class Projectile {
 
     // Check for collision with target
     const newDist = distance(this.x, this.y, this.target.x, this.target.y);
-    if (newDist < this.target.size + this.size) {
+    // Divine projectiles have a larger hit radius
+    const hitRadius = this.type === 'divine' ? this.target.size + this.size * 3 : this.target.size + this.size;
+    if (newDist < hitRadius) {
       this.hit = true;
       this.active = false;
     }
@@ -227,8 +232,8 @@ class Projectile {
 
     const affectedEnemies = [];
 
-    // Handle AOE projectiles (cannon, mortar)
-    if ((this.type === 'aoe' || this.type === 'cannon' || this.type === 'mortar') && this.aoeRadius) {
+    // Handle AOE projectiles (cannon, mortar, divine)
+    if ((this.type === 'aoe' || this.type === 'cannon' || this.type === 'mortar' || this.type === 'divine') && this.aoeRadius) {
       // Apply AOE damage to all enemies in radius
       enemies.forEach(enemy => {
         if (enemy.alive) {

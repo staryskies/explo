@@ -127,6 +127,13 @@ class Tower {
         this.lastBuffTime = 0;
         this.buffInterval = 1000; // Apply buffs every second
         this.projectileType = 'divine';
+        this.buffRadius = 150; // Radius for buffing nearby towers
+        this.buffDamage = 0.2; // 20% damage buff
+        this.buffRange = 0.1; // 10% range buff
+        this.aoeRadius = 50; // Area damage radius
+        this.pierceCount = 3; // Pierces through multiple enemies
+        this.chainCount = 3; // Can chain to nearby enemies
+        this.chainRange = 150; // Chain range
         break;
       case 'cannon':
       case 'mortar':
@@ -2503,6 +2510,54 @@ class Tower {
     }
 
     ctx.fillText(typeIndicator, this.x, this.y);
+
+    // Draw buff indicator if tower is buffed
+    if (this.buffed) {
+      // Calculate buff percentages
+      let buffText = '';
+
+      if (this.originalDamage) {
+        const damageBoost = Math.round((this.damage / this.originalDamage - 1) * 100);
+        if (damageBoost > 0) {
+          buffText += `+${damageBoost}% DMG`;
+        }
+      }
+
+      if (this.originalRange) {
+        const rangeBoost = Math.round((this.range / this.originalRange - 1) * 100);
+        if (rangeBoost > 0) {
+          if (buffText) buffText += '\n';
+          buffText += `+${rangeBoost}% RNG`;
+        }
+      }
+
+      if (buffText) {
+        // Draw buff text with golden glow
+        ctx.save();
+
+        // Draw glow around tower
+        ctx.globalAlpha = 0.3;
+        ctx.fillStyle = '#FFEB3B';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 25, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw buff text
+        ctx.globalAlpha = 1.0;
+        ctx.fillStyle = '#FFEB3B';
+        ctx.font = '9px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+
+        // Split text into lines
+        const lines = buffText.split('\n');
+        lines.forEach((line, index) => {
+          ctx.fillText(line, this.x, this.y + 10 + index * 10);
+        });
+
+        ctx.restore();
+      }
+    }
   }
 
   // Update the tower state
@@ -2550,6 +2605,16 @@ class Tower {
   applyBuffsToNearbyTowers(towers) {
     if (this.type !== 'archangel' || !this.buffRadius) return;
 
+    // Reset buffs on previously buffed towers that are no longer in range
+    if (this.buffedTowers && this.buffedTowers.length > 0) {
+      for (const tower of this.buffedTowers) {
+        const dist = distance(this.x, this.y, tower.x, tower.y);
+        if (dist > this.buffRadius) {
+          this.resetBuffs(tower);
+        }
+      }
+    }
+
     // Reset buffed towers list
     this.buffedTowers = [];
 
@@ -2567,8 +2632,29 @@ class Tower {
     }
   }
 
+  // Reset buffs on a tower
+  resetBuffs(tower) {
+    // Reset damage
+    if (tower.originalDamage) {
+      tower.damage = tower.originalDamage;
+      tower.originalDamage = null;
+    }
+
+    // Reset range
+    if (tower.originalRange) {
+      tower.range = tower.originalRange;
+      tower.originalRange = null;
+    }
+
+    // Reset buffed flag
+    tower.buffed = false;
+  }
+
   // Apply buff to a specific tower
   buffTower(tower) {
+    // Set the buffed flag
+    tower.buffed = true;
+
     // Apply damage buff
     if (this.buffDamage) {
       // Store original damage if not already stored
@@ -2591,7 +2677,6 @@ class Tower {
       tower.range = Math.floor(tower.originalRange * (1 + this.buffRange));
     }
 
-    // Mark tower as buffed
-    tower.buffed = true;
+    // Tower is now buffed
   }
 }
