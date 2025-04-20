@@ -191,8 +191,7 @@ const gachaSystem = {
       results.push(this.rollTower());
     }
 
-    // Show the results
-    alert(`You got: ${results.map(tower => towerStats[tower].name).join(', ')}`);
+   
 
     return results;
   },
@@ -440,6 +439,7 @@ const gachaSystem = {
     // Create cutscene container
     const cutscene = document.createElement('div');
     cutscene.className = `divine-cutscene ${divineType}`;
+    cutscene.style.zIndex = '9999'; // Ensure it's on top of everything
 
     // Create words circle
     const wordsCircle = document.createElement('div');
@@ -454,8 +454,17 @@ const gachaSystem = {
       const wordElement = document.createElement('div');
       wordElement.className = `divine-word ${divineType}`;
       wordElement.textContent = word;
-      wordElement.style.transform = `rotate(${index * (360 / words.length)}deg) translateY(-220px) rotate(${-index * (360 / words.length)}deg)`;
+
+      // Calculate position around the circle
+      const angle = index * (360 / words.length);
+      const radius = 220; // Distance from center
+
+      // Position words in a circle
+      wordElement.style.position = 'absolute';
+      wordElement.style.transformOrigin = 'center';
+      wordElement.style.transform = `rotate(${angle}deg) translateY(-${radius}px) rotate(-${angle}deg)`;
       wordElement.style.animationDelay = `${index * 0.3}s`;
+
       wordsCircle.appendChild(wordElement);
     });
 
@@ -479,7 +488,7 @@ const gachaSystem = {
     cutscene.appendChild(wordsCircle);
     cutscene.appendChild(centerIcon);
 
-    // Add cutscene to document
+    // Add cutscene to document body (not inside any container)
     document.body.appendChild(cutscene);
 
     // Remove cutscene after duration

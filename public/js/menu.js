@@ -565,6 +565,12 @@ function generateMapOptions() {
 function generateShopOptions() {
   const shopContainer = document.getElementById('tower-shop-options');
 
+  // Check if the shop container exists
+  if (!shopContainer) {
+    console.log('Shop container not found, skipping shop generation');
+    return;
+  }
+
   // Clear existing options
   shopContainer.innerHTML = '';
 
