@@ -6,11 +6,22 @@ const bcrypt = require('bcryptjs');
 const { db, pool } = require('../db');
 const { users, playerData } = require('../db/schema');
 const { eq } = require('drizzle-orm');
+const createSchema = require('./create-schema');
 
 async function initializeDatabase() {
   console.log('Starting database initialization...');
 
   try {
+    // Create database schema first
+    console.log('Creating database schema...');
+    try {
+      await createSchema();
+      console.log('Schema creation completed');
+    } catch (schemaError) {
+      console.error('Schema creation failed:', schemaError);
+      throw new Error(`Schema creation failed: ${schemaError.message}`);
+    }
+
     // Check if admin user exists
     console.log('Checking if database is already initialized...');
     const adminUser = await db.select().from(users).where(eq(users.username, 'admin')).limit(1);

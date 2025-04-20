@@ -363,12 +363,17 @@ async function startServer() {
     // Check if database needs initialization
     console.log('Checking if database needs initialization...');
     try {
-      // Try to query the users table to see if it exists
+      // Create schema first to ensure tables exist
+      const createSchema = require('./scripts/create-schema');
+      await createSchema();
+      console.log('Schema creation completed');
+
+      // Try to query the users table
       const { users } = require('./db/schema');
       const result = await db.select().from(users).limit(1);
       console.log('Database already initialized');
     } catch (error) {
-      // If the table doesn't exist, initialize the database
+      // If there's an error, try to initialize the database
       console.log('Database needs initialization, running init script...');
       try {
         const initDb = require('./scripts/init-db');
