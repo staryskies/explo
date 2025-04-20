@@ -89,6 +89,13 @@ class Projectile {
         this.trailLength = 0;
         this.speed *= 2.3;
         break;
+      case 'poisonCloud':
+        this.size = 4;
+        this.color = '#8BC34A'; // Light green
+        this.trailLength = 0;
+        this.speed *= 1.8; // Slower
+        this.aoeRadius = 40; // Large area effect
+        break;
       case 'vortex':
         this.size = 2;
         this.color = '#1abc9c'; // Teal
@@ -270,6 +277,26 @@ class Projectile {
       const killed = this.target.takeDamage(this.damage, this.towerType);
       affectedEnemies.push({enemy: this.target, killed, damage: this.damage});
     }
+    // Handle poison cloud projectiles (AOE poison)
+    else if (this.type === 'poisonCloud' && this.target && this.target.alive) {
+      // Apply poison effect to all enemies in radius
+      enemies.forEach(enemy => {
+        if (enemy.alive) {
+          const dist = distance(this.x, this.y, enemy.x, enemy.y);
+          if (dist <= (this.aoeRadius || 40)) {
+            // Apply poison effect with stronger damage over time
+            enemy.applyPoisonEffect(this.damage * 0.2, 4000); // 20% of damage per second for 4 seconds
+
+            // Calculate damage falloff based on distance
+            const falloff = 1 - (dist / (this.aoeRadius || 40)) * 0.5;
+            const actualDamage = Math.floor(this.damage * falloff);
+
+            const killed = enemy.takeDamage(actualDamage, this.towerType);
+            affectedEnemies.push({enemy, killed, damage: actualDamage});
+          }
+        }
+      });
+    }
     // Handle tesla tower projectiles
     else if (this.type === 'tesla' && this.target && this.target.alive) {
       // Apply stun effect to target
@@ -398,6 +425,9 @@ class Projectile {
       case 'poison':
         this.drawPoisonProjectile(ctx);
         break;
+      case 'poisonCloud':
+        this.drawPoisonCloudProjectile(ctx);
+        break;
       case 'vortex':
         this.drawVortexProjectile(ctx);
         break;
@@ -443,35 +473,73 @@ class Projectile {
     const endX = this.target.x;
     const endY = this.target.y;
 
-    // Draw main beam - straight line
+    // Create a gradient for the laser beam
+    const gradient = ctx.createLinearGradient(startX, startY, endX, endY);
+    gradient.addColorStop(0, '#ffffff');
+    gradient.addColorStop(0.2, this.color);
+    gradient.addColorStop(0.8, this.color);
+    gradient.addColorStop(1, '#ffffff');
+
+    // Draw outer glow
+    ctx.globalAlpha = 0.3;
+    ctx.lineWidth = this.size * 5;
     ctx.strokeStyle = this.color;
-    ctx.lineWidth = this.size * 1.5;
     ctx.beginPath();
     ctx.moveTo(startX, startY);
     ctx.lineTo(endX, endY);
     ctx.stroke();
 
-    // Draw outer glow
-    ctx.globalAlpha = 0.3;
+    // Draw medium glow
+    ctx.globalAlpha = 0.6;
     ctx.lineWidth = this.size * 3;
+    ctx.strokeStyle = this.color;
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+    ctx.stroke();
+
+    // Draw main beam - straight line
+    ctx.globalAlpha = 1.0;
+    ctx.lineWidth = this.size * 1.5;
+    ctx.strokeStyle = gradient;
     ctx.beginPath();
     ctx.moveTo(startX, startY);
     ctx.lineTo(endX, endY);
     ctx.stroke();
 
     // Draw bright core at both ends
-    ctx.globalAlpha = 1.0;
     ctx.fillStyle = '#fff';
 
     // Start point glow
     ctx.beginPath();
-    ctx.arc(startX, startY, this.size, 0, Math.PI * 2);
+    ctx.arc(startX, startY, this.size * 1.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // End point impact
+    // End point impact with pulsing effect
+    const pulseSize = this.size * 2 * (1 + 0.3 * Math.sin(performance.now() / 50));
     ctx.beginPath();
-    ctx.arc(endX, endY, this.size * 1.5, 0, Math.PI * 2);
+    ctx.arc(endX, endY, pulseSize, 0, Math.PI * 2);
     ctx.fill();
+
+    // Add impact particles at the target
+    if (Math.random() < 0.3) { // Only add particles occasionally for performance
+      for (let i = 0; i < 3; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const distance = Math.random() * this.size * 3;
+        const particleX = endX + Math.cos(angle) * distance;
+        const particleY = endY + Math.sin(angle) * distance;
+        const particleSize = Math.random() * this.size + this.size / 2;
+
+        ctx.fillStyle = this.color;
+        ctx.globalAlpha = Math.random() * 0.5 + 0.5;
+        ctx.beginPath();
+        ctx.arc(particleX, particleY, particleSize, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Reset alpha
+    ctx.globalAlpha = 1.0;
   }
 
   drawSniperProjectile(ctx) {
@@ -612,39 +680,131 @@ class Projectile {
   }
 
   drawTeslaProjectile(ctx) {
-    // Draw lightning bolt
-    ctx.translate(this.x, this.y);
-    ctx.rotate(this.angle);
+    // Draw lightning bolt with more dramatic effect
+    ctx.save();
 
-    // Lightning path
-    ctx.strokeStyle = this.color;
-    ctx.lineWidth = this.size;
-    ctx.beginPath();
+    // If we have a target, draw a lightning arc to it
+    if (this.target && this.target.alive) {
+      // Get start and end points
+      const startX = this.x;
+      const startY = this.y;
+      const endX = this.target.x;
+      const endY = this.target.y;
 
-    // Create zigzag pattern
-    ctx.moveTo(0, 0);
-    const segments = 4;
-    const length = this.size * 10;
-    const segmentLength = length / segments;
+      // Calculate distance
+      const dx = endX - startX;
+      const dy = endY - startY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
 
-    for (let i = 1; i <= segments; i++) {
-      const jitter = this.size * (Math.random() * 2 - 1);
-      ctx.lineTo(i * segmentLength, jitter);
+      // Draw lightning arc with multiple branches
+      this.drawLightningArc(ctx, startX, startY, endX, endY, distance, 0.3, 3);
+
+      // Draw impact point
+      ctx.globalAlpha = 0.8;
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(endX, endY, this.size * 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Draw electric field around impact
+      const time = performance.now() / 100;
+      const pulseSize = this.size * 3 * (1 + 0.2 * Math.sin(time));
+
+      ctx.globalAlpha = 0.3;
+      ctx.fillStyle = this.color;
+      ctx.beginPath();
+      ctx.arc(endX, endY, pulseSize, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // Fallback to old style if no target
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.angle);
+
+      // Lightning path
+      ctx.strokeStyle = this.color;
+      ctx.lineWidth = this.size;
+      ctx.beginPath();
+
+      // Create zigzag pattern
+      ctx.moveTo(0, 0);
+      const segments = 4;
+      const length = this.size * 10;
+      const segmentLength = length / segments;
+
+      for (let i = 1; i <= segments; i++) {
+        const jitter = this.size * (Math.random() * 2 - 1);
+        ctx.lineTo(i * segmentLength, jitter);
+      }
+
+      ctx.stroke();
+
+      // Glow effect
+      ctx.globalAlpha = 0.5;
+      ctx.lineWidth = this.size * 2;
+      ctx.stroke();
+
+      // Bright core
+      ctx.globalAlpha = 1.0;
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+      ctx.fill();
     }
 
-    ctx.stroke();
+    ctx.restore();
+  }
 
-    // Glow effect
-    ctx.globalAlpha = 0.5;
-    ctx.lineWidth = this.size * 2;
-    ctx.stroke();
+  // Helper method to draw a lightning arc with branches
+  drawLightningArc(ctx, x1, y1, x2, y2, distance, displacementFactor, iterations) {
+    if (iterations <= 0) {
+      // Base case: draw a straight line
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = this.size * 0.8;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
 
-    // Bright core
-    ctx.globalAlpha = 1.0;
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
-    ctx.fill();
+      // Draw glow
+      ctx.globalAlpha = 0.4;
+      ctx.strokeStyle = this.color;
+      ctx.lineWidth = this.size * 2;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+      ctx.globalAlpha = 1.0;
+      return;
+    }
+
+    // Calculate midpoint
+    const midX = (x1 + x2) / 2;
+    const midY = (y1 + y2) / 2;
+
+    // Add random displacement to midpoint
+    const displacement = (Math.random() * 2 - 1) * displacementFactor * distance;
+    const perpX = -(y2 - y1);
+    const perpY = x2 - x1;
+    const perpLength = Math.sqrt(perpX * perpX + perpY * perpY);
+
+    const displacedMidX = midX + (perpX / perpLength) * displacement;
+    const displacedMidY = midY + (perpY / perpLength) * displacement;
+
+    // Recursively draw the two halves
+    this.drawLightningArc(ctx, x1, y1, displacedMidX, displacedMidY, distance / 2, displacementFactor, iterations - 1);
+    this.drawLightningArc(ctx, displacedMidX, displacedMidY, x2, y2, distance / 2, displacementFactor, iterations - 1);
+
+    // Add branches with some probability
+    if (iterations > 1 && Math.random() < 0.4) {
+      // Calculate branch endpoint
+      const branchLength = distance * 0.3;
+      const branchAngle = Math.atan2(y2 - y1, x2 - x1) + (Math.random() * 0.5 + 0.5) * (Math.random() < 0.5 ? -1 : 1);
+      const branchEndX = displacedMidX + Math.cos(branchAngle) * branchLength;
+      const branchEndY = displacedMidY + Math.sin(branchAngle) * branchLength;
+
+      // Draw the branch with fewer iterations
+      this.drawLightningArc(ctx, displacedMidX, displacedMidY, branchEndX, branchEndY, branchLength, displacementFactor, iterations - 2);
+    }
   }
 
   drawFlameProjectile(ctx) {
@@ -780,6 +940,76 @@ class Projectile {
     }
   }
 
+  drawPoisonCloudProjectile(ctx) {
+    // Draw a larger poison cloud with more dramatic effects
+    const time = Date.now() / 200;
+    const pulse = Math.sin(time) * 0.3 + 0.7;
+
+    // Draw cloud area effect indicator
+    if (this.aoeRadius) {
+      ctx.globalAlpha = 0.15 * pulse;
+      ctx.fillStyle = '#8BC34A';
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.aoeRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Draw pulsing ring around the area
+      ctx.globalAlpha = 0.2 * pulse;
+      ctx.strokeStyle = '#689F38';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.aoeRadius * (0.9 + 0.1 * Math.sin(time * 2)), 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // Draw main cloud
+    ctx.globalAlpha = 0.7 * pulse;
+
+    // Create a more complex cloud shape
+    const cloudSize = this.size * 3;
+    ctx.fillStyle = this.color;
+
+    // Draw multiple overlapping circles for cloud effect
+    for (let i = 0; i < 5; i++) {
+      const angle = time * 0.5 + (Math.PI * 2 / 5) * i;
+      const distance = cloudSize * 0.5;
+      const offsetX = Math.cos(angle) * distance;
+      const offsetY = Math.sin(angle) * distance;
+      const size = cloudSize * (0.7 + 0.3 * Math.sin(time + i));
+
+      ctx.beginPath();
+      ctx.arc(this.x + offsetX, this.y + offsetY, size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Draw toxic particles
+    ctx.fillStyle = '#AED581';
+    ctx.globalAlpha = 0.9 * pulse;
+
+    for (let i = 0; i < 8; i++) {
+      const angle = time * 2 + (Math.PI * 2 / 8) * i;
+      const distance = cloudSize * (0.8 + 0.2 * Math.sin(time * 3 + i));
+      const particleSize = this.size * (0.5 + 0.5 * Math.random());
+
+      ctx.beginPath();
+      ctx.arc(
+        this.x + Math.cos(angle) * distance,
+        this.y + Math.sin(angle) * distance,
+        particleSize,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+    }
+
+    // Draw center of the cloud
+    ctx.fillStyle = '#DCEDC8';
+    ctx.globalAlpha = 0.6 * pulse;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, cloudSize * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
   drawVortexProjectile(ctx) {
     // Draw vortex
     const time = Date.now() / 200;
@@ -848,6 +1078,9 @@ class Projectile {
         break;
       case 'poison':
         this.drawPoisonExplosion(ctx);
+        break;
+      case 'poisonCloud':
+        this.drawPoisonCloudExplosion(ctx);
         break;
       case 'vortex':
         this.drawVortexExplosion(ctx);
@@ -1242,6 +1475,97 @@ class Projectile {
         0, -this.size
       );
       ctx.fill();
+
+      ctx.restore();
+    }
+  }
+
+  drawPoisonCloudExplosion(ctx) {
+    // Draw a large poison cloud explosion
+    const radius = this.aoeRadius || 40;
+
+    // Draw area effect
+    const gradient = ctx.createRadialGradient(
+      this.x, this.y, 0,
+      this.x, this.y, radius
+    );
+    gradient.addColorStop(0, 'rgba(139, 195, 74, 0.7)');
+    gradient.addColorStop(0.6, 'rgba(139, 195, 74, 0.3)');
+    gradient.addColorStop(1, 'rgba(139, 195, 74, 0)');
+
+    ctx.globalAlpha = 0.6;
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw pulsing ring
+    ctx.globalAlpha = 0.4;
+    ctx.strokeStyle = '#8BC34A';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, radius * 0.8, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Draw toxic particles
+    ctx.fillStyle = '#AED581';
+
+    // Create multiple cloud puffs
+    for (let i = 0; i < 8; i++) {
+      const angle = (Math.PI * 2 / 8) * i;
+      const distance = radius * 0.6 * Math.random();
+      const cloudX = this.x + Math.cos(angle) * distance;
+      const cloudY = this.y + Math.sin(angle) * distance;
+      const cloudSize = this.size * 3 * (0.5 + 0.5 * Math.random());
+
+      // Draw cloud puff
+      ctx.globalAlpha = 0.5 + 0.3 * Math.random();
+      ctx.beginPath();
+      ctx.arc(cloudX, cloudY, cloudSize, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Add smaller particles around each puff
+      for (let j = 0; j < 5; j++) {
+        const particleAngle = Math.random() * Math.PI * 2;
+        const particleDistance = cloudSize * 0.8 * Math.random();
+        const particleX = cloudX + Math.cos(particleAngle) * particleDistance;
+        const particleY = cloudY + Math.sin(particleAngle) * particleDistance;
+        const particleSize = this.size * (0.5 + 0.5 * Math.random());
+
+        ctx.globalAlpha = 0.4 * Math.random();
+        ctx.fillStyle = '#DCEDC8';
+        ctx.beginPath();
+        ctx.arc(particleX, particleY, particleSize, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Draw toxic symbols
+    ctx.globalAlpha = 0.7;
+    ctx.fillStyle = '#33691E';
+
+    for (let i = 0; i < 3; i++) {
+      const angle = (Math.PI * 2 / 3) * i;
+      const distance = radius * 0.4;
+      const symbolX = this.x + Math.cos(angle) * distance;
+      const symbolY = this.y + Math.sin(angle) * distance;
+      const symbolSize = this.size * 2;
+
+      // Draw toxic symbol (biohazard-like)
+      ctx.save();
+      ctx.translate(symbolX, symbolY);
+      ctx.rotate(angle);
+
+      // Draw three circles in a triangle pattern
+      for (let j = 0; j < 3; j++) {
+        const circleAngle = (Math.PI * 2 / 3) * j;
+        const circleX = Math.cos(circleAngle) * symbolSize;
+        const circleY = Math.sin(circleAngle) * symbolSize;
+
+        ctx.beginPath();
+        ctx.arc(circleX, circleY, symbolSize / 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       ctx.restore();
     }

@@ -32,7 +32,7 @@ const towerVariants = {
     visualEffect: "metallic",
     color: "#C0C0C0"
   },
-  
+
   // Elemental variants (rare tier - 25%)
   fire: {
     name: "Fire",
@@ -75,7 +75,7 @@ const towerVariants = {
     visualEffect: "rocks",
     color: "#795548"
   },
-  
+
   // Special variants (epic tier - 10%)
   shadow: {
     name: "Shadow",
@@ -105,7 +105,7 @@ const towerVariants = {
     visualEffect: "void",
     color: "#311B92"
   },
-  
+
   // Ultimate variants (legendary tier - 5%)
   gold: {
     name: "Gold",
@@ -134,5 +134,48 @@ const towerVariants = {
     aoeRadius: 30,
     visualEffect: "cosmic",
     color: "#3F51B5"
+  },
+  holy: {
+    name: "Holy",
+    description: "Blessed by divine light, this tower radiates pure celestial energy",
+    tier: "divine", // New ultra-rare tier
+    bonusMultiplier: 5.0, // 500% bonus
+    rangeBonus: 50,
+    aoeRadius: 60,
+    pierceCount: 3,
+    critChance: 0.3,
+    critMultiplier: 3.0,
+    visualEffect: "holy",
+    color: "#FFFFFF",
+    specialAnimation: true
+  },
+
+  satanic: {
+    name: "Satanic",
+    description: "Infused with infernal power, this tower channels the darkness of the abyss",
+    tier: "divine", // New ultra-rare tier
+    bonusMultiplier: 5.0, // 500% bonus
+    rangeBonus: 50,
+    aoeRadius: 60,
+    armorPiercing: 0.8, // 80% armor piercing
+    burnDamage: 20,
+    burnDuration: 5000,
+    visualEffect: "satanic",
+    color: "#990000",
+    specialAnimation: true
+  },
+
+
+  // Special tower-specific variants
+  poisonCloud: {
+    name: "Poison Cloud",
+    description: "Creates a deadly cloud of poison that damages all enemies in range",
+    tier: "epic",
+    bonusMultiplier: 1.3, // 30% bonus
+    poisonDamage: 8,
+    poisonDuration: 4000,
+    aoeRadius: 40,
+    visualEffect: "toxic",
+    color: "#8BC34A"
   }
 };

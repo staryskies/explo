@@ -170,7 +170,19 @@ class Tower {
       storm: '#FFC107',
       inferno: '#FF9800',
       guided: '#607D8B',
-      toxic: '#8BC34A'
+      toxic: '#8BC34A',
+
+      // Special tower-specific variants
+      poisonCloud: '#8BC34A',
+
+      // Elemental variants from towerVariants.js
+      lightning: '#FFC107',
+      earth: '#795548',
+
+      // Special variants from towerVariants.js
+      rainbow: '#E91E63',
+      cosmic: '#3F51B5',
+      void: '#311B92'
     };
 
     // Apply variant color
@@ -183,13 +195,18 @@ class Tower {
       // Basic tower variants
       case 'gold':
         this.damage *= 1.2; // 20% more damage
+        this.projectileType = 'gold';
         break;
       case 'crystal':
         this.range *= 1.15; // 15% more range
+        this.projectileType = 'crystal';
+        this.critChance = (this.critChance || 0) + 0.1; // 10% crit chance
         break;
       case 'shadow':
         this.fireRate *= 1.2; // 20% faster firing
         this.cooldown = 1000 / this.fireRate;
+        this.projectileType = 'shadow';
+        this.canTargetShadow = true;
         break;
 
       // Archer tower variants
@@ -211,19 +228,26 @@ class Tower {
       case 'dragon':
         this.extraShots += 1; // One more arrow
         this.projectileType = 'dragon';
+        this.burnDamage = 3;
+        this.burnDuration = 1500;
         break;
 
       // Cannon tower variants
       case 'double':
         this.extraShots = 1; // Fires two cannonballs
+        this.projectileType = 'double';
         break;
       case 'heavy':
         this.damage *= 1.5; // 50% more damage
         this.fireRate *= 0.8; // 20% slower firing
         this.cooldown = 1000 / this.fireRate;
+        this.projectileType = 'heavy';
+        this.stunChance = 0.15; // 15% chance to stun
+        this.stunDuration = 500; // 0.5 second stun
         break;
       case 'explosive':
         this.aoeRadius *= 1.3; // 30% larger explosion radius
+        this.projectileType = 'explosive';
         break;
 
       // Sniper tower variants
@@ -231,15 +255,68 @@ class Tower {
         this.fireRate *= 1.5; // 50% faster firing
         this.cooldown = 1000 / this.fireRate;
         this.damage *= 0.8; // 20% less damage
+        this.projectileType = 'rapid';
         break;
       case 'stealth':
-        this.critChance += 0.2; // +20% crit chance
+        this.critChance = (this.critChance || 0) + 0.2; // +20% crit chance
+        this.projectileType = 'stealth';
         break;
       case 'railgun':
         this.damage *= 1.8; // 80% more damage
         this.fireRate *= 0.6; // 40% slower firing
         this.cooldown = 1000 / this.fireRate;
         this.projectileSpeed *= 2; // Much faster projectiles
+        this.projectileType = 'railgun';
+        this.pierceCount = 2; // Pierce through 2 enemies
+        break;
+
+      // Special tower-specific variants
+      case 'poisonCloud':
+        this.projectileType = 'poisonCloud';
+        this.aoeRadius = (this.aoeRadius || 40) * 1.3; // 30% larger poison radius
+        this.poisonDamage = (this.poisonDamage || 0) + 8; // +8 poison damage
+        this.poisonDuration = (this.poisonDuration || 0) + 4000; // +4s poison duration
+        break;
+
+      // Elemental variants from towerVariants.js
+      case 'fire':
+        this.projectileType = 'fire';
+        this.burnDamage = (this.burnDamage || 0) + 5;
+        this.burnDuration = (this.burnDuration || 0) + 2000;
+        break;
+      case 'ice':
+        this.projectileType = 'ice';
+        this.slowFactor = (this.slowFactor || 0) + 0.2;
+        this.slowDuration = (this.slowDuration || 0) + 1500;
+        break;
+      case 'lightning':
+        this.projectileType = 'lightning';
+        this.chainChance = (this.chainChance || 0) + 0.2;
+        this.chainCount = (this.chainCount || 0) + 2;
+        this.chainRange = (this.chainRange || 0) + 80;
+        break;
+      case 'earth':
+        this.projectileType = 'earth';
+        this.stunChance = (this.stunChance || 0) + 0.15;
+        this.stunDuration = (this.stunDuration || 0) + 500;
+        break;
+
+      // Special variants from towerVariants.js
+      case 'rainbow':
+        this.projectileType = 'rainbow';
+        this.randomEffectChance = 0.3; // 30% chance for random effect
+        this.damage *= 1.4; // 40% more damage
+        break;
+      case 'cosmic':
+        this.projectileType = 'cosmic';
+        this.pierceCount = 2;
+        this.aoeRadius = (this.aoeRadius || 0) + 30;
+        this.damage *= 1.6; // 60% more damage
+        break;
+      case 'void':
+        this.projectileType = 'void';
+        this.armorPiercing = 0.5; // 50% armor piercing
+        this.damage *= 1.2; // 20% more damage
         break;
     }
 

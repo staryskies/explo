@@ -1142,7 +1142,7 @@ function setupGachaEventListeners() {
 
         // Find highest tier
         let highestTier = 'common';
-        const tierOrder = ['common', 'rare', 'epic', 'legendary', 'mythic'];
+        const tierOrder = ['common', 'rare', 'epic', 'legendary', 'mythic', 'divine'];
 
         towers.forEach(tower => {
           const tier = towerStats[tower].tier;
@@ -1187,7 +1187,7 @@ function setupGachaEventListeners() {
 
         // Find highest tier
         let highestTier = 'common';
-        const tierOrder = ['common', 'rare', 'epic', 'legendary', 'mythic'];
+        const tierOrder = ['common', 'rare', 'epic', 'legendary', 'mythic', 'divine'];
 
         towers.forEach(tower => {
           const tier = towerStats[tower].tier;
@@ -1236,7 +1236,7 @@ function setupGachaEventListeners() {
 
           // Play animation for rare and above
           if (tier !== 'common') {
-            const animationDuration = gachaSystem.playAnimation(tier, variantResult);
+            const animationDuration = gachaSystem.playAnimation(tier, variantResult, variant);
 
             // Delay displaying result until animation is complete
             setTimeout(() => {
@@ -1272,7 +1272,7 @@ function setupGachaEventListeners() {
         if (variants.length > 0) {
           // Find highest tier
           let highestTier = 'common';
-          const tierOrder = ['common', 'rare', 'epic', 'legendary'];
+          const tierOrder = ['common', 'rare', 'epic', 'legendary', 'divine'];
 
           variants.forEach(variant => {
             const tier = towerVariants[variant].tier;
@@ -1283,7 +1283,9 @@ function setupGachaEventListeners() {
 
           // Play animation for rare and above
           if (highestTier !== 'common') {
-            const animationDuration = gachaSystem.playAnimation(highestTier, variantResult);
+            // Find a variant of the highest tier to use for the animation
+            const highestVariant = variants.find(v => towerVariants[v].tier === highestTier) || variants[0];
+            const animationDuration = gachaSystem.playAnimation(highestTier, variantResult, highestVariant);
 
             // Delay displaying results until animation is complete
             setTimeout(() => {
@@ -1319,7 +1321,7 @@ function setupGachaEventListeners() {
         if (variants.length > 0) {
           // Find highest tier
           let highestTier = 'common';
-          const tierOrder = ['common', 'rare', 'epic', 'legendary'];
+          const tierOrder = ['common', 'rare', 'epic', 'legendary', 'divine'];
 
           variants.forEach(variant => {
             const tier = towerVariants[variant].tier;
@@ -1330,7 +1332,9 @@ function setupGachaEventListeners() {
 
           // Play animation for rare and above
           if (highestTier !== 'common') {
-            const animationDuration = gachaSystem.playAnimation(highestTier, variantResult);
+            // Find a variant of the highest tier to use for the animation
+            const highestVariant = variants.find(v => towerVariants[v].tier === highestTier) || variants[0];
+            const animationDuration = gachaSystem.playAnimation(highestTier, variantResult, highestVariant);
 
             // Delay displaying results until animation is complete
             setTimeout(() => {

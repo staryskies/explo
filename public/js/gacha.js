@@ -37,10 +37,11 @@ const gachaSystem = {
 
   // Animation durations (in milliseconds)
   animationDurations: {
-    mythic: 5000,     // 5 seconds
-    legendary: 4000,  // 4 seconds
-    epic: 3000,       // 3 seconds
-    rare: 2000,       // 2 seconds
+    divine: 12000,    // 12 seconds
+    mythic: 8000,     // 8 seconds
+    legendary: 6000,  // 6 seconds
+    epic: 4000,       // 4 seconds
+    rare: 3000,       // 3 seconds
     common: 1000      // 1 second
   },
 
@@ -65,13 +66,15 @@ const gachaSystem = {
       rare: 0.20,      // 20%
       epic: 0.08,      // 8%
       legendary: 0.018, // 1.8%
-      mythic: 0.002    // 0.2%
+      mythic: 0.001,   // 0.1%
+      divine: 0.001    // 0.1%
     },
     variant: {
-      common: 0.65,    // 65%
+      common: 0.649,   // 64.9%
       rare: 0.25,      // 25%
       epic: 0.08,      // 8%
-      legendary: 0.02   // 2%
+      legendary: 0.02,  // 2%
+      divine: 0.001    // 0.1%
     }
   },
 
@@ -81,12 +84,14 @@ const gachaSystem = {
       rare: 15,        // Guaranteed rare after 15 rolls
       epic: 60,        // Guaranteed epic after 60 rolls
       legendary: 150,  // Guaranteed legendary after 150 rolls
-      mythic: 500      // Guaranteed mythic after 500 rolls
+      mythic: 500,     // Guaranteed mythic after 500 rolls
+      divine: 1000     // Guaranteed divine after 1000 rolls
     },
     variant: {
       rare: 10,        // Guaranteed rare after 10 rolls
       epic: 50,        // Guaranteed epic after 50 rolls
-      legendary: 100   // Guaranteed legendary after 100 rolls
+      legendary: 100,  // Guaranteed legendary after 100 rolls
+      divine: 1000     // Guaranteed divine after 1000 rolls
     }
   },
 
@@ -96,12 +101,14 @@ const gachaSystem = {
       rare: 0,
       epic: 0,
       legendary: 0,
-      mythic: 0
+      mythic: 0,
+      divine: 0
     },
     variant: {
       rare: 0,
       epic: 0,
-      legendary: 0
+      legendary: 0,
+      divine: 0
     }
   },
 
@@ -117,18 +124,21 @@ const gachaSystem = {
       this.pityCounter.tower.epic++;
       this.pityCounter.tower.legendary++;
       this.pityCounter.tower.mythic++;
+      this.pityCounter.tower.divine++;
 
       // Determine tier based on random chance
       const rand = Math.random();
       const rates = this.dropRates.tower;
 
-      if (rand < rates.mythic) {
+      if (rand < rates.divine) {
+        tier = 'divine';
+      } else if (rand < rates.divine + rates.mythic) {
         tier = 'mythic';
-      } else if (rand < rates.mythic + rates.legendary) {
+      } else if (rand < rates.divine + rates.mythic + rates.legendary) {
         tier = 'legendary';
-      } else if (rand < rates.mythic + rates.legendary + rates.epic) {
+      } else if (rand < rates.divine + rates.mythic + rates.legendary + rates.epic) {
         tier = 'epic';
-      } else if (rand < rates.mythic + rates.legendary + rates.epic + rates.rare) {
+      } else if (rand < rates.divine + rates.mythic + rates.legendary + rates.epic + rates.rare) {
         tier = 'rare';
       } else {
         tier = 'common';
@@ -191,16 +201,19 @@ const gachaSystem = {
       this.pityCounter.variant.rare++;
       this.pityCounter.variant.epic++;
       this.pityCounter.variant.legendary++;
+      this.pityCounter.variant.divine++;
 
       // Determine tier based on random chance
       const rand = Math.random();
       const rates = this.dropRates.variant;
 
-      if (rand < rates.legendary) {
+      if (rand < rates.divine) {
+        tier = 'divine';
+      } else if (rand < rates.divine + rates.legendary) {
         tier = 'legendary';
-      } else if (rand < rates.legendary + rates.epic) {
+      } else if (rand < rates.divine + rates.legendary + rates.epic) {
         tier = 'epic';
-      } else if (rand < rates.legendary + rates.epic + rates.rare) {
+      } else if (rand < rates.divine + rates.legendary + rates.epic + rates.rare) {
         tier = 'rare';
       } else {
         tier = 'common';
@@ -251,7 +264,7 @@ const gachaSystem = {
 
     if (results.length > 0) {
       // Show the results
-      alert(`You got variants: ${results.map(variant => towerVariants[variant].name).join(', ')}`);
+
     }
 
     return results;
@@ -263,6 +276,10 @@ const gachaSystem = {
     const pityThresholds = this.pity[type];
 
     // Check from highest to lowest tier
+    if (pityCounters.divine >= pityThresholds.divine) {
+      return 'divine';
+    }
+
     if (type === 'tower' && pityCounters.mythic >= pityThresholds.mythic) {
       return 'mythic';
     }
@@ -288,8 +305,11 @@ const gachaSystem = {
 
     // Reset all counters for tiers equal to or lower than the obtained tier
     switch (tier) {
+      case 'divine':
+        pityCounters.divine = 0;
+        // Fall through to reset lower tiers
       case 'mythic':
-        pityCounters.mythic = 0;
+        if (type === 'tower') pityCounters.mythic = 0;
         // Fall through to reset lower tiers
       case 'legendary':
         pityCounters.legendary = 0;
@@ -368,16 +388,97 @@ const gachaSystem = {
   },
 
   // Play animation for a gacha result
-  playAnimation: function(tier, resultElement) {
+  playAnimation: function(tier, resultElement, variant) {
     if (!resultElement) return;
 
     // Only play animation for rare and above
     if (tier === 'common') return;
 
+    // Check if this is a divine variant (holy or satanic)
+    const isDivineHoly = tier === 'divine' && variant === 'holy';
+    const isDisvineSatanic = tier === 'divine' && variant === 'satanic';
+    const isDivine = isDivineHoly || isDisvineSatanic;
+
     // Create animation container
     const animationContainer = document.createElement('div');
     animationContainer.className = 'gacha-animation-container';
 
+    // For divine variants, create a special cutscene first
+    if (isDivine) {
+      // Create the divine cutscene
+      const divineType = isDivineHoly ? 'holy' : 'satanic';
+      this.createDivineCutscene(divineType);
+
+      // Delay the regular animation
+      setTimeout(() => {
+        this.createRegularAnimation(tier, divineType, animationContainer, resultElement);
+      }, 6000); // 6 seconds for the cutscene
+    } else {
+      // Create regular animation immediately
+      this.createRegularAnimation(tier, variant, animationContainer, resultElement);
+    }
+
+    // Return animation duration
+    return this.animationDurations[tier];
+  },
+
+  // Create the special divine cutscene
+  createDivineCutscene: function(divineType) {
+    // Create cutscene container
+    const cutscene = document.createElement('div');
+    cutscene.className = `divine-cutscene ${divineType}`;
+
+    // Create words circle
+    const wordsCircle = document.createElement('div');
+    wordsCircle.className = `divine-words-circle ${divineType}`;
+
+    // Add words around the circle
+    const words = divineType === 'holy' ?
+      ['Serene', 'Purity', 'Divine', 'Blessed', 'Sacred', 'Radiant', 'Celestial', 'Eternal', 'Heavenly', 'Glorious', 'Righteous', 'Virtuous'] :
+      ['Infernal', 'Darkness', 'Abyss', 'Torment', 'Wicked', 'Unholy', 'Demonic', 'Cursed', 'Malevolent', 'Sinister', 'Corrupt', 'Fallen'];
+
+    words.forEach((word, index) => {
+      const wordElement = document.createElement('div');
+      wordElement.className = `divine-word ${divineType}`;
+      wordElement.textContent = word;
+      wordElement.style.transform = `rotate(${index * (360 / words.length)}deg) translateY(-220px) rotate(${-index * (360 / words.length)}deg)`;
+      wordElement.style.animationDelay = `${index * 0.3}s`;
+      wordsCircle.appendChild(wordElement);
+    });
+
+    // Create center icon
+    const centerIcon = document.createElement('div');
+    centerIcon.className = `divine-center-icon ${divineType}`;
+    centerIcon.innerHTML = divineType === 'holy' ? '✝' : '⛧';
+
+    // Create light/fire effect
+    if (divineType === 'holy') {
+      const light = document.createElement('div');
+      light.className = 'divine-light holy';
+      cutscene.appendChild(light);
+    } else {
+      const fire = document.createElement('div');
+      fire.className = 'divine-fire';
+      cutscene.appendChild(fire);
+    }
+
+    // Add elements to cutscene
+    cutscene.appendChild(wordsCircle);
+    cutscene.appendChild(centerIcon);
+
+    // Add cutscene to document
+    document.body.appendChild(cutscene);
+
+    // Remove cutscene after duration
+    setTimeout(() => {
+      if (cutscene.parentNode === document.body) {
+        document.body.removeChild(cutscene);
+      }
+    }, 6000); // 6 seconds for the cutscene
+  },
+
+  // Create the regular animation
+  createRegularAnimation: function(tier, variant, animationContainer, resultElement) {
     // Create animation
     const animation = document.createElement('div');
     animation.className = `gacha-animation ${tier}`;
@@ -385,20 +486,41 @@ const gachaSystem = {
     // Create background
     const bg = document.createElement('div');
     bg.className = `gacha-animation-bg ${tier}`;
+
+    // Add variant class if it's a divine variant
+    if (tier === 'divine' && (variant === 'holy' || variant === 'satanic')) {
+      bg.classList.add(variant);
+    }
+
     animation.appendChild(bg);
 
     // Create rings
     if (tier !== 'common') {
       const ring = document.createElement('div');
       ring.className = `gacha-animation-ring ${tier}`;
+
+      // Add variant class if it's a divine variant
+      if (tier === 'divine' && (variant === 'holy' || variant === 'satanic')) {
+        ring.classList.add(variant);
+      }
+
       animation.appendChild(ring);
     }
 
     // Create sparkles for epic and above
-    if (tier === 'mythic' || tier === 'legendary' || tier === 'epic') {
-      for (let i = 1; i <= 6; i++) {
+    if (tier === 'divine' || tier === 'mythic' || tier === 'legendary' || tier === 'epic') {
+      // More sparkles for higher tiers
+      const sparkleCount = tier === 'divine' ? 12 : (tier === 'mythic' ? 8 : (tier === 'legendary' ? 6 : 4));
+
+      for (let i = 1; i <= sparkleCount; i++) {
         const sparkle = document.createElement('div');
-        sparkle.className = `gacha-animation-sparkle ${tier} s${i}`;
+        sparkle.className = `gacha-animation-sparkle ${tier} s${i % 8 + 1}`;
+
+        // Add variant class if it's a divine variant
+        if (tier === 'divine' && (variant === 'holy' || variant === 'satanic')) {
+          sparkle.classList.add(variant);
+        }
+
         animation.appendChild(sparkle);
       }
     }
@@ -415,9 +537,6 @@ const gachaSystem = {
         resultElement.removeChild(animationContainer);
       }
     }, this.animationDurations[tier]);
-
-    // Return animation duration
-    return this.animationDurations[tier];
   }
 };
 

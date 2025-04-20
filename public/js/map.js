@@ -29,9 +29,18 @@ class GameMap {
     console.log('Creating map with canvas dimensions:', canvas.width, 'x', canvas.height);
     console.log('Map template:', this.mapTemplate.name);
 
-    this.tileSize = 64;
-    this.gridWidth = Math.max(1, Math.floor(canvas.width / this.tileSize));
-    this.gridHeight = Math.max(1, Math.floor(canvas.height / this.tileSize));
+    // Fixed grid dimensions
+    this.gridWidth = 15;
+    this.gridHeight = 10;
+
+    // Calculate tile size based on canvas dimensions and fixed grid size
+    this.tileSize = Math.min(
+      Math.floor(canvas.width / this.gridWidth),
+      Math.floor(canvas.height / this.gridHeight)
+    );
+
+    console.log('Using tile size:', this.tileSize, 'for grid:', this.gridWidth, 'x', this.gridHeight);
+
     this.grid = [];
     this.path = [];
     this.pathCoordinates = [];
@@ -1514,9 +1523,17 @@ class GameMap {
 
   // Resize the map when the canvas size changes
   resize(gameStarted = false) {
-    // Calculate new grid dimensions
-    const newGridWidth = Math.floor(this.canvas.width / this.tileSize);
-    const newGridHeight = Math.floor(this.canvas.height / this.tileSize);
+    // Keep fixed grid dimensions (15x10)
+    const fixedGridWidth = 15;
+    const fixedGridHeight = 10;
+
+    // Recalculate tile size based on canvas dimensions and fixed grid size
+    const newTileSize = Math.min(
+      Math.floor(this.canvas.width / fixedGridWidth),
+      Math.floor(this.canvas.height / fixedGridHeight)
+    );
+
+    console.log(`Resizing map with fixed grid: ${fixedGridWidth}x${fixedGridHeight}, new tile size: ${newTileSize}`);
 
     // Store the old grid for reference
     const oldGrid = this.grid;
@@ -1535,11 +1552,15 @@ class GameMap {
       }
     }
 
+    // Update tile size
+    this.tileSize = newTileSize;
+
     if (!gameStarted) {
       // Only regenerate the map if the game hasn't started yet
-      console.log(`Regenerating map with dimensions: ${newGridWidth}x${newGridHeight}`);
-      this.gridWidth = newGridWidth;
-      this.gridHeight = newGridHeight;
+      console.log(`Regenerating map with fixed dimensions: ${fixedGridWidth}x${fixedGridHeight}`);
+      // Keep the fixed grid dimensions
+      this.gridWidth = fixedGridWidth;
+      this.gridHeight = fixedGridHeight;
       this.initializeGrid();
       this.generatePath();
 
@@ -1560,9 +1581,9 @@ class GameMap {
     } else {
       // If game has started, just update the tile size to scale the map
       console.log(`Game already started - scaling map without regenerating`);
-      // Only update grid dimensions if they're larger than before
-      if (newGridWidth > this.gridWidth) this.gridWidth = newGridWidth;
-      if (newGridHeight > this.gridHeight) this.gridHeight = newGridHeight;
+      // Keep the fixed grid dimensions
+      this.gridWidth = fixedGridWidth;
+      this.gridHeight = fixedGridHeight;
 
       // Update path coordinates with new tile size
       this.pathCoordinates = this.path.map(point => ({
