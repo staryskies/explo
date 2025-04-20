@@ -1,44 +1,114 @@
 /**
- * Simple gacha system for tower defense game
+ * Advanced gacha system for tower defense game
  */
 
 // Log that gacha.js is loaded
 console.log('Gacha system loaded');
 
-// Simple gacha system
+// Advanced gacha system
 const gachaSystem = {
   // Tower costs
   costs: {
     tower: {
-      single: 100,
-      ten: 900,
-      hundred: 8000
-    },
-    variant: {
       single: 150,
       ten: 1350,
       hundred: 12000
+    },
+    variant: {
+      single: 200,
+      ten: 1800,
+      hundred: 16000
+    }
+  },
+
+  // Tower drop rates
+  dropRates: {
+    tower: {
+      common: 0.70,    // 70%
+      rare: 0.20,      // 20%
+      epic: 0.08,      // 8%
+      legendary: 0.018, // 1.8%
+      mythic: 0.002    // 0.2%
+    },
+    variant: {
+      common: 0.65,    // 65%
+      rare: 0.25,      // 25%
+      epic: 0.08,      // 8%
+      legendary: 0.02   // 2%
+    }
+  },
+
+  // Pity system thresholds
+  pity: {
+    tower: {
+      rare: 15,        // Guaranteed rare after 15 rolls
+      epic: 60,        // Guaranteed epic after 60 rolls
+      legendary: 150,  // Guaranteed legendary after 150 rolls
+      mythic: 500      // Guaranteed mythic after 500 rolls
+    },
+    variant: {
+      rare: 10,        // Guaranteed rare after 10 rolls
+      epic: 50,        // Guaranteed epic after 50 rolls
+      legendary: 100   // Guaranteed legendary after 100 rolls
+    }
+  },
+
+  // Current pity counters
+  pityCounter: {
+    tower: {
+      rare: 0,
+      epic: 0,
+      legendary: 0,
+      mythic: 0
+    },
+    variant: {
+      rare: 0,
+      epic: 0,
+      legendary: 0
     }
   },
 
   // Roll a single tower
   rollTower: function() {
-    // Determine tier based on random chance
-    const rand = Math.random();
-    let tier;
+    // Check pity system first
+    let tier = this.checkPity('tower');
 
-    if (rand < 0.05) {
-      tier = 'legendary';
-    } else if (rand < 0.15) {
-      tier = 'epic';
-    } else if (rand < 0.40) {
-      tier = 'rare';
-    } else {
-      tier = 'common';
+    // If no pity tier was determined, use random chance
+    if (!tier) {
+      // Increment all pity counters
+      this.pityCounter.tower.rare++;
+      this.pityCounter.tower.epic++;
+      this.pityCounter.tower.legendary++;
+      this.pityCounter.tower.mythic++;
+
+      // Determine tier based on random chance
+      const rand = Math.random();
+      const rates = this.dropRates.tower;
+
+      if (rand < rates.mythic) {
+        tier = 'mythic';
+      } else if (rand < rates.mythic + rates.legendary) {
+        tier = 'legendary';
+      } else if (rand < rates.mythic + rates.legendary + rates.epic) {
+        tier = 'epic';
+      } else if (rand < rates.mythic + rates.legendary + rates.epic + rates.rare) {
+        tier = 'rare';
+      } else {
+        tier = 'common';
+      }
     }
+
+    // Reset pity counters based on the tier obtained
+    this.resetPityCounters('tower', tier);
 
     // Get all towers of this tier
     const towersOfTier = Object.keys(towerStats).filter(tower => towerStats[tower].tier === tier);
+
+    // If no towers of this tier exist (shouldn't happen), fallback to common
+    if (towersOfTier.length === 0) {
+      console.error(`No towers found for tier: ${tier}, falling back to common`);
+      return this.rollTower(); // Try again
+    }
 
     // Randomly select one tower from the tier
     const randomIndex = Math.floor(Math.random() * towersOfTier.length);
@@ -75,22 +145,42 @@ const gachaSystem = {
       return null;
     }
 
-    // Determine tier based on random chance
-    const rand = Math.random();
-    let tier;
+    // Check pity system first
+    let tier = this.checkPity('variant');
 
-    if (rand < 0.05) {
-      tier = 'legendary';
-    } else if (rand < 0.15) {
-      tier = 'epic';
-    } else if (rand < 0.40) {
-      tier = 'rare';
-    } else {
-      tier = 'common';
+    // If no pity tier was determined, use random chance
+    if (!tier) {
+      // Increment all pity counters
+      this.pityCounter.variant.rare++;
+      this.pityCounter.variant.epic++;
+      this.pityCounter.variant.legendary++;
+
+      // Determine tier based on random chance
+      const rand = Math.random();
+      const rates = this.dropRates.variant;
+
+      if (rand < rates.legendary) {
+        tier = 'legendary';
+      } else if (rand < rates.legendary + rates.epic) {
+        tier = 'epic';
+      } else if (rand < rates.legendary + rates.epic + rates.rare) {
+        tier = 'rare';
+      } else {
+        tier = 'common';
+      }
     }
+
+    // Reset pity counters based on the tier obtained
+    this.resetPityCounters('variant', tier);
 
     // Get all variants of this tier
     const variantsOfTier = Object.keys(towerVariants).filter(variant => towerVariants[variant].tier === tier);
+
+    // If no variants of this tier exist (shouldn't happen), fallback to common
+    if (variantsOfTier.length === 0) {
+      console.error(`No variants found for tier: ${tier}, falling back to common`);
+      return this.rollVariant(towerType); // Try again
+    }
 
     // Randomly select one variant from the tier
     const randomIndex = Math.floor(Math.random() * variantsOfTier.length);
@@ -128,6 +218,71 @@ const gachaSystem = {
     }
 
     return results;
+  },
+
+  // Check if pity system should trigger
+  checkPity: function(type) {
+    const pityCounters = this.pityCounter[type];
+    const pityThresholds = this.pity[type];
+
+    // Check from highest to lowest tier
+    if (type === 'tower' && pityCounters.mythic >= pityThresholds.mythic) {
+      return 'mythic';
+    }
+
+    if (pityCounters.legendary >= pityThresholds.legendary) {
+      return 'legendary';
+    }
+
+    if (pityCounters.epic >= pityThresholds.epic) {
+      return 'epic';
+    }
+
+    if (pityCounters.rare >= pityThresholds.rare) {
+      return 'rare';
+    }
+
+    return null; // No pity triggered
+  },
+
+  // Reset pity counters based on obtained tier
+  resetPityCounters: function(type, tier) {
+    const pityCounters = this.pityCounter[type];
+
+    // Reset all counters for tiers equal to or lower than the obtained tier
+    switch (tier) {
+      case 'mythic':
+        pityCounters.mythic = 0;
+        // Fall through to reset lower tiers
+      case 'legendary':
+        pityCounters.legendary = 0;
+        // Fall through to reset lower tiers
+      case 'epic':
+        pityCounters.epic = 0;
+        // Fall through to reset lower tiers
+      case 'rare':
+        pityCounters.rare = 0;
+        break;
+      default:
+        // Common tier doesn't reset any pity counters
+        break;
+    }
+  },
+
+  // Get drop rate information for display
+  getDropRateInfo: function(type) {
+    const rates = this.dropRates[type];
+    const result = [];
+
+    // Format each tier's drop rate as a percentage
+    for (const [tier, rate] of Object.entries(rates)) {
+      result.push({
+        tier: tier,
+        rate: (rate * 100).toFixed(2) + '%'
+      });
+    }
+
+    return result;
   }
 };
 

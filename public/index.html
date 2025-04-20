@@ -14,7 +14,8 @@
       <h1>Tower Defense</h1>
       <div class="menu-buttons">
         <button id="play-button" class="menu-btn">Play Game</button>
-        <button id="gacha-button" class="menu-btn">Tower Gacha</button>
+        <button id="tower-gacha-button" class="menu-btn">Tower Gacha</button>
+        <button id="variant-gacha-button" class="menu-btn">Variant Gacha</button>
         <button id="inventory-button" class="menu-btn">Inventory</button>
       </div>
 
@@ -111,37 +112,89 @@
 
     <!-- Tower Gacha Modal -->
     <div id="tower-gacha-modal" class="modal">
-      <div class="modal-content shop-content">
+      <div class="modal-content gacha-content">
         <div class="modal-header">
           <h2>Tower Gacha</h2>
           <span class="close-btn" id="close-tower-gacha">&times;</span>
         </div>
 
-        <!-- Simple Gacha Interface -->
-        <div class="gacha-simple">
-          <div class="gacha-section">
-            <h3>Tower Gacha</h3>
-            <p>Roll for new towers to use in your game!</p>
-            <div class="gacha-buttons">
-              <button id="roll-tower-1" class="gacha-btn">Roll 1 Tower (100 Silver)</button>
-              <button id="roll-tower-10" class="gacha-btn">Roll 10 Towers (900 Silver)</button>
-              <button id="roll-tower-100" class="gacha-btn">Roll 100 Towers (8000 Silver)</button>
+        <!-- Tower Gacha Interface -->
+        <div class="gacha-container">
+          <div class="gacha-main">
+            <div class="gacha-section">
+              <h3>Tower Gacha</h3>
+              <p>Roll for new towers to use in your game!</p>
+              <div class="gacha-box">
+                <div id="tower-result" class="gacha-result"></div>
+              </div>
+              <div class="gacha-buttons">
+                <button id="roll-tower-1" class="gacha-btn">Roll 1 Tower (150 Silver)</button>
+                <button id="roll-tower-10" class="gacha-btn">Roll 10 Towers (1350 Silver)</button>
+                <button id="roll-tower-100" class="gacha-btn">Roll 100 Towers (12000 Silver)</button>
+              </div>
             </div>
           </div>
 
-          <div class="gacha-section">
-            <h3>Variant Gacha</h3>
-            <p>Roll for tower variants to customize your towers!</p>
-            <div class="tower-selector">
-              <label for="variant-tower-select">Select Tower:</label>
-              <select id="variant-tower-select">
-                <!-- Tower options will be generated here -->
-              </select>
+          <div class="gacha-sidebar">
+            <div class="drop-rate-chart">
+              <h3>Tower Drop Rates</h3>
+              <div class="rate-table">
+                <div class="rate-row mythic">
+                  <span class="rate-tier">Mythic</span>
+                  <span class="rate-value">0.2%</span>
+                </div>
+                <div class="rate-row legendary">
+                  <span class="rate-tier">Legendary</span>
+                  <span class="rate-value">1.8%</span>
+                </div>
+                <div class="rate-row epic">
+                  <span class="rate-tier">Epic</span>
+                  <span class="rate-value">8%</span>
+                </div>
+                <div class="rate-row rare">
+                  <span class="rate-tier">Rare</span>
+                  <span class="rate-value">20%</span>
+                </div>
+                <div class="rate-row common">
+                  <span class="rate-tier">Common</span>
+                  <span class="rate-value">70%</span>
+                </div>
+              </div>
             </div>
-            <div class="gacha-buttons">
-              <button id="roll-variant-1" class="gacha-btn">Roll 1 Variant (150 Silver)</button>
-              <button id="roll-variant-10" class="gacha-btn">Roll 10 Variants (1350 Silver)</button>
-              <button id="roll-variant-100" class="gacha-btn">Roll 100 Variants (12000 Silver)</button>
+
+            <div class="pity-system">
+              <h3>Pity System</h3>
+              <p>Guaranteed drops after:</p>
+              <div class="pity-info">
+                <div class="pity-row mythic">
+                  <span class="pity-tier">Mythic:</span>
+                  <span class="pity-count">500 rolls</span>
+                  <div class="pity-bar">
+                    <div id="tower-mythic-pity" class="pity-progress" style="width: 0%"></div>
+                  </div>
+                </div>
+                <div class="pity-row legendary">
+                  <span class="pity-tier">Legendary:</span>
+                  <span class="pity-count">150 rolls</span>
+                  <div class="pity-bar">
+                    <div id="tower-legendary-pity" class="pity-progress" style="width: 0%"></div>
+                  </div>
+                </div>
+                <div class="pity-row epic">
+                  <span class="pity-tier">Epic:</span>
+                  <span class="pity-count">60 rolls</span>
+                  <div class="pity-bar">
+                    <div id="tower-epic-pity" class="pity-progress" style="width: 0%"></div>
+                  </div>
+                </div>
+                <div class="pity-row rare">
+                  <span class="pity-tier">Rare:</span>
+                  <span class="pity-count">15 rolls</span>
+                  <div class="pity-bar">
+                    <div id="tower-rare-pity" class="pity-progress" style="width: 0%"></div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -149,7 +202,100 @@
         <div class="modal-footer">
           <div class="silver-display">
             <span>Silver: </span>
-            <span id="gacha-silver-amount">0</span>
+            <span id="tower-gacha-silver-amount">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Variant Gacha Modal -->
+    <div id="variant-gacha-modal" class="modal">
+      <div class="modal-content gacha-content">
+        <div class="modal-header">
+          <h2>Variant Gacha</h2>
+          <span class="close-btn" id="close-variant-gacha">&times;</span>
+        </div>
+
+        <!-- Variant Gacha Interface -->
+        <div class="gacha-container">
+          <div class="gacha-main">
+            <div class="gacha-section">
+              <h3>Variant Gacha</h3>
+              <p>Roll for tower variants to customize your towers!</p>
+              <div class="tower-selector">
+                <label for="variant-tower-select">Select Tower:</label>
+                <select id="variant-tower-select">
+                  <!-- Tower options will be generated here -->
+                </select>
+              </div>
+              <div class="gacha-box">
+                <div id="variant-result" class="gacha-result"></div>
+              </div>
+              <div class="gacha-buttons">
+                <button id="roll-variant-1" class="gacha-btn">Roll 1 Variant (200 Silver)</button>
+                <button id="roll-variant-10" class="gacha-btn">Roll 10 Variants (1800 Silver)</button>
+                <button id="roll-variant-100" class="gacha-btn">Roll 100 Variants (16000 Silver)</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="gacha-sidebar">
+            <div class="drop-rate-chart">
+              <h3>Variant Drop Rates</h3>
+              <div class="rate-table">
+                <div class="rate-row legendary">
+                  <span class="rate-tier">Legendary</span>
+                  <span class="rate-value">2%</span>
+                </div>
+                <div class="rate-row epic">
+                  <span class="rate-tier">Epic</span>
+                  <span class="rate-value">8%</span>
+                </div>
+                <div class="rate-row rare">
+                  <span class="rate-tier">Rare</span>
+                  <span class="rate-value">25%</span>
+                </div>
+                <div class="rate-row common">
+                  <span class="rate-tier">Common</span>
+                  <span class="rate-value">65%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="pity-system">
+              <h3>Pity System</h3>
+              <p>Guaranteed drops after:</p>
+              <div class="pity-info">
+                <div class="pity-row legendary">
+                  <span class="pity-tier">Legendary:</span>
+                  <span class="pity-count">100 rolls</span>
+                  <div class="pity-bar">
+                    <div id="variant-legendary-pity" class="pity-progress" style="width: 0%"></div>
+                  </div>
+                </div>
+                <div class="pity-row epic">
+                  <span class="pity-tier">Epic:</span>
+                  <span class="pity-count">50 rolls</span>
+                  <div class="pity-bar">
+                    <div id="variant-epic-pity" class="pity-progress" style="width: 0%"></div>
+                  </div>
+                </div>
+                <div class="pity-row rare">
+                  <span class="pity-tier">Rare:</span>
+                  <span class="pity-count">10 rolls</span>
+                  <div class="pity-bar">
+                    <div id="variant-rare-pity" class="pity-progress" style="width: 0%"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <div class="silver-display">
+            <span>Silver: </span>
+            <span id="variant-gacha-silver-amount">0</span>
           </div>
         </div>
       </div>

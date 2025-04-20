@@ -162,24 +162,51 @@ function setupEventListeners() {
     document.getElementById('map-selection-modal').classList.add('active');
   });
 
-  // Gacha button
-  const gachaButton = document.getElementById('gacha-button');
-  if (gachaButton) {
-    gachaButton.addEventListener('click', () => {
-      const gachaModal = document.getElementById('tower-gacha-modal');
-      if (gachaModal) {
-        gachaModal.classList.add('active');
+  // Tower Gacha button
+  const towerGachaButton = document.getElementById('tower-gacha-button');
+  if (towerGachaButton) {
+    towerGachaButton.addEventListener('click', () => {
+      const towerGachaModal = document.getElementById('tower-gacha-modal');
+      if (towerGachaModal) {
+        towerGachaModal.classList.add('active');
         // Update silver display when opening the modal
-        const gachaSilverAmount = document.getElementById('gacha-silver-amount');
-        if (gachaSilverAmount) {
-          gachaSilverAmount.textContent = playerData.silver;
+        const towerGachaSilverAmount = document.getElementById('tower-gacha-silver-amount');
+        if (towerGachaSilverAmount) {
+          towerGachaSilverAmount.textContent = playerData.silver;
         }
+        // Update pity progress bars
+        updatePityProgressBars('tower');
       } else {
-        console.error('Gacha modal not found');
+        console.error('Tower gacha modal not found');
       }
     });
   } else {
-    console.error('Gacha button not found');
+    console.error('Tower gacha button not found');
+  }
+
+  // Variant Gacha button
+  const variantGachaButton = document.getElementById('variant-gacha-button');
+  if (variantGachaButton) {
+    variantGachaButton.addEventListener('click', () => {
+      const variantGachaModal = document.getElementById('variant-gacha-modal');
+      if (variantGachaModal) {
+        // Populate tower select dropdown for variants
+        populateVariantTowerSelect();
+
+        variantGachaModal.classList.add('active');
+        // Update silver display when opening the modal
+        const variantGachaSilverAmount = document.getElementById('variant-gacha-silver-amount');
+        if (variantGachaSilverAmount) {
+          variantGachaSilverAmount.textContent = playerData.silver;
+        }
+        // Update pity progress bars
+        updatePityProgressBars('variant');
+      } else {
+        console.error('Variant gacha modal not found');
+      }
+    });
+  } else {
+    console.error('Variant gacha button not found');
   }
 
   // Inventory button
@@ -738,10 +765,16 @@ function updateSilverDisplay() {
     silverAmount.textContent = playerData.silver;
   }
 
-  // Update gacha silver display
-  const gachaSilverAmount = document.getElementById('gacha-silver-amount');
-  if (gachaSilverAmount) {
-    gachaSilverAmount.textContent = playerData.silver;
+  // Update tower gacha silver display
+  const towerGachaSilverAmount = document.getElementById('tower-gacha-silver-amount');
+  if (towerGachaSilverAmount) {
+    towerGachaSilverAmount.textContent = playerData.silver;
+  }
+
+  // Update variant gacha silver display
+  const variantGachaSilverAmount = document.getElementById('variant-gacha-silver-amount');
+  if (variantGachaSilverAmount) {
+    variantGachaSilverAmount.textContent = playerData.silver;
   }
 
   // Update inventory silver display
@@ -1011,24 +1044,62 @@ function capitalizeFirstLetter(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
+// Populate tower select dropdown for variants
+function populateVariantTowerSelect() {
+  const variantTowerSelect = document.getElementById('variant-tower-select');
+  if (!variantTowerSelect) return;
+
+  // Clear existing options
+  variantTowerSelect.innerHTML = '';
+
+  // Only show unlocked towers
+  playerData.unlockedTowers.forEach(towerType => {
+    const option = document.createElement('option');
+    option.value = towerType;
+    option.textContent = towerStats[towerType]?.name || towerType;
+    variantTowerSelect.appendChild(option);
+  });
+}
+
+// Update pity progress bars
+function updatePityProgressBars(type) {
+  const pityCounters = gachaSystem.pityCounter[type];
+  const pityThresholds = gachaSystem.pity[type];
+
+  // Update each pity progress bar
+  for (const tier in pityCounters) {
+    const progressBar = document.getElementById(`${type}-${tier}-pity`);
+    if (progressBar) {
+      const percentage = (pityCounters[tier] / pityThresholds[tier]) * 100;
+      progressBar.style.width = `${Math.min(percentage, 100)}%`;
+    }
+  }
+}
+
 // Setup gacha system event listeners
 function setupGachaEventListeners() {
-  // Check if gacha elements exist
+  // Check if tower gacha elements exist
   const rollTower1 = document.getElementById('roll-tower-1');
   const rollTower10 = document.getElementById('roll-tower-10');
   const rollTower100 = document.getElementById('roll-tower-100');
+  const closeTowerGacha = document.getElementById('close-tower-gacha');
+  const towerResult = document.getElementById('tower-result');
+
+  // Check if variant gacha elements exist
   const rollVariant1 = document.getElementById('roll-variant-1');
   const rollVariant10 = document.getElementById('roll-variant-10');
   const rollVariant100 = document.getElementById('roll-variant-100');
-  const closeTowerGacha = document.getElementById('close-tower-gacha');
-  const towerSelect = document.getElementById('variant-tower-select');
+  const closeVariantGacha = document.getElementById('close-variant-gacha');
+  const variantResult = document.getElementById('variant-result');
 
   // Tower roll buttons
   if (rollTower1) {
     rollTower1.addEventListener('click', () => {
       if (spendSilver(gachaSystem.costs.tower.single)) {
-        gachaSystem.rollTowers(1);
+        const tower = gachaSystem.rollTower();
+        displayTowerResult(tower, towerResult);
         updateSilverDisplay();
+        updatePityProgressBars('tower');
       } else {
         alert('Not enough silver!');
       }
@@ -1038,8 +1109,10 @@ function setupGachaEventListeners() {
   if (rollTower10) {
     rollTower10.addEventListener('click', () => {
       if (spendSilver(gachaSystem.costs.tower.ten)) {
-        gachaSystem.rollTowers(10);
+        const towers = gachaSystem.rollTowers(10);
+        displayTowerResults(towers, towerResult);
         updateSilverDisplay();
+        updatePityProgressBars('tower');
       } else {
         alert('Not enough silver!');
       }
@@ -1049,23 +1122,13 @@ function setupGachaEventListeners() {
   if (rollTower100) {
     rollTower100.addEventListener('click', () => {
       if (spendSilver(gachaSystem.costs.tower.hundred)) {
-        gachaSystem.rollTowers(100);
+        const towers = gachaSystem.rollTowers(100);
+        displayTowerResults(towers, towerResult);
         updateSilverDisplay();
+        updatePityProgressBars('tower');
       } else {
         alert('Not enough silver!');
       }
-    });
-  }
-
-  // Populate tower select dropdown for variants
-  if (towerSelect) {
-    towerSelect.innerHTML = '';
-
-    playerData.unlockedTowers.forEach(towerType => {
-      const option = document.createElement('option');
-      option.value = towerType;
-      option.textContent = towerStats[towerType]?.name || towerType;
-      towerSelect.appendChild(option);
     });
   }
 
@@ -1074,8 +1137,12 @@ function setupGachaEventListeners() {
     rollVariant1.addEventListener('click', () => {
       const selectedTower = document.getElementById('variant-tower-select')?.value || 'basic';
       if (spendSilver(gachaSystem.costs.variant.single)) {
-        gachaSystem.rollVariant(selectedTower);
-        updateSilverDisplay();
+        const variant = gachaSystem.rollVariant(selectedTower);
+        if (variant) {
+          displayVariantResult(variant, selectedTower, variantResult);
+          updateSilverDisplay();
+          updatePityProgressBars('variant');
+        }
       } else {
         alert('Not enough silver!');
       }
@@ -1086,8 +1153,12 @@ function setupGachaEventListeners() {
     rollVariant10.addEventListener('click', () => {
       const selectedTower = document.getElementById('variant-tower-select')?.value || 'basic';
       if (spendSilver(gachaSystem.costs.variant.ten)) {
-        gachaSystem.rollVariants(10, selectedTower);
-        updateSilverDisplay();
+        const variants = gachaSystem.rollVariants(10, selectedTower);
+        if (variants.length > 0) {
+          displayVariantResults(variants, selectedTower, variantResult);
+          updateSilverDisplay();
+          updatePityProgressBars('variant');
+        }
       } else {
         alert('Not enough silver!');
       }
@@ -1098,20 +1169,34 @@ function setupGachaEventListeners() {
     rollVariant100.addEventListener('click', () => {
       const selectedTower = document.getElementById('variant-tower-select')?.value || 'basic';
       if (spendSilver(gachaSystem.costs.variant.hundred)) {
-        gachaSystem.rollVariants(100, selectedTower);
-        updateSilverDisplay();
+        const variants = gachaSystem.rollVariants(100, selectedTower);
+        if (variants.length > 0) {
+          displayVariantResults(variants, selectedTower, variantResult);
+          updateSilverDisplay();
+          updatePityProgressBars('variant');
+        }
       } else {
         alert('Not enough silver!');
       }
     });
   }
 
-  // Close button
+  // Close tower gacha button
   if (closeTowerGacha) {
     closeTowerGacha.addEventListener('click', () => {
-      const gachaModal = document.getElementById('tower-gacha-modal');
-      if (gachaModal) {
-        gachaModal.classList.remove('active');
+      const towerGachaModal = document.getElementById('tower-gacha-modal');
+      if (towerGachaModal) {
+        towerGachaModal.classList.remove('active');
+      }
+    });
+  }
+
+  // Close variant gacha button
+  if (closeVariantGacha) {
+    closeVariantGacha.addEventListener('click', () => {
+      const variantGachaModal = document.getElementById('variant-gacha-modal');
+      if (variantGachaModal) {
+        variantGachaModal.classList.remove('active');
       }
     });
   }
@@ -1158,9 +1243,306 @@ function setupGachaEventListeners() {
   }
 
   // Update silver display
-  const gachaSilverAmount = document.getElementById('gacha-silver-amount');
-  if (gachaSilverAmount) {
-    gachaSilverAmount.textContent = playerData.silver;
+  updateSilverDisplay();
+
+  // Initialize pity progress bars
+  updatePityProgressBars('tower');
+  updatePityProgressBars('variant');
+}
+
+// Display a single tower result
+function displayTowerResult(tower, resultElement) {
+  if (!resultElement) return;
+
+  // Clear previous results
+  resultElement.innerHTML = '';
+
+  // Create canvas for tower image
+  const canvas = document.createElement('canvas');
+  canvas.width = 120;
+  canvas.height = 120;
+  const ctx = canvas.getContext('2d');
+
+  // Get tower data
+  const towerData = towerStats[tower];
+
+  // Draw tower
+  drawLargeTower(ctx, tower, towerData);
+
+  // Create tower info
+  const towerInfo = document.createElement('div');
+  towerInfo.className = 'gacha-item-info';
+
+  // Tower name with tier
+  const towerName = document.createElement('div');
+  towerName.className = `gacha-item-name ${towerData.tier}`;
+  towerName.textContent = towerData.name || tower;
+
+  // Tower tier
+  const towerTier = document.createElement('div');
+  towerTier.className = `gacha-item-tier ${towerData.tier}`;
+  towerTier.textContent = capitalizeFirstLetter(towerData.tier);
+
+  // Add elements to info
+  towerInfo.appendChild(towerName);
+  towerInfo.appendChild(towerTier);
+
+  // Add elements to result
+  resultElement.appendChild(canvas);
+  resultElement.appendChild(towerInfo);
+}
+
+// Display multiple tower results
+function displayTowerResults(towers, resultElement) {
+  if (!resultElement) return;
+
+  // Clear previous results
+  resultElement.innerHTML = '';
+
+  // Create result summary
+  const resultSummary = document.createElement('div');
+  resultSummary.className = 'gacha-result-summary';
+
+  // Count towers by tier
+  const tierCounts = {};
+  towers.forEach(tower => {
+    const tier = towerStats[tower].tier;
+    tierCounts[tier] = (tierCounts[tier] || 0) + 1;
+  });
+
+  // Create summary text
+  const summaryText = document.createElement('div');
+  summaryText.className = 'gacha-summary-text';
+  summaryText.innerHTML = 'You got:<br>';
+
+  // Add tier counts to summary
+  for (const tier of ['mythic', 'legendary', 'epic', 'rare', 'common']) {
+    if (tierCounts[tier]) {
+      const tierSpan = document.createElement('span');
+      tierSpan.className = tier;
+      tierSpan.textContent = `${tierCounts[tier]} ${capitalizeFirstLetter(tier)}`;
+      summaryText.appendChild(tierSpan);
+      summaryText.appendChild(document.createElement('br'));
+    }
+  }
+
+  // Add summary to result
+  resultElement.appendChild(summaryText);
+
+  // Display the highest tier tower
+  const tiers = ['mythic', 'legendary', 'epic', 'rare', 'common'];
+  for (const tier of tiers) {
+    const towersOfTier = towers.filter(tower => towerStats[tower].tier === tier);
+    if (towersOfTier.length > 0) {
+      displayTowerResult(towersOfTier[0], resultElement);
+      break;
+    }
+  }
+}
+
+// Display a single variant result
+function displayVariantResult(variant, towerType, resultElement) {
+  if (!resultElement) return;
+
+  // Clear previous results
+  resultElement.innerHTML = '';
+
+  // Create canvas for variant image
+  const canvas = document.createElement('canvas');
+  canvas.width = 120;
+  canvas.height = 120;
+  const ctx = canvas.getContext('2d');
+
+  // Get variant data
+  const variantData = towerVariants[variant];
+  const towerData = towerStats[towerType];
+
+  // Draw tower with variant
+  drawLargeTowerWithVariant(ctx, towerType, towerData, variant, variantData);
+
+  // Create variant info
+  const variantInfo = document.createElement('div');
+  variantInfo.className = 'gacha-item-info';
+
+  // Variant name with tier
+  const variantName = document.createElement('div');
+  variantName.className = `gacha-item-name ${variantData.tier}`;
+  variantName.textContent = variantData.name || variant;
+
+  // Variant tier
+  const variantTier = document.createElement('div');
+  variantTier.className = `gacha-item-tier ${variantData.tier}`;
+  variantTier.textContent = capitalizeFirstLetter(variantData.tier);
+
+  // Add elements to info
+  variantInfo.appendChild(variantName);
+  variantInfo.appendChild(variantTier);
+
+  // Add elements to result
+  resultElement.appendChild(canvas);
+  resultElement.appendChild(variantInfo);
+}
+
+// Display multiple variant results
+function displayVariantResults(variants, towerType, resultElement) {
+  if (!resultElement) return;
+
+  // Clear previous results
+  resultElement.innerHTML = '';
+
+  // Create result summary
+  const resultSummary = document.createElement('div');
+  resultSummary.className = 'gacha-result-summary';
+
+  // Count variants by tier
+  const tierCounts = {};
+  variants.forEach(variant => {
+    const tier = towerVariants[variant].tier;
+    tierCounts[tier] = (tierCounts[tier] || 0) + 1;
+  });
+
+  // Create summary text
+  const summaryText = document.createElement('div');
+  summaryText.className = 'gacha-summary-text';
+  summaryText.innerHTML = 'You got:<br>';
+
+  // Add tier counts to summary
+  for (const tier of ['legendary', 'epic', 'rare', 'common']) {
+    if (tierCounts[tier]) {
+      const tierSpan = document.createElement('span');
+      tierSpan.className = tier;
+      tierSpan.textContent = `${tierCounts[tier]} ${capitalizeFirstLetter(tier)}`;
+      summaryText.appendChild(tierSpan);
+      summaryText.appendChild(document.createElement('br'));
+    }
+  }
+
+  // Add summary to result
+  resultElement.appendChild(summaryText);
+
+  // Display the highest tier variant
+  const tiers = ['legendary', 'epic', 'rare', 'common'];
+  for (const tier of tiers) {
+    const variantsOfTier = variants.filter(variant => towerVariants[variant].tier === tier);
+    if (variantsOfTier.length > 0) {
+      displayVariantResult(variantsOfTier[0], towerType, resultElement);
+      break;
+    }
+  }
+}
+
+// Draw a large tower for gacha result
+function drawLargeTower(ctx, _towerType, towerData) {
+  // Base
+  ctx.fillStyle = '#555';
+  ctx.beginPath();
+  ctx.arc(60, 80, 20, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Tower body
+  ctx.fillStyle = towerData.color || '#4CAF50';
+  ctx.fillRect(45, 30, 30, 50);
+
+  // Tower top
+  ctx.beginPath();
+  ctx.arc(60, 30, 15, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Add glow effect based on tier
+  switch(towerData.tier) {
+    case 'mythic':
+      ctx.shadowColor = '#9C27B0';
+      ctx.shadowBlur = 20;
+      ctx.beginPath();
+      ctx.arc(60, 30, 18, 0, Math.PI * 2);
+      ctx.strokeStyle = '#9C27B0';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      break;
+    case 'legendary':
+      ctx.shadowColor = '#FFD700';
+      ctx.shadowBlur = 15;
+      ctx.beginPath();
+      ctx.arc(60, 30, 18, 0, Math.PI * 2);
+      ctx.strokeStyle = '#FFD700';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      break;
+    case 'epic':
+      ctx.shadowColor = '#8A2BE2';
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.arc(60, 30, 17, 0, Math.PI * 2);
+      ctx.strokeStyle = '#8A2BE2';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      break;
+    case 'rare':
+      ctx.shadowColor = '#1E90FF';
+      ctx.shadowBlur = 5;
+      ctx.beginPath();
+      ctx.arc(60, 30, 16, 0, Math.PI * 2);
+      ctx.strokeStyle = '#1E90FF';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      break;
+  }
+}
+
+// Draw a large tower with variant for gacha result
+function drawLargeTowerWithVariant(ctx, _towerType, towerData, _variantType, variantData) {
+  // Base
+  ctx.fillStyle = '#555';
+  ctx.beginPath();
+  ctx.arc(60, 80, 20, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Tower body
+  ctx.fillStyle = towerData.color || '#4CAF50';
+  ctx.fillRect(45, 30, 30, 50);
+
+  // Tower top with variant color
+  ctx.fillStyle = variantData.color || '#FFD700';
+  ctx.beginPath();
+  ctx.arc(60, 30, 15, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Add glow effect based on tier
+  switch(variantData.tier) {
+    case 'legendary':
+      ctx.shadowColor = '#FFD700';
+      ctx.shadowBlur = 15;
+      ctx.beginPath();
+      ctx.arc(60, 30, 18, 0, Math.PI * 2);
+      ctx.strokeStyle = '#FFD700';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      break;
+    case 'epic':
+      ctx.shadowColor = '#8A2BE2';
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.arc(60, 30, 17, 0, Math.PI * 2);
+      ctx.strokeStyle = '#8A2BE2';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      break;
+    case 'rare':
+      ctx.shadowColor = '#1E90FF';
+      ctx.shadowBlur = 5;
+      ctx.beginPath();
+      ctx.arc(60, 30, 16, 0, Math.PI * 2);
+      ctx.strokeStyle = '#1E90FF';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      break;
   }
 }
 

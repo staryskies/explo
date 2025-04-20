@@ -114,20 +114,20 @@ const towerStats = {
   },
   tesla: {
     name: "Tesla Tower",
-    description: "Powerful electricity jumps between many nearby enemies, stunning them",
-    persistentCost: 550,
-    ability: "Advanced chain lightning",
-    range: 200, // Increased range
-    damage: 45, // 50% more damage
-    fireRate: 1.2, // Faster fire rate
-    projectileSpeed: 20, // Faster projectiles
+    description: "Extremely rare tower that unleashes devastating chain lightning",
+    persistentCost: 1000,
+    ability: "Mythic chain lightning",
+    range: 250, // Greatly increased range
+    damage: 80, // Significantly increased damage
+    fireRate: 1.5, // Much faster fire rate
+    projectileSpeed: 25, // Much faster projectiles
     canTargetFlying: true,
-    chainCount: 5, // More chain targets
-    chainRange: 120, // Longer chain range
-    stunChance: 0.3, // Added stun chance
-    stunDuration: 800, // Added stun duration
-    color: '#673AB7',
-    tier: 'epic'
+    chainCount: 8, // Many more chain targets
+    chainRange: 150, // Much longer chain range
+    stunChance: 0.5, // High stun chance
+    stunDuration: 1200, // Longer stun duration
+    color: '#9C27B0', // More vibrant purple
+    tier: 'mythic'
   },
   flame: {
     name: "Flame Tower",
