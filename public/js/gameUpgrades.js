@@ -194,6 +194,28 @@ Game.prototype.updateUpgradeMenu = function() {
   document.getElementById('tower-fire-rate').textContent = tower.fireRate.toFixed(2);
   document.getElementById('tower-special').textContent = tower.ability;
 
+  // Update targeting capabilities
+  document.getElementById('can-target-ground').textContent = 'Yes';
+  document.getElementById('can-target-ground').className = 'target-yes';
+
+  // Update flying targeting capability
+  if (tower.canTargetFlying) {
+    document.getElementById('can-target-flying').textContent = 'Yes';
+    document.getElementById('can-target-flying').className = 'target-yes';
+  } else {
+    document.getElementById('can-target-flying').textContent = 'No';
+    document.getElementById('can-target-flying').className = 'target-no';
+  }
+
+  // Update shadow targeting capability
+  if (tower.canTargetShadow()) {
+    document.getElementById('can-target-shadow').textContent = 'Yes';
+    document.getElementById('can-target-shadow').className = 'target-yes';
+  } else {
+    document.getElementById('can-target-shadow').textContent = 'No';
+    document.getElementById('can-target-shadow').className = 'target-no';
+  }
+
   // Get upgrade paths
   const towerType = tower.type;
   const pathA = towerUpgrades[towerType]?.pathA;

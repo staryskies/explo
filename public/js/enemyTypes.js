@@ -107,6 +107,18 @@ const enemyTypes = {
     explosionRadius: 100,
     explosionDamage: 30 // Damage to nearby towers when killed
   },
+  shadow: {
+    name: "Shadow",
+    health: 90,
+    speed: 1.6,
+    reward: 40,
+    damage: 2,
+    color: '#212121', // Very dark gray
+    size: 24,
+    flying: false,
+    shadowEffect: true, // Can only be targeted by certain towers
+    visibleToSpecialTowers: ['tesla', 'laser', 'flame']
+  },
   boss: {
     name: "Boss",
     health: 1000,

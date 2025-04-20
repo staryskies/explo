@@ -688,6 +688,15 @@ class Enemy {
       ctx.globalAlpha = 0.3;
     }
 
+    // Apply shadow effect
+    if (this.type === 'shadow') {
+      ctx.globalAlpha = 0.6;
+      ctx.shadowColor = '#000';
+      ctx.shadowBlur = 15;
+      ctx.shadowOffsetX = 3;
+      ctx.shadowOffsetY = 3;
+    }
+
     // Draw shield effect for invulnerable enemies
     if (this.isInvulnerable) {
       ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
@@ -696,14 +705,37 @@ class Enemy {
       ctx.fill();
     }
 
-    // Save context for rotation
-    ctx.save();
-    ctx.translate(this.x, this.y);
+    // Special drawing for flying enemies
+    if (this.flying) {
+      // Calculate hover effect
+      const hoverHeight = Math.sin(Date.now() / 200) * 5; // Hovering effect
 
-    // Calculate rotation based on direction
-    if (this.dirX !== 0 || this.dirY !== 0) {
-      const angle = Math.atan2(this.dirY, this.dirX);
-      ctx.rotate(angle);
+      // Draw shadow on the ground
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+      ctx.beginPath();
+      ctx.ellipse(this.x, this.y + this.size/3, this.size/3, this.size/6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Save context for rotation
+      ctx.save();
+      ctx.translate(this.x, this.y - 10 + hoverHeight);
+
+      // Calculate rotation based on direction
+      if (this.dirX !== 0 || this.dirY !== 0) {
+        const angle = Math.atan2(this.dirY, this.dirX);
+        ctx.rotate(angle);
+      }
+    } else {
+      // Regular enemy drawing
+      // Save context for rotation
+      ctx.save();
+      ctx.translate(this.x, this.y);
+
+      // Calculate rotation based on direction
+      if (this.dirX !== 0 || this.dirY !== 0) {
+        const angle = Math.atan2(this.dirY, this.dirX);
+        ctx.rotate(angle);
+      }
     }
 
     // Draw enemy based on type
@@ -731,6 +763,9 @@ class Enemy {
         break;
       case 'explosive':
         this.drawExplosiveEnemy(ctx);
+        break;
+      case 'shadow':
+        this.drawShadowEnemy(ctx);
         break;
       case 'boss':
         this.drawBossEnemy(ctx);
@@ -767,11 +802,11 @@ class Enemy {
     );
 
     // Health color based on enemy type
-    let healthBarClass = 'health-bar-normal';
+    // Note: We're using direct color assignment instead of CSS classes
     if (this.isBoss) {
-      healthBarClass = 'health-bar-boss';
+      // Boss health bar colors are handled with gradient
     } else if (this.type && enemyTypes && enemyTypes[this.type]) {
-      healthBarClass = `health-bar-${this.type}`;
+      // Type-specific colors are handled in the fallback colors
     }
 
     // Fallback colors based on health percentage
@@ -1527,9 +1562,13 @@ class Enemy {
 
   drawFlyingEnemy(ctx) {
     // Draw futuristic drone/UFO body
-    ctx.fillStyle = this.color;
+    const time = Date.now() / 1000;
+    // Hovering effect is now handled in the main draw method
+
+    // Draw shadow on the ground (this is drawn in the main draw method now)
 
     // Main body - saucer shape
+    ctx.fillStyle = this.color;
     ctx.beginPath();
     ctx.ellipse(0, 0, this.size * 1.2, this.size * 0.4, 0, 0, Math.PI * 2);
     ctx.fill();
@@ -1549,29 +1588,36 @@ class Enemy {
     ctx.fill();
 
     // Draw tech details - antigravity rings
-    const ringPulse = Math.sin(Date.now() / 300) * 0.2 + 0.8; // Pulsing animation
+    const ringPulse = Math.sin(time * 3) * 0.2 + 0.8; // Pulsing animation
 
-    // Outer ring
+    // Outer ring with rotation
+    ctx.save();
+    ctx.rotate(time % (Math.PI * 2));
     ctx.strokeStyle = '#4FC3F7';
     ctx.lineWidth = 2;
     ctx.globalAlpha = ringPulse;
     ctx.beginPath();
     ctx.ellipse(0, 0, this.size * 1.4, this.size * 0.5, 0, 0, Math.PI * 2);
     ctx.stroke();
+    ctx.restore();
 
-    // Inner ring
+    // Inner ring with opposite rotation
+    ctx.save();
+    ctx.rotate(-(time % (Math.PI * 2)));
     ctx.strokeStyle = '#29B6F6';
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.ellipse(0, 0, this.size * 0.9, this.size * 0.3, 0, 0, Math.PI * 2);
     ctx.stroke();
+    ctx.restore();
+
     ctx.globalAlpha = 1.0;
 
-    // Draw hover jets
+    // Draw hover jets with more dynamic effects
     ctx.fillStyle = '#03A9F4';
     const jetCount = 5;
     for (let i = 0; i < jetCount; i++) {
-      const angle = (Math.PI * 2 / jetCount) * i;
+      const angle = (Math.PI * 2 / jetCount) * i + time % (Math.PI/4); // Slight rotation
       const x = Math.cos(angle) * this.size * 0.8;
       const y = Math.sin(angle) * this.size * 0.3;
 
@@ -1580,8 +1626,9 @@ class Enemy {
       ctx.arc(x, y, this.size * 0.15, 0, Math.PI * 2);
       ctx.fill();
 
-      // Jet glow
-      const glowSize = this.size * 0.3 * (0.7 + Math.sin(Date.now() / 200 + i) * 0.3);
+      // Jet glow with more dynamic pulsing
+      const pulseRate = 2 + i * 0.5; // Different pulse rate for each jet
+      const glowSize = this.size * 0.3 * (0.7 + Math.sin(time * pulseRate) * 0.3);
       const glowGradient = ctx.createRadialGradient(
         x, y, 0,
         x, y, glowSize
@@ -1594,18 +1641,69 @@ class Enemy {
       ctx.beginPath();
       ctx.arc(x, y, glowSize, 0, Math.PI * 2);
       ctx.fill();
+
+      // Add jet trail/exhaust
+      const trailGradient = ctx.createLinearGradient(
+        x, y,
+        x + Math.cos(angle + Math.PI) * this.size * 0.6,
+        y + Math.sin(angle + Math.PI) * this.size * 0.6
+      );
+      trailGradient.addColorStop(0, 'rgba(3, 169, 244, 0.7)');
+      trailGradient.addColorStop(1, 'rgba(3, 169, 244, 0)');
+
+      ctx.fillStyle = trailGradient;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+
+      // Create wavy trail
+      const trailLength = this.size * (0.4 + Math.sin(time * 3 + i) * 0.2);
+      const waveAmplitude = this.size * 0.1;
+      const waveFrequency = 10;
+
+      for (let t = 0; t <= 1; t += 0.1) {
+        const trailX = x + Math.cos(angle + Math.PI) * trailLength * t;
+        const trailY = y + Math.sin(angle + Math.PI) * trailLength * t;
+        const waveOffset = Math.sin(t * waveFrequency + time * 5) * waveAmplitude * t;
+
+        const perpAngle = angle + Math.PI/2;
+        const offsetX = trailX + Math.cos(perpAngle) * waveOffset;
+        const offsetY = trailY + Math.sin(perpAngle) * waveOffset;
+
+        ctx.lineTo(offsetX, offsetY);
+      }
+
+      ctx.closePath();
+      ctx.fill();
+
       ctx.globalAlpha = 1.0;
       ctx.fillStyle = '#03A9F4';
     }
 
-    // Draw sensor array
+    // Draw sensor array with pulsing effect
+    const sensorPulse = 0.8 + Math.sin(time * 4) * 0.2;
     ctx.fillStyle = '#F44336';
     ctx.beginPath();
-    ctx.arc(0, -this.size * 0.3, this.size * 0.15, 0, Math.PI * 2);
+    ctx.arc(0, -this.size * 0.3, this.size * 0.15 * sensorPulse, 0, Math.PI * 2);
     ctx.fill();
 
-    // Scanner beam
-    const beamHeight = this.size * (0.5 + Math.sin(Date.now() / 150) * 0.3);
+    // Add sensor glow
+    const sensorGlow = ctx.createRadialGradient(
+      0, -this.size * 0.3, 0,
+      0, -this.size * 0.3, this.size * 0.25
+    );
+    sensorGlow.addColorStop(0, 'rgba(244, 67, 54, 0.8)');
+    sensorGlow.addColorStop(1, 'rgba(244, 67, 54, 0)');
+
+    ctx.fillStyle = sensorGlow;
+    ctx.globalAlpha = 0.6 * sensorPulse;
+    ctx.beginPath();
+    ctx.arc(0, -this.size * 0.3, this.size * 0.25, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1.0;
+
+    // Scanner beam with more dynamic effect
+    const beamHeight = this.size * (0.5 + Math.sin(time * 1.5) * 0.3);
+    const beamWidth = this.size * (0.4 + Math.sin(time * 2) * 0.1);
     const beamGradient = ctx.createLinearGradient(
       0, 0,
       0, beamHeight
@@ -1614,12 +1712,12 @@ class Enemy {
     beamGradient.addColorStop(1, 'rgba(244, 67, 54, 0)');
 
     ctx.fillStyle = beamGradient;
-    ctx.globalAlpha = 0.6;
+    ctx.globalAlpha = 0.6 + Math.sin(time * 3) * 0.2;
     ctx.beginPath();
-    ctx.moveTo(-this.size * 0.2, 0);
-    ctx.lineTo(this.size * 0.2, 0);
-    ctx.lineTo(this.size * 0.3, beamHeight);
-    ctx.lineTo(-this.size * 0.3, beamHeight);
+    ctx.moveTo(-beamWidth/2, 0);
+    ctx.lineTo(beamWidth/2, 0);
+    ctx.lineTo(beamWidth/2 + beamWidth/4, beamHeight);
+    ctx.lineTo(-beamWidth/2 - beamWidth/4, beamHeight);
     ctx.closePath();
     ctx.fill();
     ctx.globalAlpha = 1.0;
@@ -1678,7 +1776,7 @@ class Enemy {
 
     // Snakes
     const time = Date.now() / 1000;
-    const snakeWave = Math.sin(time * 2) * 0.2;
+    // Wave effect is applied directly in the snake drawing
 
     // First snake
     ctx.strokeStyle = '#B3E5FC';
@@ -2403,6 +2501,97 @@ class Enemy {
     }
   }
 
+  drawShadowEnemy(ctx) {
+    // Draw shadow entity
+    const time = Date.now() / 1000;
+
+    // Shadow effect - dark body with smoky edges
+    const shadowGradient = ctx.createRadialGradient(
+      0, 0, 0,
+      0, 0, this.size
+    );
+    shadowGradient.addColorStop(0, '#000000');
+    shadowGradient.addColorStop(0.6, 'rgba(33, 33, 33, 0.8)');
+    shadowGradient.addColorStop(1, 'rgba(33, 33, 33, 0)');
+
+    ctx.fillStyle = shadowGradient;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Add smoky tendrils
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.lineWidth = 2;
+
+    const tendrilCount = 6;
+    for (let i = 0; i < tendrilCount; i++) {
+      const angle = (Math.PI * 2 / tendrilCount) * i + time % Math.PI;
+      const length = this.size * (0.8 + Math.sin(time * 2 + i) * 0.3);
+
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+
+      // Create wavy tendril
+      for (let t = 0; t <= 1; t += 0.1) {
+        const segmentLength = length * t;
+        const waveOffset = Math.sin(t * Math.PI * 3 + time * 2) * this.size * 0.15;
+        const x = Math.cos(angle) * segmentLength + Math.cos(angle + Math.PI/2) * waveOffset;
+        const y = Math.sin(angle) * segmentLength + Math.sin(angle + Math.PI/2) * waveOffset;
+
+        ctx.lineTo(x, y);
+      }
+
+      ctx.stroke();
+    }
+
+    // Draw glowing eyes
+    const eyeSize = this.size * 0.15;
+    const eyeDistance = this.size * 0.25;
+    const eyeY = -this.size * 0.1;
+
+    // Left eye
+    const leftEyeGlow = ctx.createRadialGradient(
+      -eyeDistance, eyeY, 0,
+      -eyeDistance, eyeY, eyeSize
+    );
+    leftEyeGlow.addColorStop(0, '#9C27B0'); // Purple
+    leftEyeGlow.addColorStop(0.5, 'rgba(156, 39, 176, 0.5)');
+    leftEyeGlow.addColorStop(1, 'rgba(156, 39, 176, 0)');
+
+    ctx.fillStyle = leftEyeGlow;
+    ctx.beginPath();
+    ctx.arc(-eyeDistance, eyeY, eyeSize, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Right eye
+    const rightEyeGlow = ctx.createRadialGradient(
+      eyeDistance, eyeY, 0,
+      eyeDistance, eyeY, eyeSize
+    );
+    rightEyeGlow.addColorStop(0, '#9C27B0'); // Purple
+    rightEyeGlow.addColorStop(0.5, 'rgba(156, 39, 176, 0.5)');
+    rightEyeGlow.addColorStop(1, 'rgba(156, 39, 176, 0)');
+
+    ctx.fillStyle = rightEyeGlow;
+    ctx.beginPath();
+    ctx.arc(eyeDistance, eyeY, eyeSize, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Add pulsing shadow aura
+    const auraSize = this.size * (1.2 + Math.sin(time * 2) * 0.2);
+    const auraGradient = ctx.createRadialGradient(
+      0, 0, this.size * 0.8,
+      0, 0, auraSize
+    );
+    auraGradient.addColorStop(0, 'rgba(66, 30, 77, 0.3)');
+    auraGradient.addColorStop(1, 'rgba(66, 30, 77, 0)');
+
+    ctx.fillStyle = auraGradient;
+    ctx.beginPath();
+    ctx.arc(0, 0, auraSize, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
   // Take damage and return true if killed
   takeDamage(amount, towerType) {
     // Check for invulnerability
@@ -2413,6 +2602,14 @@ class Enemy {
       // Check if the tower can see invisible enemies
       if (!towerType || !this.visibleToSpecialTowers || !this.visibleToSpecialTowers.includes(towerType)) {
         return false;
+      }
+    }
+
+    // Check for shadow effect
+    if (this.type === 'shadow') {
+      // Check if the tower can target shadow enemies
+      if (!towerType || !this.visibleToSpecialTowers || !this.visibleToSpecialTowers.includes(towerType)) {
+        return false; // Shadow enemies can only be damaged by certain towers
       }
     }
 

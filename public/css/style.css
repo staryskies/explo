@@ -258,6 +258,27 @@ body {
   font-weight: 600;
 }
 
+.targeting-info {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(210, 180, 140, 0.5);
+}
+
+.targeting-info p {
+  margin: 5px 0;
+  font-size: 13px;
+}
+
+.target-yes {
+  color: #4CAF50 !important; /* Green */
+  font-weight: bold;
+}
+
+.target-no {
+  color: #F44336 !important; /* Red */
+  font-weight: bold;
+}
+
 .upgrade-paths {
   flex: 2;
   display: flex;
@@ -896,4 +917,15 @@ body {
   #controls label {
     font-size: 10px;
   }
+}
+
+/* Shadow enemy styles */
+.enemy-shadow {
+  background-color: #212121;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+}
+
+/* Health bar for shadow enemies */
+.health-bar-shadow {
+  background: linear-gradient(90deg, #212121, #9C27B0);
 }

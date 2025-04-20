@@ -15,7 +15,7 @@ const towerStats = {
     damage: 10, // Significantly reduced damage
     fireRate: 0.6, // Slower fire rate
     projectileSpeed: 8, // Slower projectiles
-    canTargetFlying: false,
+    canTargetFlying: true, // Allow targeting flying enemies
     color: '#4CAF50'
   },
   archer: {
@@ -40,7 +40,7 @@ const towerStats = {
     damage: 60, // Significantly increased damage
     fireRate: 1.0, // Faster fire rate
     projectileSpeed: 12, // Faster projectiles
-    canTargetFlying: false,
+    canTargetFlying: true, // Allow targeting flying enemies
     aoeRadius: 60, // Larger splash radius
     stunChance: 0.15, // Added stun chance
     color: '#795548'
@@ -84,7 +84,7 @@ const towerStats = {
     damage: 100, // Significantly increased damage
     fireRate: 0.7, // Faster fire rate
     projectileSpeed: 10, // Faster projectiles
-    canTargetFlying: false,
+    canTargetFlying: true, // Allow targeting flying enemies
     aoeRadius: 100, // Much larger splash radius
     stunChance: 0.25, // Added stun chance
     stunDuration: 1000, // Added stun duration

@@ -534,6 +534,9 @@ class Tower {
       if (!enemy.alive) return false;
       if (enemy.flying && !this.canTargetFlying) return false;
 
+      // Check if this is a shadow enemy and if the tower can target it
+      if (enemy.type === 'shadow' && !this.canTargetShadow()) return false;
+
       const dist = distance(this.x, this.y, enemy.x, enemy.y);
       return dist <= this.range;
     });
@@ -968,6 +971,13 @@ class Tower {
 
     // Restore context state
     ctx.restore();
+  }
+
+  // Check if this tower can target shadow enemies
+  canTargetShadow() {
+    // Only certain tower types can target shadow enemies
+    const shadowTargetingTowers = ['tesla', 'laser', 'flame'];
+    return shadowTargetingTowers.includes(this.type);
   }
 
   // Draw the tower
