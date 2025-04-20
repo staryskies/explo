@@ -6,6 +6,7 @@
   <title>Tower Defense Game - Main Menu</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/menu.css">
+  <link rel="stylesheet" href="css/auth.css">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -17,6 +18,7 @@
         <button id="tower-gacha-button" class="menu-btn">Tower Gacha</button>
         <button id="variant-gacha-button" class="menu-btn">Variant Gacha</button>
         <button id="inventory-button" class="menu-btn">Inventory</button>
+        <button id="squad-button" class="menu-btn">Squads</button>
       </div>
 
       <div class="player-stats">
@@ -31,6 +33,16 @@
         <div class="stat-item">
           <span class="stat-label">High Score:</span>
           <span id="high-score" class="stat-value">0</span>
+        </div>
+      </div>
+
+      <div class="auth-buttons">
+        <button id="login-button" class="auth-btn">Login</button>
+        <button id="signup-button" class="auth-btn">Sign Up</button>
+        <button id="guest-button" class="auth-btn">Play as Guest</button>
+        <div id="user-info" class="user-info" style="display: none;">
+          <span id="username-display"></span>
+          <button id="logout-button" class="auth-btn">Logout</button>
         </div>
       </div>
     </div>
@@ -365,7 +377,122 @@
         </div>
       </div>
     </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Login</h2>
+          <span class="close-btn" id="close-login">&times;</span>
+        </div>
+        <div class="modal-body">
+          <form id="login-form">
+            <div class="form-group">
+              <label for="login-username">Username</label>
+              <input type="text" id="login-username" name="username" required>
+            </div>
+            <div class="form-group">
+              <label for="login-password">Password</label>
+              <input type="password" id="login-password" name="password" required>
+            </div>
+            <div id="login-error" class="error-message"></div>
+            <button type="submit" class="primary-btn">Login</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Signup Modal -->
+    <div id="signup-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Sign Up</h2>
+          <span class="close-btn" id="close-signup">&times;</span>
+        </div>
+        <div class="modal-body">
+          <form id="signup-form">
+            <div class="form-group">
+              <label for="signup-username">Username</label>
+              <input type="text" id="signup-username" name="username" required>
+            </div>
+            <div class="form-group">
+              <label for="signup-email">Email (optional)</label>
+              <input type="email" id="signup-email" name="email">
+            </div>
+            <div class="form-group">
+              <label for="signup-password">Password</label>
+              <input type="password" id="signup-password" name="password" required>
+            </div>
+            <div class="form-group">
+              <label for="signup-confirm-password">Confirm Password</label>
+              <input type="password" id="signup-confirm-password" name="confirmPassword" required>
+            </div>
+            <div id="signup-error" class="error-message"></div>
+            <button type="submit" class="primary-btn">Sign Up</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Squad Modal -->
+    <div id="squad-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Squads</h2>
+          <span class="close-btn" id="close-squad">&times;</span>
+        </div>
+        <div class="modal-body">
+          <div id="no-squad" style="display: none;">
+            <p>You are not in a squad. Create a new squad or join an existing one.</p>
+            <div class="squad-actions">
+              <button id="create-squad-btn" class="primary-btn">Create Squad</button>
+              <div class="join-squad-form">
+                <input type="text" id="squad-code-input" placeholder="Enter squad code" maxlength="6">
+                <button id="join-squad-btn" class="primary-btn">Join Squad</button>
+              </div>
+            </div>
+          </div>
+          <div id="current-squad" style="display: none;">
+            <div class="squad-info">
+              <h3>Your Squad</h3>
+              <div class="squad-code-display">
+                <span>Squad Code: </span>
+                <span id="squad-code" class="squad-code"></span>
+                <button id="copy-code-btn" class="icon-btn">📋</button>
+              </div>
+            </div>
+            <div class="squad-members">
+              <h4>Members</h4>
+              <ul id="squad-members-list">
+                <!-- Squad members will be listed here -->
+              </ul>
+            </div>
+            <div class="squad-chat">
+              <h4>Squad Chat</h4>
+              <div id="chat-messages" class="chat-messages">
+                <!-- Chat messages will appear here -->
+              </div>
+              <div class="chat-input">
+                <input type="text" id="chat-input" placeholder="Type a message...">
+                <button id="send-message-btn" class="primary-btn">Send</button>
+              </div>
+            </div>
+            <div class="squad-actions">
+              <button id="leave-squad-btn" class="danger-btn">Leave Squad</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+
+  <!-- Load Socket.IO client -->
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+  <!-- Load services -->
+  <script src="js/services/authService.js"></script>
+  <script src="js/services/squadService.js"></script>
+  <script src="js/services/playerDataService.js"></script>
 
   <!-- Load game scripts -->
   <script src="js/towerData.js"></script>
@@ -373,6 +500,8 @@
   <script src="js/playerData.js"></script>
   <script src="js/towerHelper.js"></script>
   <script src="js/gacha.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/squad.js"></script>
   <script src="js/menu.js"></script>
 </body>
 </html>
