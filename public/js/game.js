@@ -43,8 +43,8 @@ class Game {
     this.silverEarned = 0;
 
     // Player stats - adjusted based on difficulty
-    this.lives = this.getDifficultyLives();
-    this.gold = this.getDifficultyGold();
+    this.lives = Math.floor(this.getDifficultyLives()); // Ensure lives is an integer
+    this.gold = Math.floor(this.getDifficultyGold()); // Ensure gold is an integer
     this.score = 0;
     this.wave = 1;
 
@@ -498,7 +498,7 @@ class Game {
       if (enemy.reachedEnd) {
         // Reduce lives based on enemy damage (default to 1 if not specified)
         const damageTaken = enemy.damage || 1;
-        this.lives -= damageTaken;
+        this.lives = Math.floor(this.lives - damageTaken); // Ensure lives is always an integer
         this.enemiesLeaked++;
 
         console.log(`Enemy reached the end! -${damageTaken} lives. Remaining: ${this.lives}`);
@@ -875,8 +875,8 @@ class Game {
 
   // Update UI elements
   updateUI() {
-    document.getElementById('lives').textContent = this.lives;
-    document.getElementById('gold').textContent = formatNumber(this.gold);
+    document.getElementById('lives').textContent = Math.floor(this.lives); // Ensure displayed lives is an integer
+    document.getElementById('gold').textContent = formatNumber(Math.floor(this.gold)); // Ensure displayed gold is an integer
     document.getElementById('wave').textContent = this.wave;
     document.getElementById('score').textContent = formatNumber(this.score);
 
@@ -1290,8 +1290,8 @@ class Game {
     this.effects = [];
 
     // Reset player stats
-    this.lives = this.getDifficultyLives();
-    this.gold = this.getDifficultyGold();
+    this.lives = Math.floor(this.getDifficultyLives()); // Ensure lives is an integer
+    this.gold = Math.floor(this.getDifficultyGold()); // Ensure gold is an integer
     this.score = 0;
     this.wave = 1;
 
