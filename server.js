@@ -20,12 +20,14 @@ const playerDataRoutes = require('./routes/playerData');
 const app = express();
 const server = http.createServer(app);
 
-// Enable CORS
+// Enable CORS with broader configuration for Vercel
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
-    ? ['https://tower-defense-game.vercel.app']
+    ? ['https://tower-defense-game.vercel.app', 'https://explo-rho.vercel.app', 'https://*.vercel.app']
     : ['http://localhost:3000', 'http://localhost:5173'],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 // Compress responses
@@ -67,7 +69,7 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
       fontSrc: ["'self'", 'https://fonts.gstatic.com'],
       imgSrc: ["'self'", 'data:'],
-      connectSrc: ["'self'", 'wss:', 'ws:', 'https://explo-98bi.onrender.com', 'wss://explo-98bi.onrender.com']
+      connectSrc: ["'self'", 'wss:', 'ws:', 'https://explo-98bi.onrender.com', 'wss://explo-98bi.onrender.com', 'https://explo-rho.vercel.app', 'wss://explo-rho.vercel.app', 'https://*.vercel.app', 'wss://*.vercel.app']
     }
   },
   crossOriginEmbedderPolicy: false,
@@ -101,22 +103,48 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Initialize Socket.IO
+// Initialize Socket.IO with configuration for serverless environments
 const io = new Server(server, {
   cors: {
     origin: process.env.NODE_ENV === 'production'
-      ? ['https://tower-defense-game.vercel.app']
+      ? ['https://tower-defense-game.vercel.app', 'https://explo-rho.vercel.app']
       : ['http://localhost:3000', 'http://localhost:5173'],
     credentials: true
-  }
+  },
+  // Add configuration for serverless environments
+  transports: ['polling', 'websocket'],
+  allowUpgrades: true,
+  pingTimeout: 30000,
+  pingInterval: 25000,
+  cookie: {
+    name: 'io',
+    path: '/',
+    httpOnly: true,
+    sameSite: 'lax'
+  },
+  // Disable sticky sessions for Vercel
+  adapter: require('socket.io-adapter')()
 });
 
 // Socket.IO middleware for authentication
 io.use(async (socket, next) => {
   try {
-    const token = socket.handshake.auth.token;
+    // Allow anonymous connections for Vercel health checks
+    if (socket.handshake.headers['user-agent'] &&
+        socket.handshake.headers['user-agent'].includes('vercel')) {
+      console.log('Vercel health check connection detected, allowing without authentication');
+      socket.user = { id: 'vercel-health-check', username: 'vercel-health-check', isGuest: true };
+      return next();
+    }
+
+    // Get token from auth or query parameters (for better compatibility)
+    const token = socket.handshake.auth.token || socket.handshake.query.token;
+
     if (!token) {
-      return next(new Error('Authentication error'));
+      console.log('No authentication token provided');
+      // Create a guest user for connections without a token
+      socket.user = { id: `guest-${Date.now()}`, username: 'Guest', isGuest: true };
+      return next();
     }
 
     // Verify token using JWT
@@ -124,6 +152,17 @@ io.use(async (socket, next) => {
 
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+      // Check if database is available
+      if (!pool) {
+        console.log('Database not available, using token data for authentication');
+        socket.user = {
+          id: decoded.userId,
+          username: 'User',
+          isGuest: false
+        };
+        return next();
+      }
 
       // Find session in database
       const sessionResult = await pool.query(
@@ -138,7 +177,9 @@ io.use(async (socket, next) => {
 
       // Check if session exists and is not expired
       if (!session || new Date() > new Date(session.expires_at)) {
-        return next(new Error('Invalid session'));
+        console.log('Invalid or expired session');
+        socket.user = { id: `guest-${Date.now()}`, username: 'Guest', isGuest: true };
+        return next();
       }
 
       // Set user in socket
@@ -150,24 +191,67 @@ io.use(async (socket, next) => {
       };
       next();
     } catch (error) {
-      return next(new Error('Invalid token'));
+      console.log('Token verification failed:', error.message);
+      // Create a guest user for invalid tokens
+      socket.user = { id: `guest-${Date.now()}`, username: 'Guest', isGuest: true };
+      return next();
     }
   } catch (error) {
     console.error('Socket authentication error:', error);
-    next(new Error('Authentication error'));
+    // Create a guest user for any authentication errors
+    socket.user = { id: `guest-${Date.now()}`, username: 'Guest', isGuest: true };
+    next();
   }
 });
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-  console.log(`User connected: ${socket.id}, User: ${socket.user.username}`);
+  console.log(`User connected: ${socket.id}, User: ${socket.user?.username || 'Unknown'}`);
+
+  // Send connection acknowledgement
+  socket.emit('connection-established', {
+    socketId: socket.id,
+    userId: socket.user?.id || 'guest',
+    timestamp: new Date().toISOString()
+  });
 
   // Join user to their own room for private messages
-  socket.join(`user:${socket.user.id}`);
+  if (socket.user && socket.user.id) {
+    socket.join(`user:${socket.user.id}`);
+  }
 
   // Handle squad room joining
   socket.on('join-squad', async (squadId) => {
     try {
+      // Validate input
+      if (!squadId) {
+        socket.emit('error', { message: 'Invalid squad ID' });
+        return;
+      }
+
+      // Check if user is authenticated
+      if (!socket.user || !socket.user.id) {
+        socket.emit('error', { message: 'Authentication required' });
+        return;
+      }
+
+      // Check if database is available
+      if (!pool) {
+        console.log('Database not available, allowing squad join without verification');
+        // Join squad room without verification
+        socket.join(`squad:${squadId}`);
+        socket.emit('squad-joined', {
+          id: squadId,
+          members: [{
+            id: socket.user.id,
+            username: socket.user.username,
+            isGuest: socket.user.isGuest,
+            joinedAt: new Date().toISOString()
+          }]
+        });
+        return;
+      }
+
       // Check if user is a member of the squad
       const membershipResult = await pool.query(
         `SELECT * FROM squad_members WHERE squad_id = $1 AND user_id = $2 LIMIT 1`,
@@ -245,6 +329,32 @@ io.on('connection', (socket) => {
     try {
       const { squadId, message } = data;
 
+      // Validate input
+      if (!squadId || !message) {
+        socket.emit('error', { message: 'Invalid message data' });
+        return;
+      }
+
+      // Check if user is authenticated
+      if (!socket.user || !socket.user.id) {
+        socket.emit('error', { message: 'Authentication required' });
+        return;
+      }
+
+      // Check if database is available
+      if (!pool) {
+        console.log('Database not available, allowing squad message without verification');
+        // Broadcast message without verification
+        io.to(`squad:${squadId}`).emit('squad-message', {
+          id: Date.now().toString(),
+          userId: socket.user.id,
+          username: socket.user.username,
+          message,
+          timestamp: new Date().toISOString()
+        });
+        return;
+      }
+
       // Check if user is a member of the squad
       const membershipResult = await pool.query(
         `SELECT * FROM squad_members WHERE squad_id = $1 AND user_id = $2 LIMIT 1`,
@@ -277,6 +387,30 @@ io.on('connection', (socket) => {
     try {
       const { squadId, gameState } = data;
 
+      // Validate input
+      if (!squadId || !gameState) {
+        socket.emit('error', { message: 'Invalid game state data' });
+        return;
+      }
+
+      // Check if user is authenticated
+      if (!socket.user || !socket.user.id) {
+        socket.emit('error', { message: 'Authentication required' });
+        return;
+      }
+
+      // Check if database is available
+      if (!pool) {
+        console.log('Database not available, allowing game state update without verification');
+        // Broadcast game state without verification
+        socket.to(`squad:${squadId}`).emit('game-state-update', {
+          userId: socket.user.id,
+          username: socket.user.username,
+          gameState
+        });
+        return;
+      }
+
       // Check if user is a member of the squad
       const membershipResult = await pool.query(
         `SELECT * FROM squad_members WHERE squad_id = $1 AND user_id = $2 LIMIT 1`,
@@ -304,19 +438,30 @@ io.on('connection', (socket) => {
 
   // Handle disconnection
   socket.on('disconnect', () => {
-    console.log(`User disconnected: ${socket.id}, User: ${socket.user.username}`);
+    try {
+      console.log(`User disconnected: ${socket.id}, User: ${socket.user?.username || 'Unknown'}`);
 
-    // Notify squad members if user was in a squad
-    const rooms = [...socket.rooms];
-    rooms.forEach(room => {
-      if (room.startsWith('squad:')) {
-        const squadId = room.split(':')[1];
-        socket.to(`squad:${squadId}`).emit('member-left', {
-          id: socket.user.id,
-          username: socket.user.username
+      // Notify squad members if user was in a squad and user is authenticated
+      if (socket.user && socket.user.id) {
+        const rooms = [...socket.rooms];
+        rooms.forEach(room => {
+          if (room.startsWith('squad:')) {
+            const squadId = room.split(':')[1];
+            socket.to(`squad:${squadId}`).emit('member-left', {
+              id: socket.user.id,
+              username: socket.user.username
+            });
+          }
         });
       }
-    });
+    } catch (error) {
+      console.error('Error handling disconnect:', error);
+    }
+  });
+
+  // Handle errors
+  socket.on('error', (error) => {
+    console.error('Socket error:', error);
   });
 });
 

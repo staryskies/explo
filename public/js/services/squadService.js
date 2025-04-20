@@ -8,12 +8,12 @@ class SquadService {
     this.listeners = [];
     this.messageListeners = [];
     this.gameStateListeners = [];
-    
+
     // Initialize socket connection when auth service is ready
     if (window.authService && window.authService.isLoggedIn()) {
       this.initSocket();
     }
-    
+
     // Listen for auth state changes
     if (window.authService) {
       window.authService.addListener(user => {
@@ -35,15 +35,23 @@ class SquadService {
     const token = window.authService.getToken();
     if (!token) return;
 
-    // Create socket connection with auth token
+    // Create socket connection with auth token and better reconnection settings
     this.socket = io({
-      auth: { token }
+      auth: { token },
+      query: { token }, // Add token to query for better compatibility
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 20000,
+      autoConnect: true,
+      transports: ['polling', 'websocket']
     });
 
     // Handle connection events
     this.socket.on('connect', () => {
-      console.log('Socket connected');
-      
+      console.log('Socket connected with ID:', this.socket.id);
+
       // Get current squad
       this.getCurrentSquad().then(squad => {
         if (squad) {
@@ -52,14 +60,55 @@ class SquadService {
       });
     });
 
+    // Handle connection established event
+    this.socket.on('connection-established', (data) => {
+      console.log('Connection established:', data);
+    });
+
     // Handle disconnection
-    this.socket.on('disconnect', () => {
-      console.log('Socket disconnected');
+    this.socket.on('disconnect', (reason) => {
+      console.log('Socket disconnected:', reason);
+
+      // Attempt to reconnect if not intentional
+      if (reason === 'io server disconnect' || reason === 'transport close') {
+        console.log('Attempting to reconnect...');
+        this.socket.connect();
+      }
+    });
+
+    // Handle reconnection
+    this.socket.on('reconnect', (attemptNumber) => {
+      console.log(`Socket reconnected after ${attemptNumber} attempts`);
+
+      // Rejoin squad room if we were in one
+      if (this.currentSquad) {
+        this.joinSquadRoom(this.currentSquad.id);
+      }
+    });
+
+    // Handle reconnection attempts
+    this.socket.on('reconnect_attempt', (attemptNumber) => {
+      console.log(`Reconnection attempt ${attemptNumber}`);
+    });
+
+    // Handle reconnection errors
+    this.socket.on('reconnect_error', (error) => {
+      console.error('Reconnection error:', error);
+    });
+
+    // Handle reconnection failures
+    this.socket.on('reconnect_failed', () => {
+      console.error('Failed to reconnect after all attempts');
     });
 
     // Handle errors
     this.socket.on('error', (error) => {
       console.error('Socket error:', error);
+    });
+
+    // Handle connect errors
+    this.socket.on('connect_error', (error) => {
+      console.error('Connection error:', error);
     });
 
     // Handle squad events
@@ -113,11 +162,32 @@ class SquadService {
 
   // Join squad room
   joinSquadRoom(squadId) {
+    if (!squadId) {
+      console.error('Cannot join squad: Invalid squad ID');
+      return;
+    }
+
     if (!this.socket) {
+      console.log('Socket not initialized, initializing...');
       this.initSocket();
     }
-    
+
+    // If socket exists but not connected, set up a connection handler
+    if (this.socket && !this.socket.connected) {
+      console.log('Socket not connected, waiting for connection...');
+      const connectHandler = () => {
+        console.log('Connected, now joining squad:', squadId);
+        this.socket.emit('join-squad', squadId);
+        this.socket.off('connect', connectHandler);
+      };
+      this.socket.on('connect', connectHandler);
+      this.socket.connect();
+      return;
+    }
+
+    // If socket is connected, join immediately
     if (this.socket && this.socket.connected) {
+      console.log('Joining squad room:', squadId);
       this.socket.emit('join-squad', squadId);
     }
   }
@@ -145,7 +215,7 @@ class SquadService {
 
       this.currentSquad = data;
       this.notifyListeners();
-      
+
       // Join squad room
       this.joinSquadRoom(data.id);
 
@@ -180,7 +250,7 @@ class SquadService {
 
       this.currentSquad = data;
       this.notifyListeners();
-      
+
       // Join squad room
       this.joinSquadRoom(data.id);
 
@@ -246,7 +316,7 @@ class SquadService {
       }
 
       const data = await response.json();
-      
+
       if (data.squad) {
         this.currentSquad = data.squad;
         this.notifyListeners();

@@ -70,8 +70,7 @@ If deployment fails:
 
 1. Check the build logs on Vercel
 2. Ensure that all required environment variables are set
-3. Verify that the Prisma schema is valid
-4. Try redeploying after fixing any issues
+3. Try redeploying after fixing any issues
 
 ## Monitoring and Maintenance
 
