@@ -7,6 +7,66 @@ console.log('Gacha system loaded');
 
 // Advanced gacha system
 const gachaSystem = {
+  // Initialize cooldowns from localStorage
+  initCooldowns: function() {
+    // Check for existing cooldowns in localStorage
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key.startsWith('cooldown_')) {
+        try {
+          const cooldownData = JSON.parse(localStorage.getItem(key));
+          const { type, amount, endTime } = cooldownData;
+
+          // Check if cooldown is still active
+          const now = Date.now();
+          const timeLeft = Math.max(0, endTime - now);
+
+          if (timeLeft > 0) {
+            // Restart the cooldown with the remaining time
+            const button = document.getElementById(`roll-${type}-${amount}`);
+            if (button) {
+              // Add cooldown class and set data attribute
+              button.classList.add('cooldown');
+              button.disabled = true;
+
+              // Calculate remaining seconds
+              const remaining = Math.ceil(timeLeft / 1000);
+              button.setAttribute('data-cooldown', `${remaining}s`);
+
+              // Set interval to update countdown
+              const timerKey = amount === 1 ? 'single' : amount === 10 ? 'ten' : 'hundred';
+              this.cooldownTimers[type][timerKey] = setInterval(() => {
+                const currentTime = Date.now();
+                const currentTimeLeft = Math.max(0, endTime - currentTime);
+                const currentRemaining = Math.ceil(currentTimeLeft / 1000);
+
+                if (currentRemaining <= 0) {
+                  // End cooldown
+                  clearInterval(this.cooldownTimers[type][timerKey]);
+                  this.cooldownTimers[type][timerKey] = null;
+                  button.classList.remove('cooldown');
+                  button.disabled = false;
+                  button.removeAttribute('data-cooldown');
+
+                  // Remove from localStorage
+                  localStorage.removeItem(key);
+                } else {
+                  // Update countdown
+                  button.setAttribute('data-cooldown', `${currentRemaining}s`);
+                }
+              }, 1000);
+            }
+          } else {
+            // Cooldown has expired, remove it
+            localStorage.removeItem(key);
+          }
+        } catch (error) {
+          console.error('Error parsing cooldown data:', error);
+          localStorage.removeItem(key);
+        }
+      }
+    }
+  },
   // Tower costs
   costs: {
     tower: {
@@ -191,7 +251,7 @@ const gachaSystem = {
       results.push(this.rollTower());
     }
 
-   
+
 
     return results;
   },
@@ -368,6 +428,20 @@ const gachaSystem = {
       default: duration = 2000; // Default 2 seconds
     }
 
+    // Calculate end time
+    const endTime = Date.now() + duration;
+
+    // Store cooldown in localStorage
+    const cooldownData = {
+      endTime: endTime,
+      type: type,
+      amount: amount
+    };
+
+    // Use a unique key for each button
+    const cooldownKey = `cooldown_${type}_${amount}`;
+    localStorage.setItem(cooldownKey, JSON.stringify(cooldownData));
+
     // Add cooldown class and set data attribute
     button.classList.add('cooldown');
     button.disabled = true;
@@ -384,7 +458,10 @@ const gachaSystem = {
     // Set interval to update countdown
     const timerKey = amount === 1 ? 'single' : amount === 10 ? 'ten' : 'hundred';
     this.cooldownTimers[type][timerKey] = setInterval(() => {
-      remaining--;
+      const now = Date.now();
+      const timeLeft = Math.max(0, endTime - now);
+      remaining = Math.ceil(timeLeft / 1000);
+
       if (remaining <= 0) {
         // End cooldown
         clearInterval(this.cooldownTimers[type][timerKey]);
@@ -392,6 +469,9 @@ const gachaSystem = {
         button.classList.remove('cooldown');
         button.disabled = false;
         button.removeAttribute('data-cooldown');
+
+        // Remove from localStorage
+        localStorage.removeItem(cooldownKey);
       } else {
         // Update countdown
         button.setAttribute('data-cooldown', `${remaining}s`);
@@ -439,7 +519,7 @@ const gachaSystem = {
     // Create cutscene container
     const cutscene = document.createElement('div');
     cutscene.className = `divine-cutscene ${divineType}`;
-    cutscene.style.zIndex = '9999'; // Ensure it's on top of everything
+    cutscene.style.zIndex = '8000'; // Behind the regular animation
 
     // Create words circle
     const wordsCircle = document.createElement('div');
@@ -500,10 +580,11 @@ const gachaSystem = {
   },
 
   // Create the regular animation
-  createRegularAnimation: function(tier, variant, animationContainer, resultElement) {
+  createRegularAnimation: function(tier, variant, animationContainer, _resultElement) {
     // Create animation
     const animation = document.createElement('div');
     animation.className = `gacha-animation ${tier}`;
+    animation.style.zIndex = '9000'; // High z-index but below the divine cutscene
 
     // Create background
     const bg = document.createElement('div');
@@ -550,13 +631,20 @@ const gachaSystem = {
     // Add animation to container
     animationContainer.appendChild(animation);
 
-    // Add container to result element
-    resultElement.appendChild(animationContainer);
+    // Add container to document body instead of result element
+    // Position it in the center of the screen
+    animationContainer.style.position = 'fixed';
+    animationContainer.style.top = '50%';
+    animationContainer.style.left = '50%';
+    animationContainer.style.transform = 'translate(-50%, -50%)';
+    animationContainer.style.zIndex = '9000';
+    animationContainer.style.pointerEvents = 'none';
+    document.body.appendChild(animationContainer);
 
     // Remove animation after duration
     setTimeout(() => {
-      if (animationContainer.parentNode === resultElement) {
-        resultElement.removeChild(animationContainer);
+      if (animationContainer.parentNode === document.body) {
+        document.body.removeChild(animationContainer);
       }
     }, this.animationDurations[tier]);
   }

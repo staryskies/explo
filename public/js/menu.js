@@ -17,6 +17,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Setup gacha system event listeners
   setupGachaEventListeners();
 
+  // Initialize cooldowns from localStorage
+  if (gachaSystem.initCooldowns) {
+    gachaSystem.initCooldowns();
+  }
+
   // Generate map options
   generateMapOptions();
 
@@ -1507,7 +1512,7 @@ function displayTowerResults(towers, resultElement) {
   resultElement.appendChild(summaryText);
 
   // Display the highest tier tower
-  const tiers = ['mythic', 'legendary', 'epic', 'rare', 'common'];
+  const tiers = ['divine', 'mythic', 'legendary', 'epic', 'rare', 'common'];
   for (const tier of tiers) {
     const towersOfTier = towers.filter(tower => towerStats[tower].tier === tier);
     if (towersOfTier.length > 0) {
@@ -1598,7 +1603,7 @@ function displayVariantResults(variants, towerType, resultElement) {
   resultElement.appendChild(summaryText);
 
   // Display the highest tier variant
-  const tiers = ['legendary', 'epic', 'rare', 'common'];
+  const tiers = ['divine', 'legendary', 'epic', 'rare', 'common'];
   for (const tier of tiers) {
     const variantsOfTier = variants.filter(variant => towerVariants[variant].tier === tier);
     if (variantsOfTier.length > 0) {
