@@ -1,14 +1,16 @@
 // middleware/auth.js
 const jwt = require('jsonwebtoken');
-const prisma = require('../lib/prisma');
+const { db } = require('../lib/db');
+const { users, sessions } = require('../db/schema');
+const { eq, and, gt } = require('drizzle-orm');
 
 // Middleware to authenticate users via JWT
 const authenticate = async (req, res, next) => {
   try {
     // Get token from cookies or authorization header
-    const token = req.cookies.token || 
+    const token = req.cookies.token ||
                  (req.headers.authorization && req.headers.authorization.split(' ')[1]);
-    
+
     if (!token) {
       req.user = null;
       return next();
@@ -16,12 +18,14 @@ const authenticate = async (req, res, next) => {
 
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
+
     // Find session in database
-    const session = await prisma.session.findUnique({
-      where: { token },
-      include: { user: true }
-    });
+    const sessionResults = await db
+      .select()
+      .from(sessions)
+      .where(eq(sessions.token, token));
+
+    const session = sessionResults[0];
 
     // Check if session exists and is not expired
     if (!session || new Date() > session.expiresAt) {
@@ -29,8 +33,21 @@ const authenticate = async (req, res, next) => {
       return next();
     }
 
+    // Get user from database
+    const userResults = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, session.userId));
+
+    const user = userResults[0];
+
+    if (!user) {
+      req.user = null;
+      return next();
+    }
+
     // Set user in request
-    req.user = session.user;
+    req.user = user;
     next();
   } catch (error) {
     console.error('Authentication error:', error);

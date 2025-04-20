@@ -337,18 +337,12 @@ app.use((req, res) => {
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
 
-// Initialize database before starting the server
-const { PrismaClient } = require('@prisma/client');
+// Initialize database connection
+const { db, pool } = require('./db');
 
-// Create Prisma client with connection retry logic
-const prisma = new PrismaClient({
-  log: ['query', 'info', 'warn', 'error'],
-  errorFormat: 'pretty',
-});
-
-// Handle Prisma connection issues
+// Handle database connection cleanup
 process.on('beforeExit', async () => {
-  await prisma.$disconnect();
+  await pool.end();
 });
 
 async function startServer() {
@@ -356,7 +350,8 @@ async function startServer() {
     // Check database connection
     console.log('Checking database connection...');
     try {
-      await prisma.$connect();
+      // Test the database connection with a simple query
+      await pool.query('SELECT NOW()');
       console.log('Database connection successful');
     } catch (dbError) {
       console.error('Database connection failed:', dbError);
@@ -368,8 +363,9 @@ async function startServer() {
     // Check if database needs initialization
     console.log('Checking if database needs initialization...');
     try {
-      // Try to query the User table to see if it exists
-      await prisma.user.findFirst();
+      // Try to query the users table to see if it exists
+      const { users } = require('./db/schema');
+      const result = await db.select().from(users).limit(1);
       console.log('Database already initialized');
     } catch (error) {
       // If the table doesn't exist, initialize the database

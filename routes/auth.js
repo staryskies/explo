@@ -4,7 +4,9 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { body, validationResult } = require('express-validator');
-const prisma = require('../lib/prisma');
+const { db } = require('../lib/db');
+const { users, sessions, playerData } = require('../db/schema');
+const { eq, and } = require('drizzle-orm');
 const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
@@ -19,12 +21,12 @@ const createSession = async (userId) => {
   const token = jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
   // Create session in database
-  const session = await prisma.session.create({
-    data: {
-      userId,
-      token,
-      expiresAt
-    }
+  await db.insert(sessions).values({
+    id: uuidv4(),
+    userId,
+    token,
+    expiresAt,
+    createdAt: new Date()
   });
 
   return { token, expiresAt };
@@ -213,13 +215,23 @@ router.post('/guest', async (req, res) => {
     // Create guest user with better error handling
     let user;
     try {
-      user = await prisma.user.create({
-        data: {
-          username: guestUsername,
-          isGuest: true,
-          playerData: {
-            create: {
-              gameData: {
+      // Generate user ID
+      const userId = uuidv4();
+
+      // Insert user
+      await db.insert(users).values({
+        id: userId,
+        username: guestUsername,
+        isGuest: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      // Insert player data
+      await db.insert(playerData).values({
+        id: uuidv4(),
+        userId: userId,
+        gameData: {
                 // Default player data for guests
                 silver: 1000,
                 highScore: 0,
@@ -259,11 +271,14 @@ router.post('/guest', async (req, res) => {
                   vortex: [],
                   archangel: []
                 }
-              }
-            }
-          }
-        }
+              },
+        createdAt: new Date(),
+        updatedAt: new Date()
       });
+
+      // Get the user for the response
+      const [userRecord] = await db.select().from(users).where(eq(users.id, userId));
+      user = userRecord;
     } catch (dbError) {
       console.error('Database error creating guest user:', dbError);
       return res.status(500).json({
