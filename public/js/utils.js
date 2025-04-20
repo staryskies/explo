@@ -67,3 +67,23 @@ function isPointInRect(x, y, rectX, rectY, rectW, rectH) {
   return x >= rectX && x <= rectX + rectW &&
          y >= rectY && y <= rectY + rectH;
 }
+
+// Get the base unit size for scaling based on screen dimensions
+function getBaseUnit() {
+  // Use the smaller dimension (width or height) to ensure everything fits on screen
+  const smallerDimension = Math.min(window.innerWidth, window.innerHeight);
+  // Base unit is 1% of the smaller dimension
+  return smallerDimension / 100;
+}
+
+// Convert a pixel value to a relative unit based on screen size
+function toRelativeUnit(pixelValue) {
+  const baseUnit = getBaseUnit();
+  return pixelValue / baseUnit;
+}
+
+// Convert a relative unit to pixels based on current screen size
+function toPixels(relativeValue) {
+  const baseUnit = getBaseUnit();
+  return relativeValue * baseUnit;
+}

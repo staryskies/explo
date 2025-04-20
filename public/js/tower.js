@@ -2017,8 +2017,15 @@ class Tower {
 
       case 'archangel':
         // Archangel tower with divine effects
+        // Get base unit for scaling
+        const baseUnit = getBaseUnit();
+        const scaleFactor = baseUnit / 5; // Scale factor for all dimensions
+
         // Base tower body with enhanced design
-        const archangelGradient = ctx.createLinearGradient(-8, -25, 8, 0);
+        const archangelGradient = ctx.createLinearGradient(
+          -8 * scaleFactor, -25 * scaleFactor,
+          8 * scaleFactor, 0
+        );
         archangelGradient.addColorStop(0, '#FFEB3B'); // Yellow
         archangelGradient.addColorStop(1, '#FFC107'); // Amber
 
@@ -2026,10 +2033,10 @@ class Tower {
 
         // Draw archangel tower base
         ctx.beginPath();
-        ctx.moveTo(-12, -5);
-        ctx.lineTo(-10, -25);
-        ctx.lineTo(10, -25);
-        ctx.lineTo(12, -5);
+        ctx.moveTo(-12 * scaleFactor, -5 * scaleFactor);
+        ctx.lineTo(-10 * scaleFactor, -25 * scaleFactor);
+        ctx.lineTo(10 * scaleFactor, -25 * scaleFactor);
+        ctx.lineTo(12 * scaleFactor, -5 * scaleFactor);
         ctx.closePath();
         ctx.fill();
 
@@ -2038,25 +2045,37 @@ class Tower {
 
         // Left wing
         ctx.beginPath();
-        ctx.moveTo(-5, -25);
-        ctx.quadraticCurveTo(-20, -35, -25, -15);
-        ctx.quadraticCurveTo(-15, -20, -10, -15);
+        ctx.moveTo(-5 * scaleFactor, -25 * scaleFactor);
+        ctx.quadraticCurveTo(
+          -20 * scaleFactor, -35 * scaleFactor,
+          -25 * scaleFactor, -15 * scaleFactor
+        );
+        ctx.quadraticCurveTo(
+          -15 * scaleFactor, -20 * scaleFactor,
+          -10 * scaleFactor, -15 * scaleFactor
+        );
         ctx.closePath();
         ctx.fill();
 
         // Right wing
         ctx.beginPath();
-        ctx.moveTo(5, -25);
-        ctx.quadraticCurveTo(20, -35, 25, -15);
-        ctx.quadraticCurveTo(15, -20, 10, -15);
+        ctx.moveTo(5 * scaleFactor, -25 * scaleFactor);
+        ctx.quadraticCurveTo(
+          20 * scaleFactor, -35 * scaleFactor,
+          25 * scaleFactor, -15 * scaleFactor
+        );
+        ctx.quadraticCurveTo(
+          15 * scaleFactor, -20 * scaleFactor,
+          10 * scaleFactor, -15 * scaleFactor
+        );
         ctx.closePath();
         ctx.fill();
 
         // Draw halo
         ctx.strokeStyle = '#FFD700';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2 * scaleFactor;
         ctx.beginPath();
-        ctx.arc(0, -35, 8, 0, Math.PI * 2);
+        ctx.arc(0, -35 * scaleFactor, 8 * scaleFactor, 0, Math.PI * 2);
         ctx.stroke();
 
         // Add glow effect
@@ -2066,23 +2085,31 @@ class Tower {
         ctx.fillStyle = '#FFEB3B';
         ctx.globalAlpha = glowIntensity;
         ctx.beginPath();
-        ctx.arc(0, -25, 15, 0, Math.PI * 2);
+        ctx.arc(0, -25 * scaleFactor, 15 * scaleFactor, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+
+        // Add pulsing effect
+        const pulseSize = (10 + Math.sin(timeInSec * 0.5) * 2) * scaleFactor;
+        ctx.globalAlpha = 0.2;
+        ctx.beginPath();
+        ctx.arc(0, -25 * scaleFactor, pulseSize, 0, Math.PI * 2);
         ctx.fill();
         ctx.globalAlpha = 1.0;
 
         // Draw divine light rays
         ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 1;
+        ctx.lineWidth = scaleFactor;
 
-        for (let i = 0; i < 8; i++) {
-          const angle = Math.PI * 2 * (i / 8) + timeInSec % (Math.PI * 2);
-          const length = 20 + Math.sin(timeInSec * 3 + i) * 5;
+        for (let i = 0; i < 12; i++) { // Increased from 8 to 12 rays
+          const angle = Math.PI * 2 * (i / 12) + timeInSec % (Math.PI * 2);
+          const length = (20 + Math.sin(timeInSec * 3 + i) * 5) * scaleFactor;
 
           ctx.beginPath();
-          ctx.moveTo(0, -25);
+          ctx.moveTo(0, -25 * scaleFactor);
           ctx.lineTo(
             Math.cos(angle) * length,
-            -25 + Math.sin(angle) * length
+            -25 * scaleFactor + Math.sin(angle) * length
           );
           ctx.stroke();
         }
@@ -2095,66 +2122,109 @@ class Tower {
           // Draw enhanced wings
           // Left wing
           ctx.beginPath();
-          ctx.moveTo(-5, -25);
-          ctx.quadraticCurveTo(-25, -40, -30, -15);
-          ctx.quadraticCurveTo(-20, -20, -10, -15);
+          ctx.moveTo(-5 * scaleFactor, -25 * scaleFactor);
+          ctx.quadraticCurveTo(
+            -25 * scaleFactor, -40 * scaleFactor,
+            -30 * scaleFactor, -15 * scaleFactor
+          );
+          ctx.quadraticCurveTo(
+            -20 * scaleFactor, -20 * scaleFactor,
+            -10 * scaleFactor, -15 * scaleFactor
+          );
           ctx.closePath();
           ctx.fill();
 
           // Right wing
           ctx.beginPath();
-          ctx.moveTo(5, -25);
-          ctx.quadraticCurveTo(25, -40, 30, -15);
-          ctx.quadraticCurveTo(20, -20, 10, -15);
+          ctx.moveTo(5 * scaleFactor, -25 * scaleFactor);
+          ctx.quadraticCurveTo(
+            25 * scaleFactor, -40 * scaleFactor,
+            30 * scaleFactor, -15 * scaleFactor
+          );
+          ctx.quadraticCurveTo(
+            20 * scaleFactor, -20 * scaleFactor,
+            10 * scaleFactor, -15 * scaleFactor
+          );
           ctx.closePath();
           ctx.fill();
 
           // Draw divine sword
           ctx.fillStyle = '#FFFFFF';
           ctx.beginPath();
-          ctx.moveTo(0, -40);
-          ctx.lineTo(-3, -25);
-          ctx.lineTo(0, -10);
-          ctx.lineTo(3, -25);
+          ctx.moveTo(0, -40 * scaleFactor);
+          ctx.lineTo(-3 * scaleFactor, -25 * scaleFactor);
+          ctx.lineTo(0, -10 * scaleFactor);
+          ctx.lineTo(3 * scaleFactor, -25 * scaleFactor);
           ctx.closePath();
           ctx.fill();
 
           // Add sword glow
           ctx.strokeStyle = '#FFD700';
-          ctx.lineWidth = 1;
+          ctx.lineWidth = scaleFactor;
           ctx.stroke();
+
+          // Add energy particles
+          for (let i = 0; i < 5; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const distance = Math.random() * 15 * scaleFactor;
+
+            ctx.fillStyle = '#FFFFFF';
+            ctx.globalAlpha = 0.7 * Math.random();
+            ctx.beginPath();
+            ctx.arc(
+              Math.cos(angle) * distance,
+              -25 * scaleFactor + Math.sin(angle) * distance,
+              scaleFactor * Math.random() * 2,
+              0,
+              Math.PI * 2
+            );
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1.0;
         }
 
         // Path B: Blessing Aura - More supportive appearance
         if (hasPathBUpgrades) {
+          // Calculate scaled buff radius
+          const scaledBuffRadius = (20 + this.pathBLevel * 5) * scaleFactor;
+
           // Enhanced supportive appearance
           ctx.fillStyle = '#E3F2FD'; // Light blue
 
           // Draw aura circle
           ctx.globalAlpha = 0.3;
           ctx.beginPath();
-          ctx.arc(0, -15, 20 + this.pathBLevel * 5, 0, Math.PI * 2);
+          ctx.arc(0, -15 * scaleFactor, scaledBuffRadius, 0, Math.PI * 2);
           ctx.fill();
           ctx.globalAlpha = 1.0;
 
           // Draw blessing symbols
           ctx.strokeStyle = '#2196F3';
-          ctx.lineWidth = 1;
+          ctx.lineWidth = scaleFactor;
 
           for (let i = 0; i < this.pathBLevel; i++) {
             const angle = Math.PI * 2 * (i / this.pathBLevel) + timeInSec % (Math.PI * 2);
-            const distance = 15;
+            const distance = 15 * scaleFactor;
             const x = Math.cos(angle) * distance;
-            const y = -15 + Math.sin(angle) * distance;
+            const y = -15 * scaleFactor + Math.sin(angle) * distance;
 
             // Draw small cross
             ctx.beginPath();
-            ctx.moveTo(x - 3, y);
-            ctx.lineTo(x + 3, y);
-            ctx.moveTo(x, y - 3);
-            ctx.lineTo(x, y + 3);
+            ctx.moveTo(x - 3 * scaleFactor, y);
+            ctx.lineTo(x + 3 * scaleFactor, y);
+            ctx.moveTo(x, y - 3 * scaleFactor);
+            ctx.lineTo(x, y + 3 * scaleFactor);
             ctx.stroke();
           }
+
+          // Add pulsing aura effect
+          const auraSize = (15 + Math.sin(timeInSec * 0.5) * 3 + this.pathBLevel * 3) * scaleFactor;
+          ctx.globalAlpha = 0.1 + Math.sin(timeInSec * 0.5) * 0.05;
+          ctx.fillStyle = '#E3F2FD';
+          ctx.beginPath();
+          ctx.arc(0, -15 * scaleFactor, auraSize, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1.0;
         }
         break;
 

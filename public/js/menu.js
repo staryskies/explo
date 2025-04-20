@@ -1498,7 +1498,7 @@ function displayTowerResults(towers, resultElement) {
   summaryText.innerHTML = 'You got:<br>';
 
   // Add tier counts to summary
-  for (const tier of ['mythic', 'legendary', 'epic', 'rare', 'common']) {
+  for (const tier of ['divine', 'mythic', 'legendary', 'epic', 'rare', 'common']) {
     if (tierCounts[tier]) {
       const tierSpan = document.createElement('span');
       tierSpan.className = tier;
@@ -1589,7 +1589,7 @@ function displayVariantResults(variants, towerType, resultElement) {
   summaryText.innerHTML = 'You got:<br>';
 
   // Add tier counts to summary
-  for (const tier of ['legendary', 'epic', 'rare', 'common']) {
+  for (const tier of ['divine', 'legendary', 'epic', 'rare', 'common']) {
     if (tierCounts[tier]) {
       const tierSpan = document.createElement('span');
       tierSpan.className = tier;
@@ -1632,6 +1632,40 @@ function drawLargeTower(ctx, _towerType, towerData) {
 
   // Add glow effect based on tier
   switch(towerData.tier) {
+    case 'divine':
+      // Divine tier has a special golden glow with rays
+      ctx.shadowColor = '#FFEB3B';
+      ctx.shadowBlur = 25;
+
+      // Draw outer glow
+      ctx.beginPath();
+      ctx.arc(60, 30, 20, 0, Math.PI * 2);
+      ctx.strokeStyle = '#FFEB3B';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Draw rays
+      for (let i = 0; i < 12; i++) {
+        const angle = Math.PI * 2 * (i / 12);
+        const innerRadius = 20;
+        const outerRadius = 30;
+
+        ctx.beginPath();
+        ctx.moveTo(
+          60 + Math.cos(angle) * innerRadius,
+          30 + Math.sin(angle) * innerRadius
+        );
+        ctx.lineTo(
+          60 + Math.cos(angle) * outerRadius,
+          30 + Math.sin(angle) * outerRadius
+        );
+        ctx.strokeStyle = '#FFEB3B';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      ctx.shadowBlur = 0;
+      break;
     case 'mythic':
       ctx.shadowColor = '#9C27B0';
       ctx.shadowBlur = 20;
@@ -1695,6 +1729,40 @@ function drawLargeTowerWithVariant(ctx, _towerType, towerData, _variantType, var
 
   // Add glow effect based on tier
   switch(variantData.tier) {
+    case 'divine':
+      // Divine tier has a special golden glow with rays
+      ctx.shadowColor = '#FFEB3B';
+      ctx.shadowBlur = 25;
+
+      // Draw outer glow
+      ctx.beginPath();
+      ctx.arc(60, 30, 20, 0, Math.PI * 2);
+      ctx.strokeStyle = '#FFEB3B';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Draw rays
+      for (let i = 0; i < 12; i++) {
+        const angle = Math.PI * 2 * (i / 12);
+        const innerRadius = 20;
+        const outerRadius = 30;
+
+        ctx.beginPath();
+        ctx.moveTo(
+          60 + Math.cos(angle) * innerRadius,
+          30 + Math.sin(angle) * innerRadius
+        );
+        ctx.lineTo(
+          60 + Math.cos(angle) * outerRadius,
+          30 + Math.sin(angle) * outerRadius
+        );
+        ctx.strokeStyle = '#FFEB3B';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      ctx.shadowBlur = 0;
+      break;
     case 'legendary':
       ctx.shadowColor = '#FFD700';
       ctx.shadowBlur = 15;

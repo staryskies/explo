@@ -1025,12 +1025,19 @@ class Projectile {
     // Draw divine projectile with holy light effects
     const time = Date.now() / 100;
 
+    // Get base unit for scaling
+    const baseUnit = getBaseUnit();
+    const scaledSize = this.size * baseUnit / 3; // Scale size based on screen dimensions
+
     // Draw trail
     if (this.trailLength > 0) {
+      // Scale trail length based on screen size
+      const scaledTrailLength = toPixels(this.trailLength / 5);
+
       // Create gradient for trail
       const trailGradient = ctx.createLinearGradient(
-        this.x - Math.cos(this.angle) * this.trailLength,
-        this.y - Math.sin(this.angle) * this.trailLength,
+        this.x - Math.cos(this.angle) * scaledTrailLength,
+        this.y - Math.sin(this.angle) * scaledTrailLength,
         this.x,
         this.y
       );
@@ -1040,12 +1047,12 @@ class Projectile {
       trailGradient.addColorStop(1, 'rgba(255, 235, 59, 0.7)');
 
       ctx.strokeStyle = trailGradient;
-      ctx.lineWidth = this.size * 2;
+      ctx.lineWidth = scaledSize * 2;
       ctx.lineCap = 'round';
       ctx.beginPath();
       ctx.moveTo(
-        this.x - Math.cos(this.angle) * this.trailLength,
-        this.y - Math.sin(this.angle) * this.trailLength
+        this.x - Math.cos(this.angle) * scaledTrailLength,
+        this.y - Math.sin(this.angle) * scaledTrailLength
       );
       ctx.lineTo(this.x, this.y);
       ctx.stroke();
@@ -1054,19 +1061,21 @@ class Projectile {
     // Draw area effect indicator if applicable
     if (this.aoeRadius) {
       const pulse = Math.sin(time * 0.1) * 0.2 + 0.8;
+      // Scale AOE radius based on screen size
+      const scaledAoeRadius = toPixels(this.aoeRadius / 10);
 
       ctx.globalAlpha = 0.2 * pulse;
       ctx.fillStyle = '#FFEB3B';
       ctx.beginPath();
-      ctx.arc(this.x, this.y, this.aoeRadius * pulse, 0, Math.PI * 2);
+      ctx.arc(this.x, this.y, scaledAoeRadius * pulse, 0, Math.PI * 2);
       ctx.fill();
     }
 
     // Draw main projectile
     ctx.globalAlpha = 1.0;
 
-    // Draw outer glow
-    const glowSize = this.size * 2 * (1 + 0.2 * Math.sin(time * 0.2));
+    // Draw outer glow with scaled size
+    const glowSize = scaledSize * 2 * (1 + 0.2 * Math.sin(time * 0.2));
     const glowGradient = ctx.createRadialGradient(
       this.x, this.y, 0,
       this.x, this.y, glowSize
@@ -1084,16 +1093,16 @@ class Projectile {
     // Draw core
     ctx.fillStyle = '#FFFFFF';
     ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.arc(this.x, this.y, scaledSize, 0, Math.PI * 2);
     ctx.fill();
 
     // Draw light rays
     ctx.strokeStyle = '#FFEB3B';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = baseUnit / 10; // Scale line width based on screen size
 
-    for (let i = 0; i < 8; i++) {
-      const angle = this.angle + (Math.PI * 2 / 8) * i + time * 0.01;
-      const length = this.size * 3 * (1 + 0.3 * Math.sin(time * 0.1 + i));
+    for (let i = 0; i < 12; i++) { // Increased from 8 to 12 rays
+      const angle = this.angle + (Math.PI * 2 / 12) * i + time * 0.01;
+      const length = scaledSize * 4 * (1 + 0.3 * Math.sin(time * 0.1 + i));
 
       ctx.globalAlpha = 0.7 * (0.5 + 0.5 * Math.sin(time * 0.1 + i));
       ctx.beginPath();
@@ -1108,10 +1117,10 @@ class Projectile {
     // Draw small particles
     ctx.fillStyle = '#FFFFFF';
 
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 5; i++) { // Increased from 3 to 5 particles
       const angle = this.angle + Math.PI * 2 * Math.random();
-      const distance = this.size * 2 * Math.random();
-      const particleSize = this.size * 0.5 * Math.random();
+      const distance = scaledSize * 2 * Math.random();
+      const particleSize = scaledSize * 0.5 * Math.random();
 
       ctx.globalAlpha = 0.8 * Math.random();
       ctx.beginPath();
@@ -1124,6 +1133,22 @@ class Projectile {
       );
       ctx.fill();
     }
+
+    // Add a pulsing halo effect
+    const haloSize = scaledSize * 5 * (0.8 + 0.2 * Math.sin(time * 0.05));
+    const haloGradient = ctx.createRadialGradient(
+      this.x, this.y, scaledSize * 2,
+      this.x, this.y, haloSize
+    );
+
+    haloGradient.addColorStop(0, 'rgba(255, 235, 59, 0.3)');
+    haloGradient.addColorStop(1, 'rgba(255, 235, 59, 0)');
+
+    ctx.globalAlpha = 0.5 * (0.7 + 0.3 * Math.sin(time * 0.05));
+    ctx.fillStyle = haloGradient;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, haloSize, 0, Math.PI * 2);
+    ctx.fill();
 
     // Reset alpha
     ctx.globalAlpha = 1.0;
@@ -1818,7 +1843,11 @@ class Projectile {
   drawDivineExplosion(ctx) {
     // Draw divine explosion with spectacular holy light effects
     const time = Date.now() / 100;
-    const radius = this.aoeRadius || this.size * 10;
+
+    // Get base unit for scaling
+    const baseUnit = getBaseUnit();
+    const scaledSize = this.size * baseUnit / 3; // Scale size based on screen dimensions
+    const radius = this.aoeRadius ? toPixels(this.aoeRadius / 10) : scaledSize * 10;
 
     // Create a pulsing effect
     const pulse = 0.8 + Math.sin(time * 0.1) * 0.2;
@@ -1847,7 +1876,7 @@ class Projectile {
 
       ctx.globalAlpha = opacity;
       ctx.strokeStyle = '#FFEB3B';
-      ctx.lineWidth = 3 - i * 0.5;
+      ctx.lineWidth = baseUnit / 10 * (3 - i * 0.5);
       ctx.beginPath();
       ctx.arc(this.x, this.y, ringRadius, 0, Math.PI * 2);
       ctx.stroke();
@@ -1856,7 +1885,7 @@ class Projectile {
     // Draw light rays emanating from center
     ctx.globalAlpha = 0.7;
     ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = baseUnit / 10;
 
     for (let i = 0; i < 16; i++) {
       const angle = (Math.PI * 2 / 16) * i + time * 0.01;
@@ -1878,7 +1907,7 @@ class Projectile {
     for (let i = 0; i < 30; i++) {
       const angle = Math.random() * Math.PI * 2;
       const distance = radius * Math.random();
-      const size = this.size * (0.5 + Math.random() * 0.5);
+      const size = scaledSize * (0.5 + Math.random() * 0.5);
 
       ctx.globalAlpha = 0.6 * Math.random();
       ctx.beginPath();
@@ -1895,7 +1924,7 @@ class Projectile {
     // Draw central burst
     const burstGradient = ctx.createRadialGradient(
       this.x, this.y, 0,
-      this.x, this.y, this.size * 5 * pulse
+      this.x, this.y, scaledSize * 5 * pulse
     );
 
     burstGradient.addColorStop(0, 'rgba(255, 255, 255, 1.0)');
@@ -1905,24 +1934,32 @@ class Projectile {
     ctx.globalAlpha = 0.9;
     ctx.fillStyle = burstGradient;
     ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size * 5 * pulse, 0, Math.PI * 2);
+    ctx.arc(this.x, this.y, scaledSize * 5 * pulse, 0, Math.PI * 2);
     ctx.fill();
 
     // Draw cross symbol in the center
     ctx.globalAlpha = 0.9;
     ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = baseUnit / 5;
 
     // Vertical line
     ctx.beginPath();
-    ctx.moveTo(this.x, this.y - this.size * 3);
-    ctx.lineTo(this.x, this.y + this.size * 3);
+    ctx.moveTo(this.x, this.y - scaledSize * 3);
+    ctx.lineTo(this.x, this.y + scaledSize * 3);
     ctx.stroke();
 
     // Horizontal line
     ctx.beginPath();
-    ctx.moveTo(this.x - this.size * 2, this.y);
-    ctx.lineTo(this.x + this.size * 2, this.y);
+    ctx.moveTo(this.x - scaledSize * 2, this.y);
+    ctx.lineTo(this.x + scaledSize * 2, this.y);
+    ctx.stroke();
+
+    // Add a shockwave effect
+    ctx.globalAlpha = 0.3 * (1 - pulse);
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = baseUnit / 20;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, radius * 1.5 * pulse, 0, Math.PI * 2);
     ctx.stroke();
   }
 }
