@@ -47,12 +47,12 @@ body {
   font-weight: 500;
   display: flex;
   gap: 15px;
-  color: #534c4c;
+  color: #000000;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 #stats span {
-  color: #00e676;
+  color: #000000;
   font-weight: 700;
 }
 
@@ -891,6 +891,33 @@ body {
 /* Game over modal styles */
 .modal-content h2, .modal-content p {
   color: #000000;
+}
+
+/* Notification box styles */
+#notification-box {
+  position: fixed;
+  bottom: 120px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 248, 231, 0.95);
+  border-radius: 10px;
+  padding: 15px 20px;
+  box-shadow: 0 5px 15px rgba(160, 120, 80, 0.3);
+  color: #000000;
+  font-weight: 600;
+  font-size: 16px;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+  border: 1px solid rgba(210, 180, 140, 0.5);
+  text-align: center;
+  min-width: 200px;
+}
+
+#notification-box.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-10px);
 }
 
 /* Responsive Design */

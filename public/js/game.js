@@ -130,6 +130,7 @@ class Game {
 
           // Check if player has enough gold
           if (this.gold < towerCost) {
+            this.showNotification(`Not enough gold! Need ${towerCost}, have ${this.gold}`);
             console.log(`Not enough gold to place tower. Need ${towerCost}, have ${this.gold}`);
             return;
           }
@@ -272,7 +273,8 @@ class Game {
     // Check if player has enough gold
     const towerCost = this.getTowerCost(type);
     if (this.gold < towerCost) {
-      // Not enough gold, show feedback
+      // Not enough gold, show notification
+      this.showNotification(`Not enough gold! Need ${towerCost}, have ${this.gold}`);
       console.log(`Not enough gold for ${type} tower. Need ${towerCost}, have ${this.gold}`);
       return;
     }
@@ -293,6 +295,23 @@ class Game {
   getTowerCost(type) {
     // Get cost from towerStats
     return towerStats[type]?.persistentCost || 50;
+  }
+
+  // Show notification
+  showNotification(message, duration = 3000) {
+    const notificationBox = document.getElementById('notification-box');
+    if (!notificationBox) return;
+
+    // Set the message
+    notificationBox.textContent = message;
+
+    // Show the notification
+    notificationBox.classList.add('show');
+
+    // Hide after duration
+    setTimeout(() => {
+      notificationBox.classList.remove('show');
+    }, duration);
   }
 
   // This method has been moved to the canvas click event handler
@@ -409,7 +428,6 @@ class Game {
 
     // Determine enemy type based on wave, difficulty, and randomness
     let enemyType = 'normal';
-    const rand = Math.random();
     const isFinalEnemy = this.enemiesSpawned === this.totalEnemiesInWave - 1;
 
     // Check if this is a boss wave and the final enemy of the wave
@@ -1045,7 +1063,7 @@ class Game {
 
       const towerCost = document.createElement('div');
       towerCost.className = 'tower-cost';
-      towerCost.textContent = towerData.cost || 100;
+      towerCost.textContent = towerData.persistentCost || towerData.cost || 100;
 
       towerOption.appendChild(towerIcon);
       towerOption.appendChild(towerName);

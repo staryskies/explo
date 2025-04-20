@@ -10,6 +10,7 @@
 <body>
   <div id="game-container">
     <canvas id="gameCanvas"></canvas>
+    <div id="notification-box"></div>
 
     <div id="stats">
       <div>Lives: <span id="lives">10</span></div>
@@ -25,12 +26,7 @@
           <button id="speedUp">Speed Up</button>
         </div>
 
-        <div class="control-group">
-          <label>
-            <input type="checkbox" id="showRange">
-            Show Tower Range
-          </label>
-        </div>
+
 
         <button id="openMapSelector">Change Map</button>
         <button id="showTutorial">Show Tutorial</button>
@@ -215,7 +211,6 @@
             <p>Additional controls:</p>
             <ul>
               <li><span class="tutorial-highlight">Speed Up</span>: Increases game speed</li>
-              <li><span class="tutorial-highlight">Show Tower Range</span>: Displays the attack range of towers</li>
               <li><span class="tutorial-highlight">Change Map</span>: Select a different map</li>
             </ul>
             <p>You're now ready to play! Good luck defending against the waves of enemies!</p>
