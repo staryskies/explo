@@ -84,6 +84,12 @@ app.use('/api/auth', authRoutes);
 app.use('/api/squads', squadRoutes);
 app.use('/api/player-data', playerDataRoutes);
 
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('API Error:', err);
+  res.status(500).send('A server error occurred. Please try again later.');
+});
+
 // Route for the game
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -302,6 +308,11 @@ io.on('connection', (socket) => {
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send('Something broke!');
+});
+
+// Handle favicon.ico requests
+app.get('/favicon.ico', (req, res) => {
+  res.status(204).end(); // No content response for favicon
 });
 
 // Handle 404 errors

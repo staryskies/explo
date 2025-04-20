@@ -1797,13 +1797,20 @@ function drawLargeTowerWithVariant(ctx, _towerType, towerData, _variantType, var
 }
 
 function generateUpgradeOptions() {
-  const upgradesContainer = document.getElementById('tower-upgrades-options');
+  try {
+    const upgradesContainer = document.getElementById('tower-upgrades-options');
 
-  // Clear existing options
-  upgradesContainer.innerHTML = '';
+    // Check if the element exists
+    if (!upgradesContainer) {
+      console.log('Tower upgrades container not found, skipping generation');
+      return;
+    }
 
-  // Add upgrade options for unlocked towers
-  playerData.unlockedTowers.forEach(towerType => {
+    // Clear existing options
+    upgradesContainer.innerHTML = '';
+
+    // Add upgrade options for unlocked towers
+    playerData.unlockedTowers.forEach(towerType => {
     // Get available variants
     const variants = Object.keys(playerData.variantPrices[towerType] || {});
 
@@ -2151,5 +2158,8 @@ function generateUpgradeOptions() {
     message.style.textAlign = 'center';
     message.style.gridColumn = '1 / -1';
     upgradesContainer.appendChild(message);
+  }
+  } catch (error) {
+    console.error('Error generating upgrade options:', error);
   }
 }

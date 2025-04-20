@@ -284,7 +284,14 @@ router.post('/guest', async (req, res) => {
     });
   } catch (error) {
     console.error('Guest creation error:', error);
-    res.status(500).json({ error: 'Server error' });
+    // Provide more detailed error message
+    let errorMessage = 'Server error';
+    if (error.code === 'P2002') {
+      errorMessage = 'Username already exists. Please try again.';
+    } else if (error.code === 'P1001') {
+      errorMessage = 'Database connection error. Please try again later.';
+    }
+    res.status(500).json({ error: errorMessage });
   }
 });
 
@@ -292,9 +299,9 @@ router.post('/guest', async (req, res) => {
 router.post('/logout', async (req, res) => {
   try {
     // Get token from cookies or authorization header
-    const token = req.cookies.token || 
+    const token = req.cookies.token ||
                  (req.headers.authorization && req.headers.authorization.split(' ')[1]);
-    
+
     if (token) {
       // Delete session from database
       await prisma.session.deleteMany({
@@ -304,7 +311,7 @@ router.post('/logout', async (req, res) => {
 
     // Clear cookie
     res.clearCookie('token');
-    
+
     res.json({ message: 'Logged out successfully' });
   } catch (error) {
     console.error('Logout error:', error);

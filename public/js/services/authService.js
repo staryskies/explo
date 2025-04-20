@@ -6,7 +6,7 @@ class AuthService {
     this.user = null;
     this.token = null;
     this.listeners = [];
-    
+
     // Try to load user from localStorage
     this.loadUserFromStorage();
   }
@@ -16,7 +16,7 @@ class AuthService {
     try {
       const userData = localStorage.getItem('towerDefenseUser');
       const tokenData = localStorage.getItem('towerDefenseToken');
-      
+
       if (userData && tokenData) {
         this.user = JSON.parse(userData);
         this.token = tokenData;
@@ -62,10 +62,27 @@ class AuthService {
         credentials: 'include'
       });
 
-      const data = await response.json();
-
+      // Check if response is ok before trying to parse JSON
       if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
+        let errorMessage = 'Registration failed';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (jsonError) {
+          const errorText = await response.text();
+          console.error('Server error response:', errorText);
+          errorMessage = 'Server error: ' + (errorText.substring(0, 100) || errorMessage);
+        }
+        throw new Error(errorMessage);
+      }
+
+      // Try to parse JSON response
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        console.error('JSON parse error:', jsonError);
+        throw new Error('Invalid server response. Please try again later.');
       }
 
       this.user = data.user;
@@ -92,10 +109,27 @@ class AuthService {
         credentials: 'include'
       });
 
-      const data = await response.json();
-
+      // Check if response is ok before trying to parse JSON
       if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
+        let errorMessage = 'Login failed';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (jsonError) {
+          const errorText = await response.text();
+          console.error('Server error response:', errorText);
+          errorMessage = 'Server error: ' + (errorText.substring(0, 100) || errorMessage);
+        }
+        throw new Error(errorMessage);
+      }
+
+      // Try to parse JSON response
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        console.error('JSON parse error:', jsonError);
+        throw new Error('Invalid server response. Please try again later.');
       }
 
       this.user = data.user;
@@ -121,10 +155,20 @@ class AuthService {
         credentials: 'include'
       });
 
-      const data = await response.json();
-
+      // Check if response is ok before trying to parse JSON
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create guest user');
+        const errorText = await response.text();
+        console.error('Server error response:', errorText);
+        throw new Error('Server error: ' + (errorText.substring(0, 100) || 'Failed to create guest user'));
+      }
+
+      // Try to parse JSON response
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        console.error('JSON parse error:', jsonError);
+        throw new Error('Invalid server response. Please try again later.');
       }
 
       this.user = data.user;
