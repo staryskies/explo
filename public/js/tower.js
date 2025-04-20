@@ -982,27 +982,7 @@ class Tower {
 
   // Draw the tower
   draw(ctx, showRange = false, currentTime = Date.now()) {
-    // Draw range indicator if requested
-    if (showRange) {
-      // Create a more futuristic range indicator with pulsing effect
-      const time = currentTime / 1000;
-      const pulseSize = Math.sin(time * 2) * 5;
-
-      // Outer glow
-      ctx.fillStyle = `${this.color}22`; // 13% opacity
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.range + pulseSize, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Inner circle
-      ctx.strokeStyle = `${this.color}88`; // 53% opacity
-      ctx.lineWidth = 2;
-      ctx.setLineDash([5, 5]); // Dashed line for futuristic look
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.range - 5, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.setLineDash([]); // Reset line dash
-    }
+    // Range indicators have been removed as requested
 
     // Draw 2D futuristic tower base (flat hexagonal)
     const baseSize = 20;

@@ -692,7 +692,7 @@ class Game {
     // Always draw towers regardless of game state
     if (this.towers && this.towers.length > 0) {
       this.towers.forEach(tower => {
-        tower.draw(this.ctx, this.showTowerRanges, currentTime);
+        tower.draw(this.ctx, false, currentTime); // Never show range circles
       });
     }
 
@@ -757,8 +757,7 @@ class Game {
     // Draw tower preview
     this.ctx.globalAlpha = 0.6;
 
-    // Draw range indicator
-    let range;
+    // Tower color for preview
     let color;
 
     // Check if there's a variant selected
@@ -782,55 +781,43 @@ class Game {
       railgun: '#0D47A1'
     };
 
-    // Get tower stats based on type
+    // Get tower color based on type
     switch (this.selectedTowerType) {
       case 'sniper':
-        range = 300;
         color = '#2196F3';
         break;
       case 'cannon':
-        range = 180;
         color = '#795548';
         break;
       case 'archer':
-        range = 220;
         color = '#8BC34A';
         break;
       case 'freeze':
-        range = 180;
         color = '#00BCD4';
         break;
       case 'mortar':
-        range = 250;
         color = '#607D8B';
         break;
       case 'laser':
-        range = 200;
         color = '#F44336';
         break;
       case 'tesla':
-        range = 180;
         color = '#FFC107';
         break;
       case 'flame':
-        range = 150;
         color = '#FF9800';
         break;
       case 'missile':
-        range = 250;
         color = '#9E9E9E';
         break;
       case 'poison':
-        range = 170;
         color = '#9C27B0';
         break;
       case 'vortex':
-        range = 190;
         color = '#009688';
         break;
       case 'basic':
       default:
-        range = 200;
         color = '#4CAF50';
         break;
     }
@@ -840,14 +827,7 @@ class Game {
       color = variantColors[variant];
     }
 
-    this.ctx.fillStyle = `${color}33`; // 20% opacity
-    this.ctx.beginPath();
-    this.ctx.arc(pixelPos.x, pixelPos.y, range, 0, Math.PI * 2);
-    this.ctx.fill();
-
-    this.ctx.strokeStyle = canPlace ? `${color}88` : '#F44336';
-    this.ctx.lineWidth = 2;
-    this.ctx.stroke();
+    // Range circle has been removed as requested
 
     // Draw tower base
     this.ctx.fillStyle = canPlace ? '#555' : '#F44336';
