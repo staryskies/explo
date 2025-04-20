@@ -362,10 +362,7 @@ if (process.env.DATABASE_URL) {
     database: url.pathname.split('/')[1],
     user: url.username,
     password: url.password,
-    ssl: {
-      rejectUnauthorized: false,
-      sslmode: 'require'
-    },
+    ssl: true,
     connectionTimeoutMillis: 10000 // 10 seconds
   };
 
@@ -395,6 +392,23 @@ async function startServer() {
         // Test the database connection with a simple query
         const result = await pool.query('SELECT NOW()');
         console.log('Database connection successful, current time:', result.rows[0].now);
+
+        // Initialize database if connected successfully
+        try {
+          console.log('Running database initialization...');
+          // Create schema
+          const createSchema = require('./scripts/create-schema');
+          await createSchema();
+          console.log('Schema creation completed');
+
+          // Initialize database
+          const initDb = require('./scripts/init-db');
+          await initDb();
+          console.log('Database initialization completed successfully');
+        } catch (initError) {
+          console.error('Database initialization failed:', initError);
+          console.log('Continuing server startup with existing database state...');
+        }
       } catch (dbError) {
         console.error('Database connection failed:', dbError);
         console.log('Starting server without database connection...');
@@ -403,34 +417,7 @@ async function startServer() {
       }
     }
 
-    // Check if database needs initialization
-    console.log('Checking if database needs initialization...');
-    if (!pool) {
-      console.error('Database connection not configured, skipping initialization');
-    } else {
-      try {
-        // Create schema first to ensure tables exist
-        const createSchema = require('./scripts/create-schema');
-        await createSchema();
-        console.log('Schema creation completed');
-
-        // Try to query the users table
-        const result = await pool.query("SELECT * FROM users LIMIT 1");
-        console.log('Database already initialized, found', result.rows.length, 'users');
-      } catch (error) {
-        // If there's an error, try to initialize the database
-        console.log('Database needs initialization, running init script...');
-        try {
-          const initDb = require('./scripts/init-db');
-          await initDb();
-          console.log('Database initialization completed successfully');
-        } catch (initError) {
-          console.error('Database initialization failed:', initError);
-          console.log('Starting server without database initialization...');
-          // Continue starting the server even if database initialization fails
-        }
-      }
-    }
+    // Database initialization is now handled in the connection check above
 
     // Start the server
     server.listen(PORT, HOST, () => {

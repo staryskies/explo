@@ -9,13 +9,11 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "build": "node scripts/test-db-connection.js && node scripts/create-schema.js && node scripts/init-db.js",
-    "postinstall": "node scripts/test-db-connection.js && node scripts/create-schema.js && node scripts/init-db.js",
+    "build": "node scripts/build.js",
+    "postinstall": "node scripts/build.js",
     "init-db": "node scripts/init-db.js",
     "create-schema": "node scripts/create-schema.js",
-    "test-db": "node scripts/test-db-connection.js",
-    "db:generate": "drizzle-kit generate:pg",
-    "db:push": "node scripts/db-push.js"
+    "test-db": "node scripts/test-db-connection.js"
   },
   "keywords": [
     "game",

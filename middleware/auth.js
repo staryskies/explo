@@ -14,10 +14,7 @@ if (process.env.DATABASE_URL) {
     database: url.pathname.split('/')[1],
     user: url.username,
     password: url.password,
-    ssl: {
-      rejectUnauthorized: false,
-      sslmode: 'require'
-    },
+    ssl: true,
     connectionTimeoutMillis: 10000 // 10 seconds
   };
 
