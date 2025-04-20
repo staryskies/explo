@@ -62,11 +62,11 @@ const gachaSystem = {
   // Tower drop rates
   dropRates: {
     tower: {
-      common: 0.70,    // 70%
+      common: 0.699,    // 69.9%
       rare: 0.20,      // 20%
       epic: 0.08,      // 8%
       legendary: 0.018, // 1.8%
-      mythic: 0.001,   // 0.1%
+      mythic: 0.002,   // 0.2%
       divine: 0.001    // 0.1%
     },
     variant: {
@@ -155,6 +155,19 @@ const gachaSystem = {
     if (towersOfTier.length === 0) {
       console.error(`No towers found for tier: ${tier}, falling back to common`);
       return this.rollTower(); // Try again
+    }
+
+    // Special case for divine tier - always return Archangel
+    if (tier === 'divine') {
+      const divineTower = 'archangel';
+
+      // Unlock the tower if not already unlocked
+      if (!playerData.unlockedTowers.includes(divineTower)) {
+        playerData.unlockedTowers.push(divineTower);
+        savePlayerData();
+      }
+
+      return divineTower;
     }
 
     // Randomly select one tower from the tier

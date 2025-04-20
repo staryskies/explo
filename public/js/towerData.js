@@ -198,6 +198,28 @@ const towerStats = {
     aoeRadius: 60, // Added area effect
     color: '#009688',
     tier: 'legendary'
+  },
+  archangel: {
+    name: "Archangel Tower",
+    description: "Divine tower that smites enemies with holy light and blesses nearby towers",
+    persistentCost: 600,
+    ability: "Divine Judgment",
+    range: 300, // Excellent range
+    damage: 100, // High base damage
+    fireRate: 2.0, // Fast fire rate
+    projectileSpeed: 30, // Very fast projectiles
+    canTargetFlying: true,
+    pierceCount: 3, // Pierces through multiple enemies
+    critChance: 0.3, // High crit chance
+    critMultiplier: 3.0, // High crit multiplier
+    aoeRadius: 50, // Area damage
+    chainCount: 3, // Can chain to nearby enemies
+    chainRange: 100, // Good chain range
+    buffRadius: 150, // Radius for buffing nearby towers
+    buffDamage: 0.2, // 20% damage buff to nearby towers
+    buffRange: 0.1, // 10% range buff to nearby towers
+    color: '#FFEB3B', // Bright yellow/gold
+    tier: 'divine'
   }
 };
 
@@ -500,6 +522,30 @@ const towerUpgrades = {
         { level: 2, cost: 650, damagePerSecond: 20, slowFactor: 0.2, description: "20 DPS, 20% slow effect" },
         { level: 3, cost: 1300, damagePerSecond: 30, slowFactor: 0.3, description: "30 DPS, 30% slow effect" },
         { level: 4, cost: 2600, damagePerSecond: 50, slowFactor: 0.5, description: "50 DPS, 50% slow effect" }
+      ]
+    }
+  },
+  archangel: {
+    // Path A: Divine Wrath
+    pathA: {
+      name: "Divine Wrath",
+      description: "Enhances the tower's offensive capabilities",
+      upgrades: [
+        { level: 1, cost: 350, damageBonus: 50, critChanceBonus: 0.1, description: "+50 damage, +10% crit chance" },
+        { level: 2, cost: 700, damageBonus: 100, critChanceBonus: 0.15, description: "+100 damage, +15% crit chance" },
+        { level: 3, cost: 1400, damageBonus: 200, critChanceBonus: 0.2, description: "+200 damage, +20% crit chance" },
+        { level: 4, cost: 2800, damageBonus: 400, critChanceBonus: 0.3, description: "+400 damage, +30% crit chance" }
+      ]
+    },
+    // Path B: Blessing Aura
+    pathB: {
+      name: "Blessing Aura",
+      description: "Enhances the tower's support capabilities",
+      upgrades: [
+        { level: 1, cost: 350, buffRadiusBonus: 50, buffDamageBonus: 0.1, description: "+50 buff radius, +10% damage buff" },
+        { level: 2, cost: 700, buffRadiusBonus: 75, buffDamageBonus: 0.15, description: "+75 buff radius, +15% damage buff" },
+        { level: 3, cost: 1400, buffRadiusBonus: 100, buffDamageBonus: 0.2, description: "+100 buff radius, +20% damage buff" },
+        { level: 4, cost: 2800, buffRadiusBonus: 150, buffDamageBonus: 0.3, description: "+150 buff radius, +30% damage buff" }
       ]
     }
   }

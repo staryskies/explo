@@ -47,7 +47,8 @@ const playerData = {
     flame: [],
     missile: [],
     poison: [],
-    vortex: []
+    vortex: [],
+    archangel: []
   },
 
   // Towers that require completing specific difficulties
@@ -71,7 +72,8 @@ const playerData = {
     flame: [],
     missile: [],
     poison: [],
-    vortex: []
+    vortex: [],
+    archangel: []
   },
 
   // Tower prices in silver
@@ -87,7 +89,8 @@ const playerData = {
     flame: 4000,
     missile: 4500,
     poison: 5000,
-    vortex: 5500
+    vortex: 5500,
+    archangel: 600 // Divine tier tower with special price
   },
 
   // Tower variant prices in silver
@@ -168,7 +171,8 @@ const playerData = {
     flame: null,
     missile: null,
     poison: null,
-    vortex: null
+    vortex: null,
+    archangel: null
   }
 };
 

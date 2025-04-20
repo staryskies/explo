@@ -1489,6 +1489,11 @@ h1 {
   box-shadow: 0 0 15px rgba(156, 39, 176, 0.5);
 }
 
+.inventory-item.divine {
+  border-color: #FFEB3B;
+  box-shadow: 0 0 20px rgba(255, 235, 59, 0.7);
+}
+
 .inventory-item.locked {
   border-color: #aaa;
   opacity: 0.7;
@@ -1568,6 +1573,13 @@ h1 {
 .inventory-item-tier.mythic {
   background: rgba(156, 39, 176, 0.2);
   color: #9C27B0;
+}
+
+.inventory-item-tier.divine {
+  background: rgba(255, 235, 59, 0.2);
+  color: #FFD700;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.7);
+  font-weight: bold;
 }
 
 .inventory-item-tier.locked {

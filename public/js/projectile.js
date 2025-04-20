@@ -96,6 +96,14 @@ class Projectile {
         this.speed *= 1.8; // Slower
         this.aoeRadius = 40; // Large area effect
         break;
+      case 'divine':
+        this.size = 3;
+        this.color = '#FFEB3B'; // Bright yellow/gold
+        this.trailLength = 10; // Long trail
+        this.speed *= 5.0; // Very fast
+        this.pierceCount = 3; // Pierce through multiple enemies
+        this.aoeRadius = 30; // Area effect
+        break;
       case 'vortex':
         this.size = 2;
         this.color = '#1abc9c'; // Teal
@@ -427,6 +435,9 @@ class Projectile {
         break;
       case 'poisonCloud':
         this.drawPoisonCloudProjectile(ctx);
+        break;
+      case 'divine':
+        this.drawDivineProjectile(ctx);
         break;
       case 'vortex':
         this.drawVortexProjectile(ctx);
@@ -1008,6 +1019,114 @@ class Projectile {
     ctx.beginPath();
     ctx.arc(this.x, this.y, cloudSize * 0.5, 0, Math.PI * 2);
     ctx.fill();
+  }
+
+  drawDivineProjectile(ctx) {
+    // Draw divine projectile with holy light effects
+    const time = Date.now() / 100;
+
+    // Draw trail
+    if (this.trailLength > 0) {
+      // Create gradient for trail
+      const trailGradient = ctx.createLinearGradient(
+        this.x - Math.cos(this.angle) * this.trailLength,
+        this.y - Math.sin(this.angle) * this.trailLength,
+        this.x,
+        this.y
+      );
+
+      trailGradient.addColorStop(0, 'rgba(255, 255, 255, 0)');
+      trailGradient.addColorStop(0.5, 'rgba(255, 235, 59, 0.3)');
+      trailGradient.addColorStop(1, 'rgba(255, 235, 59, 0.7)');
+
+      ctx.strokeStyle = trailGradient;
+      ctx.lineWidth = this.size * 2;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(
+        this.x - Math.cos(this.angle) * this.trailLength,
+        this.y - Math.sin(this.angle) * this.trailLength
+      );
+      ctx.lineTo(this.x, this.y);
+      ctx.stroke();
+    }
+
+    // Draw area effect indicator if applicable
+    if (this.aoeRadius) {
+      const pulse = Math.sin(time * 0.1) * 0.2 + 0.8;
+
+      ctx.globalAlpha = 0.2 * pulse;
+      ctx.fillStyle = '#FFEB3B';
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.aoeRadius * pulse, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Draw main projectile
+    ctx.globalAlpha = 1.0;
+
+    // Draw outer glow
+    const glowSize = this.size * 2 * (1 + 0.2 * Math.sin(time * 0.2));
+    const glowGradient = ctx.createRadialGradient(
+      this.x, this.y, 0,
+      this.x, this.y, glowSize
+    );
+
+    glowGradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+    glowGradient.addColorStop(0.5, 'rgba(255, 235, 59, 0.5)');
+    glowGradient.addColorStop(1, 'rgba(255, 235, 59, 0)');
+
+    ctx.fillStyle = glowGradient;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, glowSize, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw core
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw light rays
+    ctx.strokeStyle = '#FFEB3B';
+    ctx.lineWidth = 1;
+
+    for (let i = 0; i < 8; i++) {
+      const angle = this.angle + (Math.PI * 2 / 8) * i + time * 0.01;
+      const length = this.size * 3 * (1 + 0.3 * Math.sin(time * 0.1 + i));
+
+      ctx.globalAlpha = 0.7 * (0.5 + 0.5 * Math.sin(time * 0.1 + i));
+      ctx.beginPath();
+      ctx.moveTo(this.x, this.y);
+      ctx.lineTo(
+        this.x + Math.cos(angle) * length,
+        this.y + Math.sin(angle) * length
+      );
+      ctx.stroke();
+    }
+
+    // Draw small particles
+    ctx.fillStyle = '#FFFFFF';
+
+    for (let i = 0; i < 3; i++) {
+      const angle = this.angle + Math.PI * 2 * Math.random();
+      const distance = this.size * 2 * Math.random();
+      const particleSize = this.size * 0.5 * Math.random();
+
+      ctx.globalAlpha = 0.8 * Math.random();
+      ctx.beginPath();
+      ctx.arc(
+        this.x + Math.cos(angle) * distance,
+        this.y + Math.sin(angle) * distance,
+        particleSize,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+    }
+
+    // Reset alpha
+    ctx.globalAlpha = 1.0;
   }
 
   drawVortexProjectile(ctx) {

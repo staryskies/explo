@@ -116,6 +116,21 @@ const towerVariants = {
     visualEffect: "golden",
     color: "#FFD700"
   },
+
+  // Divine tier variants (divine tier - 0.1%)
+  divine: {
+    name: "Divine",
+    description: "Blessed by celestial light, this tower radiates pure divine energy",
+    tier: "divine",
+    bonusMultiplier: 3.0, // 300% bonus
+    rangeBonus: 40,
+    aoeRadius: 40,
+    pierceCount: 2,
+    critChance: 0.2,
+    critMultiplier: 2.5,
+    visualEffect: "divine",
+    color: "#FFEB3B"
+  },
   rainbow: {
     name: "Rainbow",
     description: "Infused with all elements, applies random effects",

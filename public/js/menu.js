@@ -828,18 +828,18 @@ function generateTowersInventory() {
   // Clear existing content
   towersInventory.innerHTML = '';
 
-  // Add all towers (both unlocked and locked)
-  Object.keys(towerStats).forEach(towerType => {
-    const isUnlocked = playerData.unlockedTowers.includes(towerType);
+  // Add only unlocked towers
+  playerData.unlockedTowers.forEach(towerType => {
     const towerData = towerStats[towerType];
+    if (!towerData) return; // Skip if tower data doesn't exist
 
     // Create inventory item
     const inventoryItem = document.createElement('div');
-    inventoryItem.className = `inventory-item ${isUnlocked ? towerData.tier : 'locked'}`;
+    inventoryItem.className = `inventory-item ${towerData.tier}`;
 
     // Create tower image container
     const imageContainer = document.createElement('div');
-    imageContainer.className = `inventory-item-image ${isUnlocked ? towerData.tier : 'locked'}`;
+    imageContainer.className = `inventory-item-image ${towerData.tier}`;
 
     // Create canvas for tower image
     const towerCanvas = document.createElement('canvas');
@@ -848,13 +848,7 @@ function generateTowersInventory() {
     const ctx = towerCanvas.getContext('2d');
 
     // Draw tower
-    if (isUnlocked) {
-      // Draw unlocked tower
-      drawTower(ctx, towerType, towerData);
-    } else {
-      // Draw locked tower silhouette
-      drawLockedTower(ctx);
-    }
+    drawTower(ctx, towerType, towerData);
 
     imageContainer.appendChild(towerCanvas);
 
@@ -865,13 +859,13 @@ function generateTowersInventory() {
 
     // Create tower tier
     const towerTier = document.createElement('div');
-    towerTier.className = `inventory-item-tier ${isUnlocked ? towerData.tier : 'locked'}`;
-    towerTier.textContent = isUnlocked ? capitalizeFirstLetter(towerData.tier) : 'Locked';
+    towerTier.className = `inventory-item-tier ${towerData.tier}`;
+    towerTier.textContent = capitalizeFirstLetter(towerData.tier);
 
     // Create tower description
     const towerDesc = document.createElement('div');
     towerDesc.className = 'inventory-item-description';
-    towerDesc.textContent = isUnlocked ? towerData.description : 'Unlock this tower through gacha or shop';
+    towerDesc.textContent = towerData.description || '';
 
     // Add elements to inventory item
     inventoryItem.appendChild(imageContainer);
@@ -900,18 +894,27 @@ function updateVariantsInventory() {
   // Get unlocked variants for this tower
   const unlockedVariants = playerData.towerVariants[selectedTower] || [];
 
-  // Add all variants (both unlocked and locked)
-  Object.keys(towerVariants).forEach(variantType => {
-    const isUnlocked = unlockedVariants.includes(variantType);
+  // If no variants are unlocked, show a message
+  if (unlockedVariants.length === 0) {
+    const noVariantsMessage = document.createElement('div');
+    noVariantsMessage.className = 'no-variants-message';
+    noVariantsMessage.textContent = 'No variants unlocked for this tower yet. Use the gacha to unlock variants.';
+    variantsInventory.appendChild(noVariantsMessage);
+    return;
+  }
+
+  // Add only unlocked variants
+  unlockedVariants.forEach(variantType => {
     const variantData = towerVariants[variantType];
+    if (!variantData) return; // Skip if variant data doesn't exist
 
     // Create inventory item
     const inventoryItem = document.createElement('div');
-    inventoryItem.className = `inventory-item ${isUnlocked ? variantData.tier : 'locked'}`;
+    inventoryItem.className = `inventory-item ${variantData.tier}`;
 
     // Create variant image container
     const imageContainer = document.createElement('div');
-    imageContainer.className = `inventory-item-image ${isUnlocked ? variantData.tier : 'locked'}`;
+    imageContainer.className = `inventory-item-image ${variantData.tier}`;
 
     // Create canvas for variant image
     const variantCanvas = document.createElement('canvas');
@@ -920,13 +923,7 @@ function updateVariantsInventory() {
     const ctx = variantCanvas.getContext('2d');
 
     // Draw variant
-    if (isUnlocked) {
-      // Draw unlocked variant
-      drawTowerWithVariant(ctx, selectedTower, towerStats[selectedTower], variantType, variantData);
-    } else {
-      // Draw locked variant silhouette
-      drawLockedVariant(ctx);
-    }
+    drawTowerWithVariant(ctx, selectedTower, towerStats[selectedTower], variantType, variantData);
 
     imageContainer.appendChild(variantCanvas);
 
@@ -937,13 +934,13 @@ function updateVariantsInventory() {
 
     // Create variant tier
     const variantTier = document.createElement('div');
-    variantTier.className = `inventory-item-tier ${isUnlocked ? variantData.tier : 'locked'}`;
-    variantTier.textContent = isUnlocked ? capitalizeFirstLetter(variantData.tier) : 'Locked';
+    variantTier.className = `inventory-item-tier ${variantData.tier}`;
+    variantTier.textContent = capitalizeFirstLetter(variantData.tier);
 
     // Create variant description
     const variantDesc = document.createElement('div');
     variantDesc.className = 'inventory-item-description';
-    variantDesc.textContent = isUnlocked ? variantData.description : 'Unlock this variant through gacha';
+    variantDesc.textContent = variantData.description || '';
 
     // Add elements to inventory item
     inventoryItem.appendChild(imageContainer);

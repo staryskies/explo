@@ -139,6 +139,10 @@
             <div class="drop-rate-chart">
               <h3>Tower Drop Rates</h3>
               <div class="rate-table">
+                <div class="rate-row divine">
+                  <span class="rate-tier">Divine</span>
+                  <span class="rate-value">0.1%</span>
+                </div>
                 <div class="rate-row mythic">
                   <span class="rate-tier">Mythic</span>
                   <span class="rate-value">0.2%</span>
@@ -157,7 +161,7 @@
                 </div>
                 <div class="rate-row common">
                   <span class="rate-tier">Common</span>
-                  <span class="rate-value">70%</span>
+                  <span class="rate-value">69.9%</span>
                 </div>
               </div>
             </div>
@@ -166,6 +170,13 @@
               <h3>Pity System</h3>
               <p>Guaranteed drops after:</p>
               <div class="pity-info">
+                <div class="pity-row divine">
+                  <span class="pity-tier">Divine:</span>
+                  <span class="pity-count">1000 rolls</span>
+                  <div class="pity-bar">
+                    <div id="tower-divine-pity" class="pity-progress" style="width: 0%"></div>
+                  </div>
+                </div>
                 <div class="pity-row mythic">
                   <span class="pity-tier">Mythic:</span>
                   <span class="pity-count">500 rolls</span>
@@ -243,6 +254,10 @@
             <div class="drop-rate-chart">
               <h3>Variant Drop Rates</h3>
               <div class="rate-table">
+                <div class="rate-row divine">
+                  <span class="rate-tier">Divine</span>
+                  <span class="rate-value">0.1%</span>
+                </div>
                 <div class="rate-row legendary">
                   <span class="rate-tier">Legendary</span>
                   <span class="rate-value">2%</span>
@@ -257,7 +272,7 @@
                 </div>
                 <div class="rate-row common">
                   <span class="rate-tier">Common</span>
-                  <span class="rate-value">65%</span>
+                  <span class="rate-value">64.9%</span>
                 </div>
               </div>
             </div>
@@ -266,6 +281,13 @@
               <h3>Pity System</h3>
               <p>Guaranteed drops after:</p>
               <div class="pity-info">
+                <div class="pity-row divine">
+                  <span class="pity-tier">Divine:</span>
+                  <span class="pity-count">1000 rolls</span>
+                  <div class="pity-bar">
+                    <div id="variant-divine-pity" class="pity-progress" style="width: 0%"></div>
+                  </div>
+                </div>
                 <div class="pity-row legendary">
                   <span class="pity-tier">Legendary:</span>
                   <span class="pity-count">100 rolls</span>
@@ -349,6 +371,7 @@
   <script src="js/towerData.js"></script>
   <script src="js/towerVariants.js"></script>
   <script src="js/playerData.js"></script>
+  <script src="js/towerHelper.js"></script>
   <script src="js/gacha.js"></script>
   <script src="js/menu.js"></script>
 </body>

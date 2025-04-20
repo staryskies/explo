@@ -551,10 +551,8 @@ class Game {
 
     // Update towers and find targets
     this.towers.forEach(tower => {
-      const target = tower.findTarget(this.enemies, currentTime);
-      if (target) {
-        tower.shoot(currentTime, this.projectiles);
-      }
+      // Pass the towers array to the update method for tower interactions (like Archangel buffs)
+      tower.update(currentTime, this.enemies, this.projectiles, this.towers);
     });
 
     // Update projectiles

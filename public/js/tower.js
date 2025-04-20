@@ -122,6 +122,12 @@ class Tower {
         this.damagePerSecond = 0;
         this.vortexSlowFactor = 0;
         break;
+      case 'archangel':
+        this.buffedTowers = [];
+        this.lastBuffTime = 0;
+        this.buffInterval = 1000; // Apply buffs every second
+        this.projectileType = 'divine';
+        break;
       case 'cannon':
       case 'mortar':
         this.stunChance = 0;
@@ -687,6 +693,40 @@ class Tower {
 
       // Handle special tower abilities based on tower type
       switch (this.type) {
+        case 'archangel':
+          // Archangel shoots divine projectiles
+          const divineProjectile = new Projectile(
+            this.x,
+            this.y,
+            this.angle,
+            this.projectileSpeed,
+            this.damage,
+            'divine', // Use divine projectile type
+            this.target,
+            this.type
+          );
+
+          // Add pierce property
+          if (this.pierceCount) {
+            divineProjectile.pierceCount = this.pierceCount;
+            divineProjectile.pierceRemaining = this.pierceCount;
+          }
+
+          // Add area effect
+          if (this.aoeRadius) {
+            divineProjectile.aoeRadius = this.aoeRadius;
+          }
+
+          // Add chain effect
+          if (this.chainCount && this.chainRange) {
+            divineProjectile.chainCount = this.chainCount;
+            divineProjectile.chainRange = this.chainRange;
+            divineProjectile.chainRemaining = this.chainCount;
+          }
+
+          projectiles.push(divineProjectile);
+          break;
+
         case 'archer':
           // Archer shoots multiple arrows based on upgrades
           const arrowCount = 1 + (this.extraShots || 0);
@@ -1975,6 +2015,149 @@ class Tower {
         }
         break;
 
+      case 'archangel':
+        // Archangel tower with divine effects
+        // Base tower body with enhanced design
+        const archangelGradient = ctx.createLinearGradient(-8, -25, 8, 0);
+        archangelGradient.addColorStop(0, '#FFEB3B'); // Yellow
+        archangelGradient.addColorStop(1, '#FFC107'); // Amber
+
+        ctx.fillStyle = archangelGradient;
+
+        // Draw archangel tower base
+        ctx.beginPath();
+        ctx.moveTo(-12, -5);
+        ctx.lineTo(-10, -25);
+        ctx.lineTo(10, -25);
+        ctx.lineTo(12, -5);
+        ctx.closePath();
+        ctx.fill();
+
+        // Draw wings
+        ctx.fillStyle = '#FFFFFF';
+
+        // Left wing
+        ctx.beginPath();
+        ctx.moveTo(-5, -25);
+        ctx.quadraticCurveTo(-20, -35, -25, -15);
+        ctx.quadraticCurveTo(-15, -20, -10, -15);
+        ctx.closePath();
+        ctx.fill();
+
+        // Right wing
+        ctx.beginPath();
+        ctx.moveTo(5, -25);
+        ctx.quadraticCurveTo(20, -35, 25, -15);
+        ctx.quadraticCurveTo(15, -20, 10, -15);
+        ctx.closePath();
+        ctx.fill();
+
+        // Draw halo
+        ctx.strokeStyle = '#FFD700';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, -35, 8, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Add glow effect
+        const timeInSec = currentTime / 1000;
+        const glowIntensity = 0.3 + Math.sin(timeInSec * 2) * 0.2;
+
+        ctx.fillStyle = '#FFEB3B';
+        ctx.globalAlpha = glowIntensity;
+        ctx.beginPath();
+        ctx.arc(0, -25, 15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+
+        // Draw divine light rays
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 1;
+
+        for (let i = 0; i < 8; i++) {
+          const angle = Math.PI * 2 * (i / 8) + timeInSec % (Math.PI * 2);
+          const length = 20 + Math.sin(timeInSec * 3 + i) * 5;
+
+          ctx.beginPath();
+          ctx.moveTo(0, -25);
+          ctx.lineTo(
+            Math.cos(angle) * length,
+            -25 + Math.sin(angle) * length
+          );
+          ctx.stroke();
+        }
+
+        // Path A: Divine Wrath - More offensive appearance
+        if (hasPathAUpgrades) {
+          // Enhanced divine appearance
+          ctx.fillStyle = '#FFD700'; // Gold
+
+          // Draw enhanced wings
+          // Left wing
+          ctx.beginPath();
+          ctx.moveTo(-5, -25);
+          ctx.quadraticCurveTo(-25, -40, -30, -15);
+          ctx.quadraticCurveTo(-20, -20, -10, -15);
+          ctx.closePath();
+          ctx.fill();
+
+          // Right wing
+          ctx.beginPath();
+          ctx.moveTo(5, -25);
+          ctx.quadraticCurveTo(25, -40, 30, -15);
+          ctx.quadraticCurveTo(20, -20, 10, -15);
+          ctx.closePath();
+          ctx.fill();
+
+          // Draw divine sword
+          ctx.fillStyle = '#FFFFFF';
+          ctx.beginPath();
+          ctx.moveTo(0, -40);
+          ctx.lineTo(-3, -25);
+          ctx.lineTo(0, -10);
+          ctx.lineTo(3, -25);
+          ctx.closePath();
+          ctx.fill();
+
+          // Add sword glow
+          ctx.strokeStyle = '#FFD700';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+
+        // Path B: Blessing Aura - More supportive appearance
+        if (hasPathBUpgrades) {
+          // Enhanced supportive appearance
+          ctx.fillStyle = '#E3F2FD'; // Light blue
+
+          // Draw aura circle
+          ctx.globalAlpha = 0.3;
+          ctx.beginPath();
+          ctx.arc(0, -15, 20 + this.pathBLevel * 5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1.0;
+
+          // Draw blessing symbols
+          ctx.strokeStyle = '#2196F3';
+          ctx.lineWidth = 1;
+
+          for (let i = 0; i < this.pathBLevel; i++) {
+            const angle = Math.PI * 2 * (i / this.pathBLevel) + timeInSec % (Math.PI * 2);
+            const distance = 15;
+            const x = Math.cos(angle) * distance;
+            const y = -15 + Math.sin(angle) * distance;
+
+            // Draw small cross
+            ctx.beginPath();
+            ctx.moveTo(x - 3, y);
+            ctx.lineTo(x + 3, y);
+            ctx.moveTo(x, y - 3);
+            ctx.lineTo(x, y + 3);
+            ctx.stroke();
+          }
+        }
+        break;
+
       case 'tesla':
         // Tesla tower with electricity effects
         // Base tower body with enhanced design
@@ -2244,10 +2427,101 @@ class Tower {
       case 'missile': typeIndicator = 'M'; break;
       case 'poison': typeIndicator = 'P'; break;
       case 'vortex': typeIndicator = 'V'; break;
+      case 'archangel': typeIndicator = 'AA'; break;
       case 'basic': typeIndicator = 'B'; break;
       default: typeIndicator = this.type.charAt(0).toUpperCase(); break;
     }
 
     ctx.fillText(typeIndicator, this.x, this.y);
+  }
+
+  // Update the tower state
+  update(currentTime, enemies, projectiles, towers = []) {
+    // Find a target if we don't have one or if it's dead
+    if (!this.target || !this.target.alive) {
+      this.findTarget(enemies, currentTime);
+    }
+
+    // Check if target is still in range
+    if (this.target && this.target.alive) {
+      const dist = distance(this.x, this.y, this.target.x, this.target.y);
+      if (dist > this.range) {
+        this.target = null;
+        this.findTarget(enemies, currentTime);
+      }
+    }
+
+    // Special handling for Archangel tower - apply buffs to nearby towers
+    if (this.type === 'archangel' && currentTime - this.lastBuffTime >= this.buffInterval) {
+      this.applyBuffsToNearbyTowers(towers);
+      this.lastBuffTime = currentTime;
+    }
+
+    // Shoot if we have a target and cooldown has passed
+    if (this.target && this.target.alive && currentTime - this.lastShot >= this.cooldown) {
+      this.shoot(currentTime, projectiles);
+      this.lastShot = currentTime;
+
+      // Start recoil animation
+      this.recoilAnimation = 1;
+    }
+
+    // Update recoil animation
+    if (this.recoilAnimation > 0) {
+      this.recoilAnimation -= 0.1;
+      if (this.recoilAnimation < 0) this.recoilAnimation = 0;
+    }
+
+    // Update animation time
+    this.animationTime = currentTime;
+  }
+
+  // Apply buffs to nearby towers (Archangel special ability)
+  applyBuffsToNearbyTowers(towers) {
+    if (this.type !== 'archangel' || !this.buffRadius) return;
+
+    // Reset buffed towers list
+    this.buffedTowers = [];
+
+    // Find towers within buff radius
+    for (const tower of towers) {
+      // Don't buff self
+      if (tower === this) continue;
+
+      const dist = distance(this.x, this.y, tower.x, tower.y);
+      if (dist <= this.buffRadius) {
+        // Apply buffs
+        this.buffTower(tower);
+        this.buffedTowers.push(tower);
+      }
+    }
+  }
+
+  // Apply buff to a specific tower
+  buffTower(tower) {
+    // Apply damage buff
+    if (this.buffDamage) {
+      // Store original damage if not already stored
+      if (!tower.originalDamage) {
+        tower.originalDamage = tower.damage;
+      }
+
+      // Apply buff
+      tower.damage = Math.floor(tower.originalDamage * (1 + this.buffDamage));
+    }
+
+    // Apply range buff
+    if (this.buffRange) {
+      // Store original range if not already stored
+      if (!tower.originalRange) {
+        tower.originalRange = tower.range;
+      }
+
+      // Apply buff
+      tower.range = Math.floor(tower.originalRange * (1 + this.buffRange));
+    }
+
+    // Mark tower as buffed
+    tower.buffed = true;
   }
 }
