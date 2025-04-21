@@ -28,35 +28,58 @@ class PlayerDataService {
   async loadPlayerData() {
     try {
       const token = window.authService.getToken();
-      if (!token) return null;
-
-      const response = await fetch('/api/player-data', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          this.playerData = null;
-          this.notifyListeners();
-          return null;
-        }
-        throw new Error('Failed to load player data');
-      }
+      if (!token) return this.createDefaultPlayerData();
 
       try {
-        const data = await response.json();
-        this.playerData = data;
-        this.notifyListeners();
-        return data;
-      } catch (jsonError) {
-        console.error('Error parsing player data JSON:', jsonError);
-        // If we can't parse the JSON, create default player data
-        const defaultData = {
+        const response = await fetch('/api/player-data', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            this.playerData = this.createDefaultPlayerData();
+            this.notifyListeners();
+            return this.playerData;
+          }
+          console.warn('Server returned error:', response.status);
+          return this.createDefaultPlayerData();
+        }
+
+        // Check if response is empty
+        const text = await response.text();
+        if (!text || text.trim() === '') {
+          console.warn('Empty response from server');
+          return this.createDefaultPlayerData();
+        }
+
+        // Try to parse JSON
+        try {
+          const data = JSON.parse(text);
+          this.playerData = data;
+          this.notifyListeners();
+          return data;
+        } catch (jsonError) {
+          console.error('Error parsing player data JSON:', jsonError);
+          return this.createDefaultPlayerData();
+        }
+      } catch (fetchError) {
+        console.error('Fetch error:', fetchError);
+        return this.createDefaultPlayerData();
+      }
+    } catch (error) {
+      console.error('Load player data error:', error);
+      return this.createDefaultPlayerData();
+    }
+  }
+
+  // Create default player data
+  createDefaultPlayerData() {
+    const defaultData = {
           silver: 1000,
           highScore: 0,
           gamesPlayed: 0,
@@ -96,14 +119,9 @@ class PlayerDataService {
             archangel: []
           }
         };
-        this.playerData = defaultData;
-        this.notifyListeners();
-        return defaultData;
-      }
-    } catch (error) {
-      console.error('Load player data error:', error);
-      return null;
-    }
+    this.playerData = defaultData;
+    this.notifyListeners();
+    return defaultData;
   }
 
   // Save player data to server

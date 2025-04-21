@@ -15,16 +15,15 @@ const { authenticate } = require('./middleware/auth');
 const authRoutes = require('./routes/auth');
 const squadRoutes = require('./routes/squads');
 const playerDataRoutes = require('./routes/playerData');
+const messagesRoutes = require('./routes/messages');
 
 // Initialize Express app
 const app = express();
 const server = http.createServer(app);
 
-// Enable CORS with broader configuration for Vercel
+// Enable CORS with more permissive configuration
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production'
-    ? ['https://tower-defense-game.vercel.app', 'https://explo-rho.vercel.app', 'https://*.vercel.app']
-    : ['http://localhost:3000', 'http://localhost:5173'],
+  origin: '*', // Allow all origins
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -85,6 +84,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/squads', squadRoutes);
 app.use('/api/player-data', playerDataRoutes);
+app.use('/api/messages', messagesRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {
@@ -106,10 +106,10 @@ app.get('/', (req, res) => {
 // Initialize Socket.IO with configuration for serverless environments
 const io = new Server(server, {
   cors: {
-    origin: process.env.NODE_ENV === 'production'
-      ? ['https://tower-defense-game.vercel.app', 'https://explo-rho.vercel.app']
-      : ['http://localhost:3000', 'http://localhost:5173'],
-    credentials: true
+    origin: '*', // Allow all origins
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
   },
   // Add configuration for serverless environments
   transports: ['polling', 'websocket'],
@@ -124,79 +124,67 @@ const io = new Server(server, {
   }
 });
 
-// Socket.IO middleware for authentication
+// Socket.IO middleware for authentication - simplified for reliability
 io.use(async (socket, next) => {
   try {
-    // Allow anonymous connections for Vercel health checks
-    if (socket.handshake.headers['user-agent'] &&
-        socket.handshake.headers['user-agent'].includes('vercel')) {
-      console.log('Vercel health check connection detected, allowing without authentication');
-      socket.user = { id: 'vercel-health-check', username: 'vercel-health-check', isGuest: true };
-      return next();
-    }
+    // Always create a user object to avoid undefined errors
+    let userId = `guest-${Date.now()}`;
+    let username = 'Guest';
+    let isGuest = true;
 
-    // Get token from auth or query parameters (for better compatibility)
-    const token = socket.handshake.auth.token || socket.handshake.query.token;
+    // Try to get token from various sources
+    const token = socket.handshake.auth?.token ||
+                 socket.handshake.query?.token ||
+                 socket.handshake.headers?.authorization?.split(' ')[1];
 
-    if (!token) {
-      console.log('No authentication token provided');
-      // Create a guest user for connections without a token
-      socket.user = { id: `guest-${Date.now()}`, username: 'Guest', isGuest: true };
-      return next();
-    }
+    if (token) {
+      try {
+        // Try to verify the token
+        const jwt = require('jsonwebtoken');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret_for_dev');
 
-    // Verify token using JWT
-    const jwt = require('jsonwebtoken');
+        // Use decoded data even if database is unavailable
+        userId = decoded.userId || userId;
+        username = 'User';
+        isGuest = false;
 
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        // Try to get user data from database if available
+        if (pool) {
+          try {
+            const userResult = await pool.query(
+              'SELECT id, username, email, is_guest as "isGuest" FROM users WHERE id = $1 LIMIT 1',
+              [decoded.userId]
+            );
 
-      // Check if database is available
-      if (!pool) {
-        console.log('Database not available, using token data for authentication');
-        socket.user = {
-          id: decoded.userId,
-          username: 'User',
-          isGuest: false
-        };
-        return next();
+            if (userResult.rows.length > 0) {
+              const user = userResult.rows[0];
+              userId = user.id;
+              username = user.username;
+              isGuest = user.isGuest;
+            }
+          } catch (dbError) {
+            console.log('Database query failed, using token data:', dbError.message);
+          }
+        }
+      } catch (tokenError) {
+        console.log('Token verification failed, using guest account:', tokenError.message);
       }
-
-      // Find session in database
-      const sessionResult = await pool.query(
-        `SELECT s.*, u.id as user_id, u.username, u.email, u.is_guest as "isGuest"
-         FROM sessions s
-         JOIN users u ON s.user_id = u.id
-         WHERE s.token = $1`,
-        [token]
-      );
-
-      const session = sessionResult.rows[0];
-
-      // Check if session exists and is not expired
-      if (!session || new Date() > new Date(session.expires_at)) {
-        console.log('Invalid or expired session');
-        socket.user = { id: `guest-${Date.now()}`, username: 'Guest', isGuest: true };
-        return next();
-      }
-
-      // Set user in socket
-      socket.user = {
-        id: session.user_id,
-        username: session.username,
-        email: session.email,
-        isGuest: session.isGuest
-      };
-      next();
-    } catch (error) {
-      console.log('Token verification failed:', error.message);
-      // Create a guest user for invalid tokens
-      socket.user = { id: `guest-${Date.now()}`, username: 'Guest', isGuest: true };
-      return next();
+    } else {
+      console.log('No authentication token provided, using guest account');
     }
+
+    // Set user in socket - always have a valid user object
+    socket.user = {
+      id: userId,
+      username: username,
+      isGuest: isGuest
+    };
+
+    // Always allow connection
+    next();
   } catch (error) {
     console.error('Socket authentication error:', error);
-    // Create a guest user for any authentication errors
+    // Even on error, create a guest user and allow connection
     socket.user = { id: `guest-${Date.now()}`, username: 'Guest', isGuest: true };
     next();
   }

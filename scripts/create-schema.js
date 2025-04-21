@@ -97,6 +97,28 @@ async function createSchema() {
       );
     `);
 
+    // Create messages table
+    console.log('Creating messages table...');
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS messages (
+        id TEXT PRIMARY KEY,
+        type VARCHAR(10) NOT NULL,
+        content TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        username VARCHAR(255) NOT NULL,
+        squad_id TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        CONSTRAINT fk_user FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+        CONSTRAINT fk_squad FOREIGN KEY(squad_id) REFERENCES squads(id) ON DELETE CASCADE
+      );
+    `);
+
+    // Create index on messages
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_messages_type_created_at ON messages(type, created_at);
+      CREATE INDEX IF NOT EXISTS idx_messages_squad_created_at ON messages(squad_id, created_at);
+    `);
+
     console.log('Database schema created successfully');
   } catch (error) {
     console.error('Error creating database schema:', error);

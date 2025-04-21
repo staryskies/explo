@@ -40,12 +40,17 @@ class SquadService {
       auth: { token },
       query: { token }, // Add token to query for better compatibility
       reconnection: true,
-      reconnectionAttempts: 10,
+      reconnectionAttempts: Infinity, // Keep trying to reconnect
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       timeout: 20000,
       autoConnect: true,
-      transports: ['polling', 'websocket']
+      transports: ['polling', 'websocket'],
+      forceNew: false,
+      withCredentials: true,
+      extraHeaders: {
+        'Authorization': `Bearer ${token}`
+      }
     });
 
     // Handle connection events

@@ -6,92 +6,49 @@ class GlobalChat {
   constructor() {
     this.messages = [];
     this.listeners = [];
-    this.socket = null;
     this.isVisible = false;
     this.container = null;
     this.messageList = null;
     this.inputField = null;
     this.sendButton = null;
-    
-    // Initialize when auth service is ready
-    if (window.authService && window.authService.isLoggedIn()) {
-      this.initSocket();
-    }
-    
-    // Listen for auth state changes
-    if (window.authService) {
-      window.authService.addListener(user => {
-        if (user) {
-          this.initSocket();
-        } else {
-          this.disconnectSocket();
-        }
-      });
-    }
-    
+    this.connectionStatus = null;
+
     // Create UI elements
     this.createUI();
-  }
-  
-  // Initialize socket connection
-  initSocket() {
-    if (this.socket) {
-      this.disconnectSocket();
-    }
-    
-    const token = window.authService.getToken();
-    if (!token) return;
-    
-    // Use the same socket as squadService if available
-    if (window.squadService && window.squadService.socket) {
-      this.socket = window.squadService.socket;
-      this.setupSocketListeners();
-      return;
-    }
-    
-    // Create socket connection with auth token
-    this.socket = io({
-      auth: { token },
-      query: { token },
-      reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      timeout: 20000,
-      autoConnect: true,
-      transports: ['polling', 'websocket']
-    });
-    
-    this.setupSocketListeners();
-  }
-  
-  // Set up socket event listeners
-  setupSocketListeners() {
-    if (!this.socket) return;
-    
-    // Remove any existing listeners to prevent duplicates
-    this.socket.off('global-message');
-    
-    // Listen for global messages
-    this.socket.on('global-message', (message) => {
-      this.addMessage(message);
-    });
-  }
-  
-  // Disconnect socket
-  disconnectSocket() {
-    // Don't disconnect if it's shared with squadService
-    if (window.squadService && window.squadService.socket === this.socket) {
-      this.socket = null;
-      return;
-    }
-    
-    if (this.socket) {
-      this.socket.disconnect();
-      this.socket = null;
+
+    // Initialize messages from communication service
+    if (window.communicationService) {
+      // Load existing messages
+      this.messages = window.communicationService.getMessages('global');
+      this.updateMessageList();
+
+      // Listen for new messages
+      window.communicationService.addMessageListener((type, message) => {
+        if (type === 'global') {
+          this.addMessage(message);
+        }
+      });
+
+      // Listen for connection state changes
+      window.communicationService.addStateListener((state) => {
+        this.updateConnectionStatus(state);
+      });
     }
   }
-  
+
+  // Update connection status display
+  updateConnectionStatus(state) {
+    if (!this.connectionStatus) return;
+
+    if (state.connected) {
+      this.connectionStatus.textContent = `Connected (${state.method})`;
+      this.connectionStatus.style.color = '#4CAF50';
+    } else {
+      this.connectionStatus.textContent = 'Disconnected';
+      this.connectionStatus.style.color = '#f44336';
+    }
+  }
+
   // Create UI elements
   createUI() {
     // Create container
@@ -109,7 +66,7 @@ class GlobalChat {
     this.container.style.zIndex = '1000';
     this.container.style.display = 'flex';
     this.container.style.flexDirection = 'column';
-    
+
     // Create header
     const header = document.createElement('div');
     header.className = 'chat-header';
@@ -118,12 +75,12 @@ class GlobalChat {
     header.style.display = 'flex';
     header.style.justifyContent = 'space-between';
     header.style.alignItems = 'center';
-    
+
     const title = document.createElement('h3');
     title.textContent = 'Global Chat';
     title.style.margin = '0';
     title.style.color = '#fff';
-    
+
     const closeButton = document.createElement('button');
     closeButton.textContent = 'X';
     closeButton.style.background = 'none';
@@ -132,24 +89,34 @@ class GlobalChat {
     closeButton.style.cursor = 'pointer';
     closeButton.style.fontSize = '16px';
     closeButton.onclick = () => this.toggle();
-    
+
     header.appendChild(title);
     header.appendChild(closeButton);
-    
+
+    // Create connection status
+    this.connectionStatus = document.createElement('div');
+    this.connectionStatus.className = 'connection-status';
+    this.connectionStatus.textContent = 'Connecting...';
+    this.connectionStatus.style.fontSize = '0.8em';
+    this.connectionStatus.style.color = '#999';
+    this.connectionStatus.style.padding = '5px 10px';
+    this.connectionStatus.style.textAlign = 'center';
+    this.connectionStatus.style.borderBottom = '1px solid #333';
+
     // Create message list
     this.messageList = document.createElement('div');
     this.messageList.className = 'chat-messages';
     this.messageList.style.flex = '1';
     this.messageList.style.overflowY = 'auto';
     this.messageList.style.padding = '10px';
-    
+
     // Create input area
     const inputArea = document.createElement('div');
     inputArea.className = 'chat-input';
     inputArea.style.padding = '10px';
     inputArea.style.borderTop = '1px solid #ccc';
     inputArea.style.display = 'flex';
-    
+
     this.inputField = document.createElement('input');
     this.inputField.type = 'text';
     this.inputField.placeholder = 'Type a message...';
@@ -163,7 +130,7 @@ class GlobalChat {
         this.sendMessage();
       }
     });
-    
+
     this.sendButton = document.createElement('button');
     this.sendButton.textContent = 'Send';
     this.sendButton.style.padding = '8px 15px';
@@ -173,22 +140,23 @@ class GlobalChat {
     this.sendButton.style.borderRadius = '3px';
     this.sendButton.style.cursor = 'pointer';
     this.sendButton.onclick = () => this.sendMessage();
-    
+
     inputArea.appendChild(this.inputField);
     inputArea.appendChild(this.sendButton);
-    
+
     // Assemble container
     this.container.appendChild(header);
+    this.container.appendChild(this.connectionStatus);
     this.container.appendChild(this.messageList);
     this.container.appendChild(inputArea);
-    
+
     // Add to document
     document.body.appendChild(this.container);
-    
+
     // Create toggle button
     this.createToggleButton();
   }
-  
+
   // Create toggle button
   createToggleButton() {
     const toggleButton = document.createElement('button');
@@ -205,85 +173,118 @@ class GlobalChat {
     toggleButton.style.cursor = 'pointer';
     toggleButton.style.zIndex = '999';
     toggleButton.onclick = () => this.toggle();
-    
+
     document.body.appendChild(toggleButton);
     this.toggleButton = toggleButton;
   }
-  
+
   // Toggle chat visibility
   toggle() {
     this.isVisible = !this.isVisible;
     this.container.style.display = this.isVisible ? 'flex' : 'none';
     this.toggleButton.style.display = this.isVisible ? 'none' : 'block';
   }
-  
+
   // Send a message
-  sendMessage() {
+  async sendMessage() {
     const message = this.inputField.value.trim();
     if (!message) return;
-    
-    if (!this.socket || !this.socket.connected) {
-      console.error('Socket not connected');
+
+    if (!window.communicationService) {
+      console.error('Communication service not available');
       return;
     }
-    
-    this.socket.emit('global-message', { message });
-    this.inputField.value = '';
+
+    const success = await window.communicationService.sendMessage('global', message);
+    if (success) {
+      this.inputField.value = '';
+    } else {
+      alert('Failed to send message. Please try again.');
+    }
   }
-  
+
+  // Update message list with all messages
+  updateMessageList() {
+    if (!this.messageList) return;
+
+    // Clear existing messages
+    this.messageList.innerHTML = '';
+
+    // Add all messages
+    this.messages.forEach(message => {
+      this.addMessageToUI(message);
+    });
+
+    // Scroll to bottom
+    this.messageList.scrollTop = this.messageList.scrollHeight;
+  }
+
   // Add a message to the chat
   addMessage(message) {
+    // Check if message already exists
+    if (this.messages.some(m => m.id === message.id)) {
+      return;
+    }
+
     this.messages.push(message);
-    
+
+    // Add message to UI
+    this.addMessageToUI(message);
+
+    // Notify listeners
+    this.notifyListeners();
+  }
+
+  // Add a message to the UI
+  addMessageToUI(message) {
+    if (!this.messageList) return;
+
     // Create message element
     const messageElement = document.createElement('div');
     messageElement.className = 'chat-message';
     messageElement.style.marginBottom = '10px';
-    
+
     const username = document.createElement('span');
     username.className = 'chat-username';
     username.textContent = message.username;
     username.style.fontWeight = 'bold';
     username.style.color = '#4CAF50';
     username.style.marginRight = '5px';
-    
+
     const timestamp = document.createElement('span');
     timestamp.className = 'chat-timestamp';
     timestamp.textContent = new Date(message.timestamp).toLocaleTimeString();
     timestamp.style.fontSize = '0.8em';
     timestamp.style.color = '#999';
     timestamp.style.marginLeft = '5px';
-    
+
     const content = document.createElement('div');
     content.className = 'chat-content';
     content.textContent = message.message;
     content.style.color = '#fff';
     content.style.wordBreak = 'break-word';
-    
+
     messageElement.appendChild(username);
     messageElement.appendChild(timestamp);
     messageElement.appendChild(content);
-    
+
     this.messageList.appendChild(messageElement);
-    
+
     // Scroll to bottom
     this.messageList.scrollTop = this.messageList.scrollHeight;
-    
-    // Notify listeners
-    this.notifyListeners();
   }
-  
+
   // Add message listener
   addListener(callback) {
     this.listeners.push(callback);
     return () => this.removeListener(callback);
   }
-  
+
   // Remove message listener
   removeListener(callback) {
     this.listeners = this.listeners.filter(listener => listener !== callback);
   }
-  
+
   // Notify all listeners
   notifyListeners() {
     this.listeners.forEach(listener => listener(this.messages));

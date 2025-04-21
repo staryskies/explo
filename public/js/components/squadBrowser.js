@@ -12,44 +12,57 @@ class SquadBrowser {
     this.createButton = null;
     this.joinInput = null;
     this.joinButton = null;
-    
+
     // Create UI elements
     this.createUI();
-    
+
     // Load squads when initialized
     this.loadSquads();
   }
-  
+
   // Load available squads
   async loadSquads() {
     try {
+      // Show loading state
+      this.squadList.innerHTML = '<p style="color: #ccc; text-align: center;">Loading squads...</p>';
+
       const token = window.authService.getToken();
-      if (!token) return;
-      
-      const response = await fetch('/api/squads/public', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        credentials: 'include'
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to load squads');
+      if (!token) {
+        this.squadList.innerHTML = '<p style="color: #ccc; text-align: center;">Please log in to view squads</p>';
+        return [];
       }
-      
-      const data = await response.json();
-      this.squads = data.squads || [];
-      this.updateSquadList();
-      
-      return this.squads;
+
+      try {
+        const response = await fetch('/api/squads/public', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to load squads');
+        }
+
+        const data = await response.json();
+        this.squads = data.squads || [];
+        this.updateSquadList();
+
+        return this.squads;
+      } catch (fetchError) {
+        console.error('Fetch squads error:', fetchError);
+        this.squadList.innerHTML = '<p style="color: #f44336; text-align: center;">Failed to load squads. Please try again.</p>';
+        return [];
+      }
     } catch (error) {
       console.error('Load squads error:', error);
+      this.squadList.innerHTML = '<p style="color: #f44336; text-align: center;">An error occurred. Please try again.</p>';
       return [];
     }
   }
-  
+
   // Create UI elements
   createUI() {
     // Create container
@@ -66,7 +79,7 @@ class SquadBrowser {
     this.container.style.borderRadius = '5px';
     this.container.style.zIndex = '1001';
     this.container.style.padding = '20px';
-    
+
     // Create header
     const header = document.createElement('div');
     header.className = 'squad-browser-header';
@@ -74,12 +87,12 @@ class SquadBrowser {
     header.style.display = 'flex';
     header.style.justifyContent = 'space-between';
     header.style.alignItems = 'center';
-    
+
     const title = document.createElement('h2');
     title.textContent = 'Available Squads';
     title.style.margin = '0';
     title.style.color = '#fff';
-    
+
     const closeButton = document.createElement('button');
     closeButton.textContent = 'X';
     closeButton.style.background = 'none';
@@ -88,32 +101,32 @@ class SquadBrowser {
     closeButton.style.cursor = 'pointer';
     closeButton.style.fontSize = '20px';
     closeButton.onclick = () => this.toggle();
-    
+
     header.appendChild(title);
     header.appendChild(closeButton);
-    
+
     // Create squad list
     this.squadList = document.createElement('div');
     this.squadList.className = 'squad-list';
     this.squadList.style.marginBottom = '20px';
     this.squadList.style.maxHeight = '300px';
     this.squadList.style.overflowY = 'auto';
-    
+
     // Create join squad section
     const joinSection = document.createElement('div');
     joinSection.className = 'join-squad-section';
     joinSection.style.marginBottom = '20px';
     joinSection.style.display = 'flex';
     joinSection.style.flexDirection = 'column';
-    
+
     const joinLabel = document.createElement('h3');
     joinLabel.textContent = 'Join Squad by Code';
     joinLabel.style.margin = '0 0 10px 0';
     joinLabel.style.color = '#fff';
-    
+
     const joinInputContainer = document.createElement('div');
     joinInputContainer.style.display = 'flex';
-    
+
     this.joinInput = document.createElement('input');
     this.joinInput.type = 'text';
     this.joinInput.placeholder = 'Enter squad code';
@@ -127,7 +140,7 @@ class SquadBrowser {
         this.joinSquad();
       }
     });
-    
+
     this.joinButton = document.createElement('button');
     this.joinButton.textContent = 'Join';
     this.joinButton.style.padding = '8px 15px';
@@ -137,13 +150,13 @@ class SquadBrowser {
     this.joinButton.style.borderRadius = '3px';
     this.joinButton.style.cursor = 'pointer';
     this.joinButton.onclick = () => this.joinSquad();
-    
+
     joinInputContainer.appendChild(this.joinInput);
     joinInputContainer.appendChild(this.joinButton);
-    
+
     joinSection.appendChild(joinLabel);
     joinSection.appendChild(joinInputContainer);
-    
+
     // Create create squad button
     this.createButton = document.createElement('button');
     this.createButton.textContent = 'Create New Squad';
@@ -155,20 +168,20 @@ class SquadBrowser {
     this.createButton.style.cursor = 'pointer';
     this.createButton.style.width = '100%';
     this.createButton.onclick = () => this.createSquad();
-    
+
     // Assemble container
     this.container.appendChild(header);
     this.container.appendChild(this.squadList);
     this.container.appendChild(joinSection);
     this.container.appendChild(this.createButton);
-    
+
     // Add to document
     document.body.appendChild(this.container);
-    
+
     // Create toggle button
     this.createToggleButton();
   }
-  
+
   // Create toggle button
   createToggleButton() {
     const toggleButton = document.createElement('button');
@@ -185,26 +198,26 @@ class SquadBrowser {
     toggleButton.style.cursor = 'pointer';
     toggleButton.style.zIndex = '999';
     toggleButton.onclick = () => this.toggle();
-    
+
     document.body.appendChild(toggleButton);
     this.toggleButton = toggleButton;
   }
-  
+
   // Toggle browser visibility
   toggle() {
     this.isVisible = !this.isVisible;
     this.container.style.display = this.isVisible ? 'block' : 'none';
-    
+
     if (this.isVisible) {
       this.loadSquads();
     }
   }
-  
+
   // Update squad list UI
   updateSquadList() {
     // Clear current list
     this.squadList.innerHTML = '';
-    
+
     if (this.squads.length === 0) {
       const noSquads = document.createElement('p');
       noSquads.textContent = 'No squads available. Create one or join by code.';
@@ -214,7 +227,7 @@ class SquadBrowser {
       this.squadList.appendChild(noSquads);
       return;
     }
-    
+
     // Add each squad to the list
     this.squads.forEach(squad => {
       const squadItem = document.createElement('div');
@@ -226,25 +239,25 @@ class SquadBrowser {
       squadItem.style.display = 'flex';
       squadItem.style.justifyContent = 'space-between';
       squadItem.style.alignItems = 'center';
-      
+
       const squadInfo = document.createElement('div');
       squadInfo.className = 'squad-info';
-      
+
       const squadName = document.createElement('div');
       squadName.className = 'squad-name';
       squadName.textContent = `Squad ${squad.code}`;
       squadName.style.color = '#fff';
       squadName.style.fontWeight = 'bold';
-      
+
       const squadMembers = document.createElement('div');
       squadMembers.className = 'squad-members';
       squadMembers.textContent = `Members: ${squad.memberCount}/4`;
       squadMembers.style.color = '#ccc';
       squadMembers.style.fontSize = '0.9em';
-      
+
       squadInfo.appendChild(squadName);
       squadInfo.appendChild(squadMembers);
-      
+
       const joinButton = document.createElement('button');
       joinButton.textContent = 'Join';
       joinButton.style.padding = '5px 10px';
@@ -254,14 +267,14 @@ class SquadBrowser {
       joinButton.style.borderRadius = '3px';
       joinButton.style.cursor = 'pointer';
       joinButton.onclick = () => this.joinSquadById(squad.id);
-      
+
       squadItem.appendChild(squadInfo);
       squadItem.appendChild(joinButton);
-      
+
       this.squadList.appendChild(squadItem);
     });
   }
-  
+
   // Create a new squad
   async createSquad() {
     try {
@@ -269,20 +282,20 @@ class SquadBrowser {
         console.error('Squad service not available');
         return;
       }
-      
+
       const squad = await window.squadService.createSquad();
       this.toggle(); // Close the browser
-      
+
       // Show squad code to share
       alert(`Squad created! Share this code with friends: ${squad.code}`);
-      
+
       return squad;
     } catch (error) {
       console.error('Create squad error:', error);
       alert('Failed to create squad. Please try again.');
     }
   }
-  
+
   // Join a squad by code
   async joinSquad() {
     const code = this.joinInput.value.trim();
@@ -290,29 +303,29 @@ class SquadBrowser {
       alert('Please enter a squad code');
       return;
     }
-    
+
     try {
       if (!window.squadService) {
         console.error('Squad service not available');
         return;
       }
-      
+
       const squad = await window.squadService.joinSquad(code);
       this.toggle(); // Close the browser
-      
+
       return squad;
     } catch (error) {
       console.error('Join squad error:', error);
       alert('Failed to join squad. Please check the code and try again.');
     }
   }
-  
+
   // Join a squad by ID
   async joinSquadById(squadId) {
     try {
       const token = window.authService.getToken();
       if (!token) return;
-      
+
       const response = await fetch(`/api/squads/${squadId}/join`, {
         method: 'POST',
         headers: {
@@ -321,41 +334,41 @@ class SquadBrowser {
         },
         credentials: 'include'
       });
-      
+
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || 'Failed to join squad');
       }
-      
+
       const data = await response.json();
-      
+
       // Update squad service
       if (window.squadService) {
         window.squadService.currentSquad = data;
         window.squadService.notifyListeners();
         window.squadService.joinSquadRoom(data.id);
       }
-      
+
       this.toggle(); // Close the browser
-      
+
       return data;
     } catch (error) {
       console.error('Join squad by ID error:', error);
       alert('Failed to join squad. Please try again.');
     }
   }
-  
+
   // Add listener
   addListener(callback) {
     this.listeners.push(callback);
     return () => this.removeListener(callback);
   }
-  
+
   // Remove listener
   removeListener(callback) {
     this.listeners = this.listeners.filter(listener => listener !== callback);
   }
-  
+
   // Notify all listeners
   notifyListeners() {
     this.listeners.forEach(listener => listener(this.squads));
