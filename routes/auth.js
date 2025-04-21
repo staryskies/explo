@@ -268,6 +268,8 @@ router.post('/guest', async (req, res) => {
       // Generate user ID
       const userId = uuidv4();
 
+      // Get database pool
+      const pool = getPool();
       if (!pool) {
         throw new Error('Database connection not available');
       }
@@ -401,12 +403,19 @@ router.post('/logout', async (req, res) => {
     const token = req.cookies.token ||
                  (req.headers.authorization && req.headers.authorization.split(' ')[1]);
 
+    // Get database pool
+    const pool = getPool();
     if (token && pool) {
       // Delete session from database
-      await pool.query(
-        'DELETE FROM sessions WHERE token = $1',
-        [token]
-      );
+      const client = await pool.connect();
+      try {
+        await client.query(
+          'DELETE FROM sessions WHERE token = $1',
+          [token]
+        );
+      } finally {
+        client.release();
+      }
     }
 
     // Clear cookie
@@ -422,15 +431,23 @@ router.post('/logout', async (req, res) => {
 // Get current user
 router.get('/me', requireAuth, async (req, res) => {
   try {
+    // Get database pool
+    const pool = getPool();
     if (!pool) {
       return res.status(500).json({ error: 'Database connection not available' });
     }
 
     // Get player data
-    const playerDataResult = await pool.query(
-      'SELECT * FROM player_data WHERE user_id = $1 LIMIT 1',
-      [req.user.id]
-    );
+    const client = await pool.connect();
+    let playerDataResult;
+    try {
+      playerDataResult = await client.query(
+        'SELECT * FROM player_data WHERE user_id = $1 LIMIT 1',
+        [req.user.id]
+      );
+    } finally {
+      client.release();
+    }
 
     const playerData = playerDataResult.rows[0];
 
@@ -469,44 +486,56 @@ router.post('/convert-guest', requireAuth, [
 
     const { username, email, password } = req.body;
 
+    // Get database pool
+    const pool = getPool();
     if (!pool) {
       return res.status(500).json({ error: 'Database connection not available' });
     }
 
-    // Check if username already exists
-    const existingUserResult = await pool.query(
-      'SELECT * FROM users WHERE username = $1 LIMIT 1',
-      [username]
-    );
+    // Get a client from the pool
+    const client = await pool.connect();
+    let existingUserResult, existingEmailResult, updateResult;
 
-    if (existingUserResult.rows.length > 0 && existingUserResult.rows[0].id !== req.user.id) {
-      return res.status(400).json({ error: 'Username already taken' });
-    }
-
-    // Check if email already exists (if provided)
-    if (email) {
-      const existingEmailResult = await pool.query(
-        'SELECT * FROM users WHERE email = $1 LIMIT 1',
-        [email]
+    try {
+      // Check if username already exists
+      existingUserResult = await client.query(
+        'SELECT * FROM users WHERE username = $1 LIMIT 1',
+        [username]
       );
 
-      if (existingEmailResult.rows.length > 0 && existingEmailResult.rows[0].id !== req.user.id) {
-        return res.status(400).json({ error: 'Email already registered' });
+      if (existingUserResult.rows.length > 0 && existingUserResult.rows[0].id !== req.user.id) {
+        client.release();
+        return res.status(400).json({ error: 'Username already taken' });
       }
+
+      // Check if email already exists (if provided)
+      if (email) {
+        existingEmailResult = await client.query(
+          'SELECT * FROM users WHERE email = $1 LIMIT 1',
+          [email]
+        );
+
+        if (existingEmailResult.rows.length > 0 && existingEmailResult.rows[0].id !== req.user.id) {
+          client.release();
+          return res.status(400).json({ error: 'Email already registered' });
+        }
+      }
+
+      // Hash password
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash(password, salt);
+
+      // Update user
+      updateResult = await client.query(
+        `UPDATE users
+         SET username = $1, email = $2, password_hash = $3, is_guest = $4, updated_at = $5
+         WHERE id = $6
+         RETURNING *`,
+        [username, email, passwordHash, false, new Date(), req.user.id]
+      );
+    } finally {
+      client.release();
     }
-
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
-
-    // Update user
-    const updateResult = await pool.query(
-      `UPDATE users
-       SET username = $1, email = $2, password_hash = $3, is_guest = $4, updated_at = $5
-       WHERE id = $6
-       RETURNING *`,
-      [username, email, passwordHash, false, new Date(), req.user.id]
-    );
 
     const updatedUser = updateResult.rows[0];
 
