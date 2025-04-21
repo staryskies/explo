@@ -2,13 +2,15 @@
   "version": 2,
   "builds": [
     {
-      "src": "server.js",
+      "src": "api/index.js",
       "use": "@vercel/node",
       "config": {
         "includeFiles": [
-          "scripts/**"
-        ],
-        "buildCommand": "npm run build"
+          "scripts/**",
+          "server.js",
+          "routes/**",
+          "middleware/**"
+        ]
       }
     },
     {
@@ -19,11 +21,11 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "server.js"
+      "dest": "/api/index.js"
     },
     {
       "src": "/socket.io/(.*)",
-      "dest": "server.js"
+      "dest": "/api/index.js"
     },
     {
       "src": "/(.*)",
@@ -37,6 +39,6 @@
   "env": {
     "NODE_ENV": "production"
   },
-  "buildCommand": "npm install && npx prisma generate",
+  "buildCommand": "npm install",
   "installCommand": "npm install"
 }

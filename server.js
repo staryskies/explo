@@ -610,3 +610,6 @@ process.on('SIGINT', () => {
     process.exit(0);
   });
 });
+
+// Export the Express app for Vercel serverless functions
+module.exports = app;

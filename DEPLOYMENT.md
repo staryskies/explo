@@ -35,7 +35,7 @@ This guide explains how to deploy the Tower Defense game to Vercel with a Render
    - Configure the project:
      - Framework Preset: "Other"
      - Root Directory: `./`
-     - Build Command: `npm install && npx prisma generate`
+     - Build Command: `npm install`
      - Output Directory: `public`
 
 4. Add environment variables:
@@ -51,6 +51,78 @@ This guide explains how to deploy the Tower Defense game to Vercel with a Render
    - Wait for the deployment to complete
 
 6. Once deployed, your application will be available at the provided Vercel URL
+
+## Important Configuration Files
+
+### server.js
+
+The `server.js` file must export the Express app for Vercel to work correctly:
+
+```javascript
+// At the end of server.js
+module.exports = app;
+```
+
+### api/index.js
+
+The `api/index.js` file serves as the entry point for Vercel serverless functions:
+
+```javascript
+// This file is used as an entry point for Vercel serverless functions
+// It simply re-exports the Express app from server.js
+
+// Import the Express app from server.js
+const app = require('../server');
+
+// Export the app for Vercel
+module.exports = app;
+```
+
+### vercel.json
+
+The `vercel.json` file configures how Vercel builds and routes requests:
+
+```json
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/index.js",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          "scripts/**",
+          "server.js",
+          "routes/**",
+          "middleware/**"
+        ]
+      }
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/index.js"
+    },
+    {
+      "src": "/socket.io/(.*)",
+      "dest": "/api/index.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/public/$1"
+    },
+    {
+      "src": "/",
+      "dest": "/public/index.html"
+    }
+  ]
+}
+```
 
 ## Troubleshooting
 
@@ -91,4 +163,4 @@ To update your application:
 
 - [Vercel Documentation](https://vercel.com/docs)
 - [Render PostgreSQL Documentation](https://render.com/docs/databases)
-- [Prisma Documentation](https://www.prisma.io/docs/)
+- [Node.js on Vercel Documentation](https://vercel.com/docs/functions/serverless-functions/runtimes/node-js)

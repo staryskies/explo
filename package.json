@@ -10,6 +10,7 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "build": "node scripts/build.js",
+    "vercel-build": "echo 'Building for Vercel deployment'",
     "postinstall": "node scripts/build.js",
     "init-db": "node scripts/init-db.js",
     "create-schema": "node scripts/create-schema.js",
