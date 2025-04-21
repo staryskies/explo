@@ -16,21 +16,21 @@ class GlobalChat {
     // Create UI elements
     this.createUI();
 
-    // Initialize messages from communication service
-    if (window.communicationService) {
+    // Initialize messages from REST communication service
+    if (window.restCommunicationService) {
       // Load existing messages
-      this.messages = window.communicationService.getMessages('global');
+      this.messages = window.restCommunicationService.getMessages('global');
       this.updateMessageList();
 
       // Listen for new messages
-      window.communicationService.addMessageListener((type, message) => {
+      window.restCommunicationService.addMessageListener((type, message) => {
         if (type === 'global') {
           this.addMessage(message);
         }
       });
 
       // Listen for connection state changes
-      window.communicationService.addStateListener((state) => {
+      window.restCommunicationService.addStateListener((state) => {
         this.updateConnectionStatus(state);
       });
     }
@@ -190,12 +190,12 @@ class GlobalChat {
     const message = this.inputField.value.trim();
     if (!message) return;
 
-    if (!window.communicationService) {
-      console.error('Communication service not available');
+    if (!window.restCommunicationService) {
+      console.error('REST communication service not available');
       return;
     }
 
-    const success = await window.communicationService.sendMessage('global', message);
+    const success = await window.restCommunicationService.sendMessage('global', message);
     if (success) {
       this.inputField.value = '';
     } else {

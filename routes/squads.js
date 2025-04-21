@@ -339,6 +339,109 @@ router.get('/public', requireAuth, async (req, res) => {
   }
 });
 
+// Get squad state
+router.get('/:id/state', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!pool) {
+      return res.status(500).json({ error: 'Database connection not available' });
+    }
+
+    // Check if user is a member of the squad
+    const membershipResult = await pool.query(
+      'SELECT * FROM squad_members WHERE squad_id = $1 AND user_id = $2 LIMIT 1',
+      [id, req.user.id]
+    );
+
+    if (membershipResult.rows.length === 0) {
+      return res.status(403).json({ error: 'You are not a member of this squad' });
+    }
+
+    // Get squad data
+    const squadResult = await pool.query(
+      `SELECT s.id, s.code, s.leader_id as "leaderId", s.created_at as "createdAt"
+       FROM squads s
+       WHERE s.id = $1`,
+      [id]
+    );
+
+    if (squadResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Squad not found' });
+    }
+
+    const squad = squadResult.rows[0];
+
+    // Get squad members
+    const membersResult = await pool.query(
+      `SELECT sm.joined_at as "joinedAt", u.id, u.username, u.is_guest as "isGuest"
+       FROM squad_members sm
+       JOIN users u ON sm.user_id = u.id
+       WHERE sm.squad_id = $1`,
+      [id]
+    );
+
+    // Add members to squad
+    squad.members = membersResult.rows;
+
+    // Get latest game state
+    const gameStateResult = await pool.query(
+      `SELECT * FROM game_states
+       WHERE squad_id = $1
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [id]
+    );
+
+    if (gameStateResult.rows.length > 0) {
+      squad.gameState = gameStateResult.rows[0].state;
+    }
+
+    res.json(squad);
+  } catch (error) {
+    console.error('Get squad state error:', error);
+    res.status(500).json({ error: 'Failed to get squad state' });
+  }
+});
+
+// Update game state
+router.post('/:id/game-state', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { gameState } = req.body;
+
+    if (!gameState) {
+      return res.status(400).json({ error: 'Game state is required' });
+    }
+
+    if (!pool) {
+      return res.status(500).json({ error: 'Database connection not available' });
+    }
+
+    // Check if user is a member of the squad
+    const membershipResult = await pool.query(
+      'SELECT * FROM squad_members WHERE squad_id = $1 AND user_id = $2 LIMIT 1',
+      [id, req.user.id]
+    );
+
+    if (membershipResult.rows.length === 0) {
+      return res.status(403).json({ error: 'You are not a member of this squad' });
+    }
+
+    // Save game state
+    await pool.query(
+      `INSERT INTO game_states (id, squad_id, user_id, state, created_at)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [require('uuid').v4(), id, req.user.id, gameState, new Date()]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Update game state error:', error);
+    res.status(500).json({ error: 'Failed to update game state' });
+  }
+});
+
 // Get user's current squad
 router.get('/my-squad', requireAuth, async (req, res) => {
   try {

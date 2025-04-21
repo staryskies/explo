@@ -3,197 +3,99 @@
  */
 class SquadService {
   constructor() {
-    this.socket = null;
     this.currentSquad = null;
     this.listeners = [];
     this.messageListeners = [];
     this.gameStateListeners = [];
+    this.pollInterval = null;
+    this.pollFrequency = 5000; // 5 seconds
 
-    // Initialize socket connection when auth service is ready
+    // Initialize when auth service is ready
     if (window.authService && window.authService.isLoggedIn()) {
-      this.initSocket();
+      this.getCurrentSquad();
     }
 
     // Listen for auth state changes
     if (window.authService) {
       window.authService.addListener(user => {
         if (user) {
-          this.initSocket();
+          this.getCurrentSquad();
         } else {
-          this.disconnectSocket();
-        }
-      });
-    }
-  }
-
-  // Initialize socket connection
-  initSocket() {
-    if (this.socket) {
-      this.disconnectSocket();
-    }
-
-    const token = window.authService.getToken();
-    if (!token) return;
-
-    // Create socket connection with auth token and better reconnection settings
-    this.socket = io({
-      auth: { token },
-      query: { token }, // Add token to query for better compatibility
-      reconnection: true,
-      reconnectionAttempts: Infinity, // Keep trying to reconnect
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      timeout: 20000,
-      autoConnect: true,
-      transports: ['polling', 'websocket'],
-      forceNew: false,
-      withCredentials: true,
-      extraHeaders: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-
-    // Handle connection events
-    this.socket.on('connect', () => {
-      console.log('Socket connected with ID:', this.socket.id);
-
-      // Get current squad
-      this.getCurrentSquad().then(squad => {
-        if (squad) {
-          this.joinSquadRoom(squad.id);
-        }
-      });
-    });
-
-    // Handle connection established event
-    this.socket.on('connection-established', (data) => {
-      console.log('Connection established:', data);
-    });
-
-    // Handle disconnection
-    this.socket.on('disconnect', (reason) => {
-      console.log('Socket disconnected:', reason);
-
-      // Attempt to reconnect if not intentional
-      if (reason === 'io server disconnect' || reason === 'transport close') {
-        console.log('Attempting to reconnect...');
-        this.socket.connect();
-      }
-    });
-
-    // Handle reconnection
-    this.socket.on('reconnect', (attemptNumber) => {
-      console.log(`Socket reconnected after ${attemptNumber} attempts`);
-
-      // Rejoin squad room if we were in one
-      if (this.currentSquad) {
-        this.joinSquadRoom(this.currentSquad.id);
-      }
-    });
-
-    // Handle reconnection attempts
-    this.socket.on('reconnect_attempt', (attemptNumber) => {
-      console.log(`Reconnection attempt ${attemptNumber}`);
-    });
-
-    // Handle reconnection errors
-    this.socket.on('reconnect_error', (error) => {
-      console.error('Reconnection error:', error);
-    });
-
-    // Handle reconnection failures
-    this.socket.on('reconnect_failed', () => {
-      console.error('Failed to reconnect after all attempts');
-    });
-
-    // Handle errors
-    this.socket.on('error', (error) => {
-      console.error('Socket error:', error);
-    });
-
-    // Handle connect errors
-    this.socket.on('connect_error', (error) => {
-      console.error('Connection error:', error);
-    });
-
-    // Handle squad events
-    this.socket.on('squad-joined', (squad) => {
-      this.currentSquad = squad;
-      this.notifyListeners();
-    });
-
-    this.socket.on('member-joined', (member) => {
-      if (this.currentSquad) {
-        // Add member if not already in the squad
-        const existingMember = this.currentSquad.members.find(m => m.id === member.id);
-        if (!existingMember) {
-          this.currentSquad.members.push({
-            ...member,
-            joinedAt: new Date().toISOString()
-          });
+          this.currentSquad = null;
           this.notifyListeners();
+          this.stopPolling();
         }
-      }
-    });
+      });
+    }
 
-    this.socket.on('member-left', (member) => {
-      if (this.currentSquad) {
-        // Remove member from squad
-        this.currentSquad.members = this.currentSquad.members.filter(m => m.id !== member.id);
-        this.notifyListeners();
-      }
-    });
-
-    // Handle squad messages
-    this.socket.on('squad-message', (message) => {
-      this.notifyMessageListeners(message);
-    });
-
-    // Handle game state updates
-    this.socket.on('game-state-update', (update) => {
-      this.notifyGameStateListeners(update);
-    });
+    // Listen for state updates from REST communication service
+    if (window.restCommunicationService) {
+      window.restCommunicationService.addStateListener(state => {
+        if (state.type === 'squad-state' && state.data) {
+          // Update squad data if it's our current squad
+          if (this.currentSquad && state.data.id === this.currentSquad.id) {
+            this.currentSquad = state.data;
+            this.notifyListeners();
+          }
+        }
+      });
+    }
   }
 
-  // Disconnect socket
-  disconnectSocket() {
-    if (this.socket) {
-      this.socket.disconnect();
-      this.socket = null;
-    }
-    this.currentSquad = null;
-    this.notifyListeners();
+  // Start polling for squad updates
+  startPolling() {
+    this.stopPolling();
+
+    if (!this.currentSquad) return;
+
+    this.pollInterval = setInterval(() => {
+      this.refreshSquadData();
+    }, this.pollFrequency);
   }
 
-  // Join squad room
-  joinSquadRoom(squadId) {
-    if (!squadId) {
-      console.error('Cannot join squad: Invalid squad ID');
-      return;
+  // Stop polling
+  stopPolling() {
+    if (this.pollInterval) {
+      clearInterval(this.pollInterval);
+      this.pollInterval = null;
     }
+  }
 
-    if (!this.socket) {
-      console.log('Socket not initialized, initializing...');
-      this.initSocket();
-    }
+  // Refresh squad data
+  async refreshSquadData() {
+    if (!this.currentSquad) return;
 
-    // If socket exists but not connected, set up a connection handler
-    if (this.socket && !this.socket.connected) {
-      console.log('Socket not connected, waiting for connection...');
-      const connectHandler = () => {
-        console.log('Connected, now joining squad:', squadId);
-        this.socket.emit('join-squad', squadId);
-        this.socket.off('connect', connectHandler);
-      };
-      this.socket.on('connect', connectHandler);
-      this.socket.connect();
-      return;
-    }
+    try {
+      const token = window.authService.getToken();
+      if (!token) return;
 
-    // If socket is connected, join immediately
-    if (this.socket && this.socket.connected) {
-      console.log('Joining squad room:', squadId);
-      this.socket.emit('join-squad', squadId);
+      const response = await fetch(`/api/squads/${this.currentSquad.id}/state`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          // Squad no longer exists
+          this.currentSquad = null;
+          this.notifyListeners();
+          this.stopPolling();
+          return;
+        }
+        throw new Error('Failed to refresh squad data');
+      }
+
+      const data = await response.json();
+
+      // Update squad data
+      this.currentSquad = data;
+      this.notifyListeners();
+    } catch (error) {
+      console.error('Refresh squad data error:', error);
     }
   }
 
@@ -221,8 +123,13 @@ class SquadService {
       this.currentSquad = data;
       this.notifyListeners();
 
-      // Join squad room
-      this.joinSquadRoom(data.id);
+      // Start polling for updates
+      this.startPolling();
+
+      // Inform REST communication service about the squad
+      if (window.restCommunicationService) {
+        window.restCommunicationService.setCurrentSquad(data);
+      }
 
       return data;
     } catch (error) {
@@ -256,8 +163,13 @@ class SquadService {
       this.currentSquad = data;
       this.notifyListeners();
 
-      // Join squad room
-      this.joinSquadRoom(data.id);
+      // Start polling for updates
+      this.startPolling();
+
+      // Inform REST communication service about the squad
+      if (window.restCommunicationService) {
+        window.restCommunicationService.setCurrentSquad(data);
+      }
 
       return data;
     } catch (error) {
@@ -292,6 +204,12 @@ class SquadService {
 
       this.currentSquad = null;
       this.notifyListeners();
+      this.stopPolling();
+
+      // Inform REST communication service
+      if (window.restCommunicationService) {
+        window.restCommunicationService.setCurrentSquad(null);
+      }
     } catch (error) {
       console.error('Leave squad error:', error);
       throw error;
@@ -325,9 +243,18 @@ class SquadService {
       if (data.squad) {
         this.currentSquad = data.squad;
         this.notifyListeners();
+
+        // Start polling for updates
+        this.startPolling();
+
+        // Inform REST communication service about the squad
+        if (window.restCommunicationService) {
+          window.restCommunicationService.setCurrentSquad(data.squad);
+        }
       } else {
         this.currentSquad = null;
         this.notifyListeners();
+        this.stopPolling();
       }
 
       return this.currentSquad;
@@ -338,31 +265,29 @@ class SquadService {
   }
 
   // Send message to squad
-  sendMessage(message) {
-    if (!this.socket || !this.currentSquad) {
+  async sendMessage(message) {
+    if (!this.currentSquad) {
       return false;
     }
 
-    this.socket.emit('squad-message', {
-      squadId: this.currentSquad.id,
-      message
-    });
+    if (window.restCommunicationService) {
+      return await window.restCommunicationService.sendMessage('squad', message, this.currentSquad.id);
+    }
 
-    return true;
+    return false;
   }
 
   // Send game state update to squad
-  sendGameState(gameState) {
-    if (!this.socket || !this.currentSquad) {
+  async sendGameState(gameState) {
+    if (!this.currentSquad) {
       return false;
     }
 
-    this.socket.emit('game-state', {
-      squadId: this.currentSquad.id,
-      gameState
-    });
+    if (window.restCommunicationService) {
+      return await window.restCommunicationService.sendGameState(gameState, this.currentSquad.id);
+    }
 
-    return true;
+    return false;
   }
 
   // Add squad state change listener

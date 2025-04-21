@@ -119,6 +119,25 @@ async function createSchema() {
       CREATE INDEX IF NOT EXISTS idx_messages_squad_created_at ON messages(squad_id, created_at);
     `);
 
+    // Create game_states table
+    console.log('Creating game_states table...');
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS game_states (
+        id TEXT PRIMARY KEY,
+        squad_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        state JSONB NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        CONSTRAINT fk_squad FOREIGN KEY(squad_id) REFERENCES squads(id) ON DELETE CASCADE,
+        CONSTRAINT fk_user FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+      );
+    `);
+
+    // Create index on game_states
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_game_states_squad_created_at ON game_states(squad_id, created_at);
+    `);
+
     console.log('Database schema created successfully');
   } catch (error) {
     console.error('Error creating database schema:', error);

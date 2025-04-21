@@ -12,24 +12,37 @@ class SquadChat {
     this.inputField = null;
     this.sendButton = null;
     this.currentSquad = null;
-    
+
     // Initialize when squad service is ready
     if (window.squadService) {
       window.squadService.addListener(squad => {
         this.currentSquad = squad;
         this.updateHeader();
-      });
-      
-      // Add message listener
-      window.squadService.addMessageListener(message => {
-        this.addMessage(message);
+
+        // If we have a squad, tell the REST communication service about it
+        if (window.restCommunicationService && squad) {
+          window.restCommunicationService.setCurrentSquad(squad);
+
+          // Load existing messages for this squad
+          const messages = window.restCommunicationService.getMessages('squad', squad.id);
+          messages.forEach(message => this.addMessage(message));
+        }
       });
     }
-    
+
+    // Add message listener to REST communication service
+    if (window.restCommunicationService) {
+      window.restCommunicationService.addMessageListener((type, message) => {
+        if (type === 'squad' && this.currentSquad && message.squadId === this.currentSquad.id) {
+          this.addMessage(message);
+        }
+      });
+    }
+
     // Create UI elements
     this.createUI();
   }
-  
+
   // Create UI elements
   createUI() {
     // Create container
@@ -47,7 +60,7 @@ class SquadChat {
     this.container.style.zIndex = '1000';
     this.container.style.display = 'flex';
     this.container.style.flexDirection = 'column';
-    
+
     // Create header
     const header = document.createElement('div');
     header.className = 'chat-header';
@@ -56,12 +69,12 @@ class SquadChat {
     header.style.display = 'flex';
     header.style.justifyContent = 'space-between';
     header.style.alignItems = 'center';
-    
+
     this.headerTitle = document.createElement('h3');
     this.headerTitle.textContent = 'Squad Chat';
     this.headerTitle.style.margin = '0';
     this.headerTitle.style.color = '#fff';
-    
+
     const closeButton = document.createElement('button');
     closeButton.textContent = 'X';
     closeButton.style.background = 'none';
@@ -70,24 +83,24 @@ class SquadChat {
     closeButton.style.cursor = 'pointer';
     closeButton.style.fontSize = '16px';
     closeButton.onclick = () => this.toggle();
-    
+
     header.appendChild(this.headerTitle);
     header.appendChild(closeButton);
-    
+
     // Create message list
     this.messageList = document.createElement('div');
     this.messageList.className = 'chat-messages';
     this.messageList.style.flex = '1';
     this.messageList.style.overflowY = 'auto';
     this.messageList.style.padding = '10px';
-    
+
     // Create input area
     const inputArea = document.createElement('div');
     inputArea.className = 'chat-input';
     inputArea.style.padding = '10px';
     inputArea.style.borderTop = '1px solid #ccc';
     inputArea.style.display = 'flex';
-    
+
     this.inputField = document.createElement('input');
     this.inputField.type = 'text';
     this.inputField.placeholder = 'Type a message...';
@@ -101,7 +114,7 @@ class SquadChat {
         this.sendMessage();
       }
     });
-    
+
     this.sendButton = document.createElement('button');
     this.sendButton.textContent = 'Send';
     this.sendButton.style.padding = '8px 15px';
@@ -111,30 +124,30 @@ class SquadChat {
     this.sendButton.style.borderRadius = '3px';
     this.sendButton.style.cursor = 'pointer';
     this.sendButton.onclick = () => this.sendMessage();
-    
+
     inputArea.appendChild(this.inputField);
     inputArea.appendChild(this.sendButton);
-    
+
     // Create squad info section
     this.squadInfo = document.createElement('div');
     this.squadInfo.className = 'squad-info';
     this.squadInfo.style.padding = '10px';
     this.squadInfo.style.borderTop = '1px solid #ccc';
     this.squadInfo.style.backgroundColor = 'rgba(33, 150, 243, 0.1)';
-    
+
     // Create members list
     this.membersList = document.createElement('div');
     this.membersList.className = 'members-list';
     this.membersList.style.fontSize = '0.9em';
     this.membersList.style.color = '#ccc';
-    
+
     // Create squad code
     this.squadCode = document.createElement('div');
     this.squadCode.className = 'squad-code';
     this.squadCode.style.marginTop = '5px';
     this.squadCode.style.fontSize = '0.9em';
     this.squadCode.style.color = '#4CAF50';
-    
+
     // Create leave button
     this.leaveButton = document.createElement('button');
     this.leaveButton.textContent = 'Leave Squad';
@@ -147,28 +160,28 @@ class SquadChat {
     this.leaveButton.style.cursor = 'pointer';
     this.leaveButton.style.width = '100%';
     this.leaveButton.onclick = () => this.leaveSquad();
-    
+
     this.squadInfo.appendChild(this.membersList);
     this.squadInfo.appendChild(this.squadCode);
     this.squadInfo.appendChild(this.leaveButton);
-    
+
     // Assemble container
     this.container.appendChild(header);
     this.container.appendChild(this.messageList);
     this.container.appendChild(inputArea);
     this.container.appendChild(this.squadInfo);
-    
+
     // Add to document
     document.body.appendChild(this.container);
-    
+
     // Create toggle button
     this.createToggleButton();
-    
+
     // Update header and squad info
     this.updateHeader();
     this.updateSquadInfo();
   }
-  
+
   // Create toggle button
   createToggleButton() {
     const toggleButton = document.createElement('button');
@@ -185,16 +198,16 @@ class SquadChat {
     toggleButton.style.cursor = 'pointer';
     toggleButton.style.zIndex = '999';
     toggleButton.onclick = () => this.toggle();
-    
+
     document.body.appendChild(toggleButton);
     this.toggleButton = toggleButton;
-    
+
     // Hide toggle button if no squad
     if (!this.currentSquad) {
       this.toggleButton.style.display = 'none';
     }
   }
-  
+
   // Update header based on current squad
   updateHeader() {
     if (this.currentSquad) {
@@ -203,16 +216,16 @@ class SquadChat {
     } else {
       this.headerTitle.textContent = 'Squad Chat (No Squad)';
       this.toggleButton.style.display = 'none';
-      
+
       // Hide chat if visible
       if (this.isVisible) {
         this.toggle();
       }
     }
-    
+
     this.updateSquadInfo();
   }
-  
+
   // Update squad info section
   updateSquadInfo() {
     if (!this.currentSquad) {
@@ -221,7 +234,7 @@ class SquadChat {
       this.leaveButton.style.display = 'none';
       return;
     }
-    
+
     // Update members list
     this.membersList.innerHTML = '<strong>Members:</strong><br>';
     this.currentSquad.members.forEach(member => {
@@ -229,95 +242,99 @@ class SquadChat {
       memberElement.textContent = member.username + (member.id === this.currentSquad.leaderId ? ' (Leader)' : '');
       this.membersList.appendChild(memberElement);
     });
-    
+
     // Update squad code
     this.squadCode.textContent = `Squad Code: ${this.currentSquad.code}`;
-    
+
     // Show leave button
     this.leaveButton.style.display = 'block';
   }
-  
+
   // Toggle chat visibility
   toggle() {
     this.isVisible = !this.isVisible;
     this.container.style.display = this.isVisible ? 'flex' : 'none';
     this.toggleButton.style.display = this.isVisible ? 'none' : 'block';
-    
+
     // Update squad info when opening
     if (this.isVisible) {
       this.updateSquadInfo();
     }
   }
-  
+
   // Send a message
-  sendMessage() {
+  async sendMessage() {
     const message = this.inputField.value.trim();
     if (!message || !this.currentSquad) return;
-    
-    if (!window.squadService) {
-      console.error('Squad service not available');
+
+    if (!window.restCommunicationService) {
+      console.error('REST communication service not available');
       return;
     }
-    
-    window.squadService.sendMessage(message);
-    this.inputField.value = '';
+
+    const success = await window.restCommunicationService.sendMessage('squad', message, this.currentSquad.id);
+    if (success) {
+      this.inputField.value = '';
+    } else {
+      alert('Failed to send message. Please try again.');
+    }
   }
-  
+
   // Add a message to the chat
   addMessage(message) {
     this.messages.push(message);
-    
+
     // Create message element
     const messageElement = document.createElement('div');
     messageElement.className = 'chat-message';
     messageElement.style.marginBottom = '10px';
-    
+
     const username = document.createElement('span');
     username.className = 'chat-username';
     username.textContent = message.username;
     username.style.fontWeight = 'bold';
     username.style.color = '#2196F3';
     username.style.marginRight = '5px';
-    
+
     const timestamp = document.createElement('span');
     timestamp.className = 'chat-timestamp';
     timestamp.textContent = new Date(message.timestamp).toLocaleTimeString();
     timestamp.style.fontSize = '0.8em';
     timestamp.style.color = '#999';
     timestamp.style.marginLeft = '5px';
-    
+
     const content = document.createElement('div');
     content.className = 'chat-content';
     content.textContent = message.message;
     content.style.color = '#fff';
     content.style.wordBreak = 'break-word';
-    
+
     messageElement.appendChild(username);
     messageElement.appendChild(timestamp);
     messageElement.appendChild(content);
-    
+
     this.messageList.appendChild(messageElement);
-    
+
     // Scroll to bottom
     this.messageList.scrollTop = this.messageList.scrollHeight;
-    
+
     // Notify listeners
     this.notifyListeners();
   }
-  
+
   // Leave the current squad
   async leaveSquad() {
     if (!this.currentSquad) return;
-    
+
     if (confirm('Are you sure you want to leave this squad?')) {
       try {
         if (!window.squadService) {
           console.error('Squad service not available');
           return;
         }
-        
+
         await window.squadService.leaveSquad();
-        
+
         // Close chat
         if (this.isVisible) {
           this.toggle();
@@ -328,18 +345,18 @@ class SquadChat {
       }
     }
   }
-  
+
   // Add message listener
   addListener(callback) {
     this.listeners.push(callback);
     return () => this.removeListener(callback);
   }
-  
+
   // Remove message listener
   removeListener(callback) {
     this.listeners = this.listeners.filter(listener => listener !== callback);
   }
-  
+
   // Notify all listeners
   notifyListeners() {
     this.listeners.forEach(listener => listener(this.messages));
