@@ -18,24 +18,41 @@ const createSession = async (userId) => {
   expiresAt.setDate(expiresAt.getDate() + 30);
 
   // Generate token
-  const token = jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '30d' });
+  const token = jwt.sign({ userId }, process.env.JWT_SECRET || 'fallback-secret-key', { expiresIn: '30d' });
 
-  // Create session in database
+  // Try to create session in database with retry logic
   const pool = getPool();
   if (pool) {
-    const client = await pool.connect();
-    try {
-      await client.query(
-        `INSERT INTO sessions (id, user_id, token, expires_at, created_at)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [uuidv4(), userId, token, expiresAt, new Date()]
-      );
-    } catch (error) {
-      console.error('Error creating session:', error);
-      // Continue anyway - we'll return the token even if DB insert fails
-    } finally {
-      client.release();
+    let retries = 3;
+    let success = false;
+
+    while (retries > 0 && !success) {
+      let client = null;
+      try {
+        client = await pool.connect();
+        await client.query(
+          `INSERT INTO sessions (id, user_id, token, expires_at, created_at)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [uuidv4(), userId, token, expiresAt, new Date()]
+        );
+        success = true;
+      } catch (error) {
+        console.error(`Error creating session (retries left: ${retries-1}):`, error);
+        retries--;
+        // Wait before retrying
+        if (retries > 0) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      } finally {
+        if (client) client.release();
+      }
     }
+
+    if (!success) {
+      console.warn('Failed to create session in database after multiple retries');
+    }
+  } else {
+    console.warn('Database pool not available, skipping session creation in database');
   }
 
   return { token, expiresAt };
@@ -56,6 +73,8 @@ router.post('/signup', [
 
     const { username, email, password } = req.body;
 
+    // Get database pool
+    const pool = getPool();
     if (!pool) {
       return res.status(500).json({ error: 'Database connection not available' });
     }
@@ -208,6 +227,8 @@ router.post('/login', [
 
     const { username, password } = req.body;
 
+    // Get database pool
+    const pool = getPool();
     if (!pool) {
       return res.status(500).json({ error: 'Database connection not available' });
     }
@@ -271,73 +292,101 @@ router.post('/guest', async (req, res) => {
       // Get database pool
       const pool = getPool();
       if (!pool) {
-        throw new Error('Database connection not available');
+        console.warn('Database connection not available, creating guest user without database');
+        // Create a fallback user object when database is unavailable
+        user = {
+          id: userId,
+          username: guestUsername,
+          is_guest: true,
+          created_at: new Date(),
+          updated_at: new Date(),
+          isGuest: true // Add this for convenience
+        };
+        return; // Skip database operations
       }
 
-      // Insert user
-      await pool.query(
-        `INSERT INTO users (id, username, is_guest, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [userId, guestUsername, true, new Date(), new Date()]
-      );
+      // Get a client from the pool
+      const client = await pool.connect();
 
-      // Insert player data
-      const gameData = {
-                // Default player data for guests
-                silver: 1000,
-                highScore: 0,
-                gamesPlayed: 0,
-                wavesCompleted: 0,
-                enemiesKilled: 0,
-                highestWaveCompleted: 0,
-                completedDifficulties: [],
-                towerRolls: 0,
-                variantRolls: 0,
-                towerPity: {
-                  rare: 0,
-                  epic: 0,
-                  legendary: 0,
-                  mythic: 0,
-                  divine: 0
-                },
-                variantPity: {
-                  rare: 0,
-                  epic: 0,
-                  legendary: 0,
-                  divine: 0
-                },
-                unlockedTowers: ['basic'],
-                towerVariants: {
-                  basic: ['normal'],
-                  archer: [],
-                  cannon: [],
-                  sniper: [],
-                  freeze: [],
-                  mortar: [],
-                  laser: [],
-                  tesla: [],
-                  flame: [],
-                  missile: [],
-                  poison: [],
-                  vortex: [],
-                  archangel: []
-                }
-              };
+      try {
+        // Begin transaction
+        await client.query('BEGIN');
 
-      // Insert player data
-      await pool.query(
-        `INSERT INTO player_data (id, user_id, game_data, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [uuidv4(), userId, JSON.stringify(gameData), new Date(), new Date()]
-      );
+        // Insert user
+        await client.query(
+          `INSERT INTO users (id, username, is_guest, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [userId, guestUsername, true, new Date(), new Date()]
+        );
 
-      // Get the user for the response
-      const userResult = await pool.query(
-        'SELECT * FROM users WHERE id = $1',
-        [userId]
-      );
+        // Insert player data
+        const gameData = {
+                  // Default player data for guests
+                  silver: 1000,
+                  highScore: 0,
+                  gamesPlayed: 0,
+                  wavesCompleted: 0,
+                  enemiesKilled: 0,
+                  highestWaveCompleted: 0,
+                  completedDifficulties: [],
+                  towerRolls: 0,
+                  variantRolls: 0,
+                  towerPity: {
+                    rare: 0,
+                    epic: 0,
+                    legendary: 0,
+                    mythic: 0,
+                    divine: 0
+                  },
+                  variantPity: {
+                    rare: 0,
+                    epic: 0,
+                    legendary: 0,
+                    divine: 0
+                  },
+                  unlockedTowers: ['basic'],
+                  towerVariants: {
+                    basic: ['normal'],
+                    archer: [],
+                    cannon: [],
+                    sniper: [],
+                    freeze: [],
+                    mortar: [],
+                    laser: [],
+                    tesla: [],
+                    flame: [],
+                    missile: [],
+                    poison: [],
+                    vortex: [],
+                    archangel: []
+                  }
+                };
 
-      user = userResult.rows[0];
+        // Insert player data
+        await client.query(
+          `INSERT INTO player_data (id, user_id, game_data, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [uuidv4(), userId, JSON.stringify(gameData), new Date(), new Date()]
+        );
+
+        // Get the user for the response
+        const userResult = await client.query(
+          'SELECT * FROM users WHERE id = $1',
+          [userId]
+        );
+
+        // Commit transaction
+        await client.query('COMMIT');
+
+        user = userResult.rows[0];
+      } catch (error) {
+        // Rollback transaction on error
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        // Always release the client back to the pool
+        client.release();
+      }
     } catch (dbError) {
       console.error('Database error creating guest user:', dbError);
       return res.status(500).json({

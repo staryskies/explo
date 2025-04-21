@@ -558,12 +558,19 @@ async function startServer() {
       console.error('Database connection not configured');
       console.log('Starting server without database connection...');
     } else {
-      try {
-        // Test the database connection with a simple query
-        const client = await pool.connect();
+      // Add retry logic for database connection
+      let connected = false;
+      let retries = 3;
+      let client = null;
+
+      while (!connected && retries > 0) {
         try {
+          console.log(`Attempting database connection (${4-retries}/3)...`);
+          // Test the database connection with a simple query
+          client = await pool.connect();
           const result = await client.query('SELECT NOW()');
           console.log('Database connection successful, current time:', result.rows[0].now);
+          connected = true;
 
           // Initialize database if connected successfully
           try {
@@ -581,16 +588,27 @@ async function startServer() {
             console.error('Database initialization failed:', initError);
             console.log('Continuing server startup with existing database state...');
           }
+        } catch (dbError) {
+          retries--;
+          console.error(`Database connection attempt failed (${retries} retries left):`, dbError.message);
+
+          if (retries > 0) {
+            // Wait before retrying
+            console.log(`Waiting 2 seconds before retry...`);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          } else {
+            console.error('All database connection attempts failed');
+            console.log('Starting server without database connection...');
+            // Continue starting the server even if database connection fails
+            // This allows the static files to be served even if the database is down
+          }
         } finally {
-          // Release the client back to the pool
-          client.release();
-          console.log('Database client released back to pool');
+          // Release the client back to the pool if it was acquired
+          if (client) {
+            client.release();
+            console.log('Database client released back to pool');
+          }
         }
-      } catch (dbError) {
-        console.error('Database connection failed:', dbError);
-        console.log('Starting server without database connection...');
-        // Continue starting the server even if database connection fails
-        // This allows the static files to be served even if the database is down
       }
     }
 
