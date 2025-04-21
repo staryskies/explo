@@ -108,12 +108,12 @@ router.post('/', requireAuth, async (req, res) => {
       code: squad.code,
       leaderId: squad.leaderId,
       createdAt: squad.createdAt,
-      members: squad.members.map(member => ({
-        id: member.id,
-        username: member.username,
-        isGuest: member.isguest,
-        joinedAt: member.joinedat
-      }))
+      members: squad.members ? squad.members.map(member => ({
+        id: member.id || '',
+        username: member.username || 'Unknown',
+        isGuest: member.isguest || false,
+        joinedAt: member.joinedat || new Date()
+      })) : []
     };
 
     res.status(201).json(formattedSquad);

@@ -41,6 +41,20 @@ app.use(cookieParser());
 // Authentication middleware
 app.use(authenticate);
 
+// Rate limiting middleware - apply to all routes
+const rateLimiter = require('./middleware/rateLimiter');
+app.use(rateLimiter({
+  windowMs: 60000, // 1 minute
+  maxRequests: 30   // 30 requests per minute
+}));
+
+// Add delay to API responses to reduce server load
+const delayResponse = require('./middleware/delayResponse');
+app.use(delayResponse({
+  minDelay: 200,  // 200ms minimum delay
+  maxDelay: 800   // 800ms maximum delay
+}));
+
 // Request logging middleware
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
