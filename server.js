@@ -509,67 +509,68 @@ app.use((req, res) => {
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
 
-// Initialize database connection
-const { Pool } = require('pg');
+// Initialize database connection using the centralized pool
+const { initPool, getPool, closePool } = require('./lib/db-pool');
 
-// Create a direct connection to the database
-let pool;
+// Initialize the pool
+const pool = initPool();
 
-// Parse the connection string
-if (process.env.DATABASE_URL) {
-  const url = new URL(process.env.DATABASE_URL);
-  const connectionConfig = {
-    host: url.hostname,
-    port: url.port,
-    database: url.pathname.split('/')[1],
-    user: url.username,
-    password: url.password,
-    ssl: true,
-    connectionTimeoutMillis: 10000 // 10 seconds
-  };
-
-  // Create a new pool
-  pool = new Pool(connectionConfig);
-  console.log(`Database connection configured for ${url.hostname}:${url.port}${url.pathname}`);
-} else {
-  console.error('DATABASE_URL environment variable is not set');
-}
+// Make the pool globally available
+global.dbPool = pool;
 
 // Handle database connection cleanup
 process.on('beforeExit', async () => {
-  if (pool) {
-    await pool.end();
-  }
+  await closePool();
+});
+
+// Handle SIGTERM for graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received, closing database connections');
+  await closePool();
+});
+
+// Handle SIGINT for graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('SIGINT received, closing database connections');
+  await closePool();
 });
 
 async function startServer() {
   try {
     // Check database connection
     console.log('Checking database connection...');
+    const pool = getPool();
     if (!pool) {
       console.error('Database connection not configured');
       console.log('Starting server without database connection...');
     } else {
       try {
         // Test the database connection with a simple query
-        const result = await pool.query('SELECT NOW()');
-        console.log('Database connection successful, current time:', result.rows[0].now);
-
-        // Initialize database if connected successfully
+        const client = await pool.connect();
         try {
-          console.log('Running database initialization...');
-          // Create schema
-          const createSchema = require('./scripts/create-schema');
-          await createSchema();
-          console.log('Schema creation completed');
+          const result = await client.query('SELECT NOW()');
+          console.log('Database connection successful, current time:', result.rows[0].now);
 
-          // Initialize database
-          const initDb = require('./scripts/init-db');
-          await initDb();
-          console.log('Database initialization completed successfully');
-        } catch (initError) {
-          console.error('Database initialization failed:', initError);
-          console.log('Continuing server startup with existing database state...');
+          // Initialize database if connected successfully
+          try {
+            console.log('Running database initialization...');
+            // Create schema
+            const createSchema = require('./scripts/create-schema');
+            await createSchema();
+            console.log('Schema creation completed');
+
+            // Initialize database
+            const initDb = require('./scripts/init-db');
+            await initDb();
+            console.log('Database initialization completed successfully');
+          } catch (initError) {
+            console.error('Database initialization failed:', initError);
+            console.log('Continuing server startup with existing database state...');
+          }
+        } finally {
+          // Release the client back to the pool
+          client.release();
+          console.log('Database client released back to pool');
         }
       } catch (dbError) {
         console.error('Database connection failed:', dbError);

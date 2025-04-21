@@ -2,31 +2,10 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
-const { Pool } = require('pg');
 const { requireAuth } = require('../middleware/auth');
 
-// Create a connection pool
-let pool;
-
-// Parse the connection string
-if (process.env.DATABASE_URL) {
-  const url = new URL(process.env.DATABASE_URL);
-  const connectionConfig = {
-    host: url.hostname,
-    port: url.port,
-    database: url.pathname.split('/')[1],
-    user: url.username,
-    password: url.password,
-    ssl: true,
-    connectionTimeoutMillis: 10000 // 10 seconds
-  };
-
-  // Create a new pool
-  pool = new Pool(connectionConfig);
-} else {
-  console.error('DATABASE_URL environment variable is not set');
-  pool = null;
-}
+// Use the centralized database pool
+const { getPool } = require('../lib/db-pool');
 
 const router = express.Router();
 
@@ -44,6 +23,7 @@ const generateSquadCode = () => {
 // Create a new squad
 router.post('/', requireAuth, async (req, res) => {
   try {
+    const pool = getPool();
     if (!pool) {
       return res.status(500).json({ error: 'Database connection not available' });
     }
@@ -129,10 +109,10 @@ router.post('/', requireAuth, async (req, res) => {
       leaderId: squad.leaderId,
       createdAt: squad.createdAt,
       members: squad.members.map(member => ({
-        id: member.user.id,
-        username: member.user.username,
-        isGuest: member.user.isGuest,
-        joinedAt: member.joinedAt
+        id: member.id,
+        username: member.username,
+        isGuest: member.isguest,
+        joinedAt: member.joinedat
       }))
     };
 
@@ -156,6 +136,7 @@ router.post('/join', requireAuth, [
 
     const { code } = req.body;
 
+    const pool = getPool();
     if (!pool) {
       return res.status(500).json({ error: 'Database connection not available' });
     }
@@ -227,10 +208,10 @@ router.post('/join', requireAuth, [
       leaderId: updatedSquad.leaderId,
       createdAt: updatedSquad.createdAt,
       members: updatedSquad.members.map(member => ({
-        id: member.user.id,
-        username: member.user.username,
-        isGuest: member.user.isGuest,
-        joinedAt: member.joinedAt
+        id: member.id,
+        username: member.username,
+        isGuest: member.isguest,
+        joinedAt: member.joinedat
       }))
     };
 
@@ -246,6 +227,7 @@ router.post('/:id/leave', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
+    const pool = getPool();
     if (!pool) {
       return res.status(500).json({ error: 'Database connection not available' });
     }
@@ -337,6 +319,7 @@ router.post('/:id/leave', requireAuth, async (req, res) => {
 // Get public squads list
 router.get('/public', requireAuth, async (req, res) => {
   try {
+    const pool = getPool();
     if (!pool) {
       return res.status(500).json({ error: 'Database connection not available' });
     }
@@ -367,6 +350,7 @@ router.get('/:id/state', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
+    const pool = getPool();
     if (!pool) {
       return res.status(500).json({ error: 'Database connection not available' });
     }
@@ -437,6 +421,7 @@ router.post('/:id/game-state', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Game state is required' });
     }
 
+    const pool = getPool();
     if (!pool) {
       return res.status(500).json({ error: 'Database connection not available' });
     }
@@ -468,6 +453,7 @@ router.post('/:id/game-state', requireAuth, async (req, res) => {
 // Get user's current squad
 router.get('/my-squad', requireAuth, async (req, res) => {
   try {
+    const pool = getPool();
     if (!pool) {
       return res.status(500).json({ error: 'Database connection not available' });
     }

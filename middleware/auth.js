@@ -1,29 +1,8 @@
 // middleware/auth.js
 const jwt = require('jsonwebtoken');
-const { Pool } = require('pg');
 
-// Create a connection pool
-let pool;
-
-// Parse the connection string
-if (process.env.DATABASE_URL) {
-  const url = new URL(process.env.DATABASE_URL);
-  const connectionConfig = {
-    host: url.hostname,
-    port: url.port,
-    database: url.pathname.split('/')[1],
-    user: url.username,
-    password: url.password,
-    ssl: true,
-    connectionTimeoutMillis: 10000 // 10 seconds
-  };
-
-  // Create a new pool
-  pool = new Pool(connectionConfig);
-} else {
-  console.error('DATABASE_URL environment variable is not set');
-  pool = null;
-}
+// Use the centralized database pool
+const { getPool } = require('../lib/db-pool');
 
 // Middleware to authenticate users via JWT
 const authenticate = async (req, res, next) => {
@@ -41,18 +20,32 @@ const authenticate = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // Find session in database
+    const pool = getPool();
     if (!pool) {
       req.user = null;
       return next();
     }
 
-    const sessionResult = await pool.query(
-      `SELECT s.*, u.id as user_id, u.username, u.email, u.is_guest as "isGuest"
-       FROM sessions s
-       JOIN users u ON s.user_id = u.id
-       WHERE s.token = $1`,
-      [token]
-    );
+    // Get a client from the pool
+    const client = await pool.connect();
+    let sessionResult;
+
+    try {
+      sessionResult = await client.query(
+        `SELECT s.*, u.id as user_id, u.username, u.email, u.is_guest as "isGuest"
+         FROM sessions s
+         JOIN users u ON s.user_id = u.id
+         WHERE s.token = $1`,
+        [token]
+      );
+    } catch (dbError) {
+      console.error('Database query error in authenticate middleware:', dbError);
+      req.user = null;
+      return next();
+    } finally {
+      // Always release the client back to the pool
+      client.release();
+    }
 
     const session = sessionResult.rows[0];
 

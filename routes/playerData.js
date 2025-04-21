@@ -1,45 +1,29 @@
 // routes/playerData.js
 const express = require('express');
-const { Pool } = require('pg');
 const { requireAuth } = require('../middleware/auth');
 
-// Create a connection pool
-let pool;
-
-// Parse the connection string
-if (process.env.DATABASE_URL) {
-  const url = new URL(process.env.DATABASE_URL);
-  const connectionConfig = {
-    host: url.hostname,
-    port: url.port,
-    database: url.pathname.split('/')[1],
-    user: url.username,
-    password: url.password,
-    ssl: true,
-    connectionTimeoutMillis: 10000 // 10 seconds
-  };
-
-  // Create a new pool
-  pool = new Pool(connectionConfig);
-} else {
-  console.error('DATABASE_URL environment variable is not set');
-  pool = null;
-}
+// Use the centralized database pool
+const { getPool } = require('../lib/db-pool');
 
 const router = express.Router();
 
 // Get player data
 router.get('/', requireAuth, async (req, res) => {
   try {
-    // Check if database is available
+    // Get database pool
+    const pool = getPool();
     if (!pool) {
       console.log('Database not available, returning default player data');
       return res.json(createDefaultPlayerData());
     }
 
+    // Get a client from the pool
+    let client;
     try {
+      client = await pool.connect();
+
       // Get player data
-      const playerDataResult = await pool.query(
+      const playerDataResult = await client.query(
         'SELECT game_data FROM player_data WHERE user_id = $1 LIMIT 1',
         [req.user.id]
       );
@@ -54,6 +38,11 @@ router.get('/', requireAuth, async (req, res) => {
       console.error('Database error:', dbError);
       // Return default data on database error
       return res.json(createDefaultPlayerData());
+    } finally {
+      // Always release the client back to the pool
+      if (client) {
+        client.release();
+      }
     }
   } catch (error) {
     console.error('Get player data error:', error);
@@ -115,29 +104,34 @@ router.put('/', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Game data is required' });
     }
 
-    // Check if database is available
+    // Get database pool
+    const pool = getPool();
     if (!pool) {
       console.log('Database not available, returning provided game data');
       return res.json(gameData);
     }
 
+    // Get a client from the pool
+    let client;
     try {
+      client = await pool.connect();
+
       // Check if player data exists
-      const existingResult = await pool.query(
+      const existingResult = await client.query(
         'SELECT id FROM player_data WHERE user_id = $1 LIMIT 1',
         [req.user.id]
       );
 
       if (existingResult.rows.length === 0) {
         // Create new player data
-        await pool.query(
+        await client.query(
           `INSERT INTO player_data (id, user_id, game_data, created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5)`,
           [require('uuid').v4(), req.user.id, JSON.stringify(gameData), new Date(), new Date()]
         );
       } else {
         // Update existing player data
-        await pool.query(
+        await client.query(
           `UPDATE player_data
            SET game_data = $1, updated_at = $2
            WHERE user_id = $3`,
@@ -150,6 +144,11 @@ router.put('/', requireAuth, async (req, res) => {
       console.error('Database error:', dbError);
       // Return the provided data even on database error
       return res.json(gameData);
+    } finally {
+      // Always release the client back to the pool
+      if (client) {
+        client.release();
+      }
     }
   } catch (error) {
     console.error('Update player data error:', error);

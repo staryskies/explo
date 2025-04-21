@@ -4,31 +4,10 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { body, validationResult } = require('express-validator');
-const { Pool } = require('pg');
 const { requireAuth } = require('../middleware/auth');
 
-// Create a connection pool
-let pool;
-
-// Parse the connection string
-if (process.env.DATABASE_URL) {
-  const url = new URL(process.env.DATABASE_URL);
-  const connectionConfig = {
-    host: url.hostname,
-    port: url.port,
-    database: url.pathname.split('/')[1],
-    user: url.username,
-    password: url.password,
-    ssl: true,
-    connectionTimeoutMillis: 10000 // 10 seconds
-  };
-
-  // Create a new pool
-  pool = new Pool(connectionConfig);
-} else {
-  console.error('DATABASE_URL environment variable is not set');
-  pool = null;
-}
+// Use the centralized database pool
+const { getPool } = require('../lib/db-pool');
 
 const router = express.Router();
 
@@ -42,12 +21,21 @@ const createSession = async (userId) => {
   const token = jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
   // Create session in database
+  const pool = getPool();
   if (pool) {
-    await pool.query(
-      `INSERT INTO sessions (id, user_id, token, expires_at, created_at)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [uuidv4(), userId, token, expiresAt, new Date()]
-    );
+    const client = await pool.connect();
+    try {
+      await client.query(
+        `INSERT INTO sessions (id, user_id, token, expires_at, created_at)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [uuidv4(), userId, token, expiresAt, new Date()]
+      );
+    } catch (error) {
+      console.error('Error creating session:', error);
+      // Continue anyway - we'll return the token even if DB insert fails
+    } finally {
+      client.release();
+    }
   }
 
   return { token, expiresAt };
