@@ -12,6 +12,14 @@ class SquadChat {
     this.inputField = null;
     this.sendButton = null;
     this.currentSquad = null;
+    this.headerTitle = null;
+    this.toggleButton = null;
+    this.membersList = null;
+    this.squadCode = null;
+    this.leaveButton = null;
+
+    // Create UI elements first
+    this.createUI();
 
     // Initialize when squad service is ready
     if (window.squadService) {
@@ -38,9 +46,6 @@ class SquadChat {
         }
       });
     }
-
-    // Create UI elements
-    this.createUI();
   }
 
   // Create UI elements
@@ -210,6 +215,11 @@ class SquadChat {
 
   // Update header based on current squad
   updateHeader() {
+    // Make sure UI elements are created before updating them
+    if (!this.headerTitle || !this.toggleButton) {
+      return; // UI not ready yet, will be updated when createUI is called
+    }
+
     if (this.currentSquad) {
       this.headerTitle.textContent = `Squad Chat (${this.currentSquad.code})`;
       this.toggleButton.style.display = 'block';
@@ -228,6 +238,11 @@ class SquadChat {
 
   // Update squad info section
   updateSquadInfo() {
+    // Make sure UI elements are created before updating them
+    if (!this.membersList || !this.squadCode || !this.leaveButton) {
+      return; // UI not ready yet, will be updated when createUI is called
+    }
+
     if (!this.currentSquad) {
       this.membersList.textContent = 'Not in a squad';
       this.squadCode.textContent = '';
@@ -237,11 +252,15 @@ class SquadChat {
 
     // Update members list
     this.membersList.innerHTML = '<strong>Members:</strong><br>';
-    this.currentSquad.members.forEach(member => {
-      const memberElement = document.createElement('div');
-      memberElement.textContent = member.username + (member.id === this.currentSquad.leaderId ? ' (Leader)' : '');
-      this.membersList.appendChild(memberElement);
-    });
+    if (this.currentSquad.members && Array.isArray(this.currentSquad.members)) {
+      this.currentSquad.members.forEach(member => {
+        const memberElement = document.createElement('div');
+        memberElement.textContent = member.username + (member.id === this.currentSquad.leaderId ? ' (Leader)' : '');
+        this.membersList.appendChild(memberElement);
+      });
+    } else {
+      this.membersList.innerHTML += '<div>No members found</div>';
+    }
 
     // Update squad code
     this.squadCode.textContent = `Squad Code: ${this.currentSquad.code}`;
@@ -252,6 +271,11 @@ class SquadChat {
 
   // Toggle chat visibility
   toggle() {
+    // Make sure UI elements are created before updating them
+    if (!this.container || !this.toggleButton) {
+      return; // UI not ready yet
+    }
+
     this.isVisible = !this.isVisible;
     this.container.style.display = this.isVisible ? 'flex' : 'none';
     this.toggleButton.style.display = this.isVisible ? 'none' : 'block';
@@ -282,7 +306,17 @@ class SquadChat {
 
   // Add a message to the chat
   addMessage(message) {
+    // Check if message already exists in our list
+    if (this.messages.some(m => m.id === message.id)) {
+      return; // Skip duplicate messages
+    }
+
     this.messages.push(message);
+
+    // Make sure UI elements are created before updating them
+    if (!this.messageList) {
+      return; // UI not ready yet
+    }
 
     // Create message element
     const messageElement = document.createElement('div');
@@ -291,21 +325,21 @@ class SquadChat {
 
     const username = document.createElement('span');
     username.className = 'chat-username';
-    username.textContent = message.username;
+    username.textContent = message.username || 'Unknown';
     username.style.fontWeight = 'bold';
     username.style.color = '#2196F3';
     username.style.marginRight = '5px';
 
     const timestamp = document.createElement('span');
     timestamp.className = 'chat-timestamp';
-    timestamp.textContent = new Date(message.timestamp).toLocaleTimeString();
+    timestamp.textContent = new Date(message.timestamp || Date.now()).toLocaleTimeString();
     timestamp.style.fontSize = '0.8em';
     timestamp.style.color = '#999';
     timestamp.style.marginLeft = '5px';
 
     const content = document.createElement('div');
     content.className = 'chat-content';
-    content.textContent = message.message;
+    content.textContent = message.message || '';
     content.style.color = '#fff';
     content.style.wordBreak = 'break-word';
 
@@ -325,6 +359,11 @@ class SquadChat {
   // Leave the current squad
   async leaveSquad() {
     if (!this.currentSquad) return;
+
+    // Make sure UI elements are created before updating them
+    if (!this.container || !this.toggleButton) {
+      return; // UI not ready yet
+    }
 
     if (confirm('Are you sure you want to leave this squad?')) {
       try {
