@@ -3,20 +3,40 @@
  * Provides a chat interface for squad members
  */
 class SquadChat {
+  // Static initialization flag to prevent multiple initializations
+  static initialized = false;
   constructor() {
+    // Prevent multiple initializations
+    if (SquadChat.initialized) {
+      console.warn('SquadChat already initialized');
+      return;
+    }
+    SquadChat.initialized = true;
+
+    // Initialize properties
     this.messages = [];
     this.listeners = [];
     this.isVisible = false;
+    this.currentSquad = null;
+
+    // UI elements - will be created in createUI
     this.container = null;
     this.messageList = null;
     this.inputField = null;
     this.sendButton = null;
-    this.currentSquad = null;
     this.headerTitle = null;
     this.toggleButton = null;
     this.membersList = null;
     this.squadCode = null;
     this.leaveButton = null;
+
+    // Defer initialization to ensure DOM is ready
+    setTimeout(() => this.initialize(), 100);
+  }
+
+  // Initialize the component
+  initialize() {
+    console.log('Initializing SquadChat component');
 
     // Create UI elements first
     this.createUI();
@@ -24,16 +44,23 @@ class SquadChat {
     // Initialize when squad service is ready
     if (window.squadService) {
       window.squadService.addListener(squad => {
+        console.log('Squad updated:', squad);
         this.currentSquad = squad;
-        this.updateHeader();
+
+        // Only update UI if elements are created
+        if (this.headerTitle && this.toggleButton) {
+          this.updateHeader();
+        }
 
         // If we have a squad, tell the REST communication service about it
         if (window.restCommunicationService && squad) {
           window.restCommunicationService.setCurrentSquad(squad);
 
           // Load existing messages for this squad
-          const messages = window.restCommunicationService.getMessages('squad', squad.id);
-          messages.forEach(message => this.addMessage(message));
+          if (this.messageList) {
+            const messages = window.restCommunicationService.getMessages('squad', squad.id);
+            messages.forEach(message => this.addMessage(message));
+          }
         }
       });
     }
@@ -50,6 +77,8 @@ class SquadChat {
 
   // Create UI elements
   createUI() {
+    try {
+      console.log('Creating SquadChat UI elements');
     // Create container
     this.container = document.createElement('div');
     this.container.className = 'chat-container squad-chat';
@@ -185,6 +214,11 @@ class SquadChat {
     // Update header and squad info
     this.updateHeader();
     this.updateSquadInfo();
+
+    console.log('SquadChat UI elements created successfully');
+    } catch (error) {
+      console.error('Error creating SquadChat UI:', error);
+    }
   }
 
   // Create toggle button

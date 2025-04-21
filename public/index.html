@@ -510,5 +510,31 @@
   <script src="js/auth.js"></script>
   <script src="js/squad.js"></script>
   <script src="js/menu.js"></script>
+
+  <!-- Initialize components after DOM is loaded -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM fully loaded, initializing components');
+
+      // Ensure services are initialized first
+      setTimeout(function() {
+        // Reinitialize components if needed
+        if (window.globalChat) {
+          console.log('Ensuring GlobalChat is initialized');
+          window.globalChat.initialize();
+        }
+
+        if (window.squadChat) {
+          console.log('Ensuring SquadChat is initialized');
+          window.squadChat.initialize();
+        }
+
+        if (window.squadGameLoader) {
+          console.log('Ensuring SquadGameLoader is initialized');
+          window.squadGameLoader.initialize();
+        }
+      }, 500);
+    });
+  </script>
 </body>
 </html>

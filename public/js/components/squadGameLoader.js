@@ -3,12 +3,24 @@
  * Allows squad members to load into the same game together
  */
 class SquadGameLoader {
+  // Static initialization flag to prevent multiple initializations
+  static initialized = false;
   constructor() {
+    // Prevent multiple initializations
+    if (SquadGameLoader.initialized) {
+      console.warn('SquadGameLoader already initialized');
+      return;
+    }
+    SquadGameLoader.initialized = true;
+
+    // Initialize properties
     this.isVisible = false;
-    this.container = null;
     this.currentSquad = null;
     this.gameState = null;
     this.readyPlayers = new Set();
+
+    // UI elements - will be created in createUI
+    this.container = null;
     this.headerTitle = null;
     this.toggleButton = null;
     this.playersList = null;
@@ -17,32 +29,53 @@ class SquadGameLoader {
     this.difficultySelect = null;
     this.mapSelect = null;
 
-    // Create UI elements first
-    this.createUI();
+    // Defer initialization to ensure DOM is ready
+    setTimeout(() => this.initialize(), 200);
+  }
 
-    // Initialize when squad service is ready
-    if (window.squadService) {
-      window.squadService.addListener(squad => {
-        this.currentSquad = squad;
-        this.updateUI();
-      });
-    }
+  // Initialize the component
+  initialize() {
+    console.log('Initializing SquadGameLoader component');
 
-    // Listen for state updates from REST communication service
-    if (window.restCommunicationService) {
-      window.restCommunicationService.addStateListener(state => {
-        if (state.type === 'squad-state' && state.data) {
-          // Handle game state updates
-          if (state.data.gameState) {
-            this.handleGameStateUpdate({ gameState: state.data.gameState });
+    try {
+      // Create UI elements first
+      this.createUI();
+
+      // Initialize when squad service is ready
+      if (window.squadService) {
+        window.squadService.addListener(squad => {
+          console.log('Squad updated in game loader:', squad);
+          this.currentSquad = squad;
+
+          // Only update UI if elements are created
+          if (this.headerTitle && this.toggleButton && this.playersList) {
+            this.updateUI();
           }
-        }
-      });
+        });
+      }
+
+      // Listen for state updates from REST communication service
+      if (window.restCommunicationService) {
+        window.restCommunicationService.addStateListener(state => {
+          if (state.type === 'squad-state' && state.data) {
+            // Handle game state updates
+            if (state.data.gameState) {
+              this.handleGameStateUpdate({ gameState: state.data.gameState });
+            }
+          }
+        });
+      }
+
+      console.log('SquadGameLoader initialized successfully');
+    } catch (error) {
+      console.error('Error initializing SquadGameLoader:', error);
     }
   }
 
   // Create UI elements
   createUI() {
+    try {
+      console.log('Creating SquadGameLoader UI elements');
     // Create container
     this.container = document.createElement('div');
     this.container.className = 'squad-game-loader';
@@ -198,6 +231,11 @@ class SquadGameLoader {
 
     // Create toggle button
     this.createToggleButton();
+
+    console.log('SquadGameLoader UI elements created successfully');
+    } catch (error) {
+      console.error('Error creating SquadGameLoader UI:', error);
+    }
   }
 
   // Create toggle button

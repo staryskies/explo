@@ -3,36 +3,62 @@
  * Provides a global chat interface for all players
  */
 class GlobalChat {
+  // Static initialization flag to prevent multiple initializations
+  static initialized = false;
   constructor() {
+    // Prevent multiple initializations
+    if (GlobalChat.initialized) {
+      console.warn('GlobalChat already initialized');
+      return;
+    }
+    GlobalChat.initialized = true;
+
+    // Initialize properties
     this.messages = [];
     this.listeners = [];
     this.isVisible = false;
+
+    // UI elements - will be created in createUI
     this.container = null;
     this.messageList = null;
     this.inputField = null;
     this.sendButton = null;
     this.connectionStatus = null;
 
-    // Create UI elements
-    this.createUI();
+    // Defer initialization to ensure DOM is ready
+    setTimeout(() => this.initialize(), 100);
+  }
 
-    // Initialize messages from REST communication service
-    if (window.restCommunicationService) {
-      // Load existing messages
-      this.messages = window.restCommunicationService.getMessages('global');
-      this.updateMessageList();
+  // Initialize the component
+  initialize() {
+    console.log('Initializing GlobalChat component');
 
-      // Listen for new messages
-      window.restCommunicationService.addMessageListener((type, message) => {
-        if (type === 'global') {
-          this.addMessage(message);
-        }
-      });
+    try {
+      // Create UI elements first
+      this.createUI();
 
-      // Listen for connection state changes
-      window.restCommunicationService.addStateListener((state) => {
-        this.updateConnectionStatus(state);
-      });
+      // Initialize messages from REST communication service
+      if (window.restCommunicationService) {
+        // Load existing messages
+        this.messages = window.restCommunicationService.getMessages('global');
+        this.updateMessageList();
+
+        // Listen for new messages
+        window.restCommunicationService.addMessageListener((type, message) => {
+          if (type === 'global') {
+            this.addMessage(message);
+          }
+        });
+
+        // Listen for connection state changes
+        window.restCommunicationService.addStateListener((state) => {
+          this.updateConnectionStatus(state);
+        });
+      }
+
+      console.log('GlobalChat initialized successfully');
+    } catch (error) {
+      console.error('Error initializing GlobalChat:', error);
     }
   }
 
@@ -51,6 +77,8 @@ class GlobalChat {
 
   // Create UI elements
   createUI() {
+    try {
+      console.log('Creating GlobalChat UI elements');
     // Create container
     this.container = document.createElement('div');
     this.container.className = 'chat-container global-chat';
@@ -155,6 +183,11 @@ class GlobalChat {
 
     // Create toggle button
     this.createToggleButton();
+
+    console.log('GlobalChat UI elements created successfully');
+    } catch (error) {
+      console.error('Error creating GlobalChat UI:', error);
+    }
   }
 
   // Create toggle button
@@ -221,57 +254,93 @@ class GlobalChat {
 
   // Add a message to the chat
   addMessage(message) {
-    // Check if message already exists
-    if (this.messages.some(m => m.id === message.id)) {
-      return;
+    try {
+      // Validate message
+      if (!message) {
+        console.warn('Attempted to add null/undefined message');
+        return;
+      }
+
+      // Ensure message has an ID
+      if (!message.id) {
+        message.id = 'local_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      }
+
+      // Check if message already exists
+      if (this.messages.some(m => m.id === message.id)) {
+        return;
+      }
+
+      // Ensure message has required fields
+      if (!message.username) message.username = 'Unknown';
+      if (!message.timestamp) message.timestamp = new Date().toISOString();
+      if (!message.message) message.message = '';
+
+      // Add to messages array
+      this.messages.push(message);
+
+      // Add message to UI if UI is ready
+      if (this.messageList) {
+        this.addMessageToUI(message);
+      }
+
+      // Notify listeners
+      this.notifyListeners();
+
+      // Limit cache size
+      if (this.messages.length > 100) {
+        this.messages = this.messages.slice(-100);
+      }
+    } catch (error) {
+      console.error('Error adding message:', error);
     }
-
-    this.messages.push(message);
-
-    // Add message to UI
-    this.addMessageToUI(message);
-
-    // Notify listeners
-    this.notifyListeners();
   }
 
   // Add a message to the UI
   addMessageToUI(message) {
-    if (!this.messageList) return;
+    try {
+      if (!this.messageList) return;
 
-    // Create message element
-    const messageElement = document.createElement('div');
-    messageElement.className = 'chat-message';
-    messageElement.style.marginBottom = '10px';
+      // Create message element
+      const messageElement = document.createElement('div');
+      messageElement.className = 'chat-message';
+      messageElement.style.marginBottom = '10px';
 
-    const username = document.createElement('span');
-    username.className = 'chat-username';
-    username.textContent = message.username;
-    username.style.fontWeight = 'bold';
-    username.style.color = '#4CAF50';
-    username.style.marginRight = '5px';
+      const username = document.createElement('span');
+      username.className = 'chat-username';
+      username.textContent = message.username || 'Unknown';
+      username.style.fontWeight = 'bold';
+      username.style.color = '#4CAF50';
+      username.style.marginRight = '5px';
 
-    const timestamp = document.createElement('span');
-    timestamp.className = 'chat-timestamp';
-    timestamp.textContent = new Date(message.timestamp).toLocaleTimeString();
-    timestamp.style.fontSize = '0.8em';
-    timestamp.style.color = '#999';
-    timestamp.style.marginLeft = '5px';
+      const timestamp = document.createElement('span');
+      timestamp.className = 'chat-timestamp';
+      try {
+        timestamp.textContent = new Date(message.timestamp).toLocaleTimeString();
+      } catch (dateError) {
+        timestamp.textContent = new Date().toLocaleTimeString();
+      }
+      timestamp.style.fontSize = '0.8em';
+      timestamp.style.color = '#999';
+      timestamp.style.marginLeft = '5px';
 
-    const content = document.createElement('div');
-    content.className = 'chat-content';
-    content.textContent = message.message;
-    content.style.color = '#fff';
-    content.style.wordBreak = 'break-word';
+      const content = document.createElement('div');
+      content.className = 'chat-content';
+      content.textContent = message.message || '';
+      content.style.color = '#fff';
+      content.style.wordBreak = 'break-word';
 
-    messageElement.appendChild(username);
-    messageElement.appendChild(timestamp);
-    messageElement.appendChild(content);
+      messageElement.appendChild(username);
+      messageElement.appendChild(timestamp);
+      messageElement.appendChild(content);
 
-    this.messageList.appendChild(messageElement);
+      this.messageList.appendChild(messageElement);
 
-    // Scroll to bottom
-    this.messageList.scrollTop = this.messageList.scrollHeight;
+      // Scroll to bottom
+      this.messageList.scrollTop = this.messageList.scrollHeight;
+    } catch (error) {
+      console.error('Error adding message to UI:', error);
+    }
   }
 
   // Add message listener
