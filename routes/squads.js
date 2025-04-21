@@ -23,34 +23,65 @@ const generateSquadCode = () => {
 // Create a new squad
 router.post('/', requireAuth, async (req, res) => {
   try {
+    // Set a timeout to prevent long-running requests
+    const timeout = setTimeout(() => {
+      console.log('Squad creation timed out');
+      if (!res.headersSent) {
+        return res.status(504).json({ error: 'Request timed out. Please try again.' });
+      }
+    }, 4000); // 4 second timeout
+
     const pool = getPool();
     if (!pool) {
+      clearTimeout(timeout);
       return res.status(500).json({ error: 'Database connection not available' });
     }
 
-    // Generate a unique squad code
-    let code;
+    // Generate a unique squad code - limit attempts to prevent infinite loops
+    let code = generateSquadCode();
     let isUnique = false;
+    let attempts = 0;
+    const maxAttempts = 3;
 
-    while (!isUnique) {
-      code = generateSquadCode();
+    while (!isUnique && attempts < maxAttempts) {
+      attempts++;
+      try {
+        // Check if code already exists
+        const client = await pool.connect();
+        try {
+          const existingSquadResult = await client.query(
+            'SELECT * FROM squads WHERE code = $1 LIMIT 1',
+            [code]
+          );
 
-      // Check if code already exists
-      const existingSquadResult = await pool.query(
-        'SELECT * FROM squads WHERE code = $1 LIMIT 1',
-        [code]
-      );
-
-      if (existingSquadResult.rows.length === 0) {
-        isUnique = true;
+          if (existingSquadResult.rows.length === 0) {
+            isUnique = true;
+          } else {
+            code = generateSquadCode(); // Generate a new code
+          }
+        } finally {
+          client.release();
+        }
+      } catch (error) {
+        console.error(`Error checking squad code (attempt ${attempts}):`, error);
+        // Generate a new code and try again
+        code = generateSquadCode();
       }
     }
 
-    // Create squad and add member in a transaction
-    const client = await pool.connect();
+    // If we couldn't generate a unique code after max attempts, use the last one
+    // The chance of collision is very low
+
+    // Create squad and add member in a transaction with timeout handling
+    let client;
     let squad;
 
     try {
+      client = await pool.connect();
+
+      // Set statement timeout to prevent long-running queries
+      await client.query('SET statement_timeout = 3000'); // 3 seconds
+
       await client.query('BEGIN');
 
       // Generate IDs
@@ -58,68 +89,71 @@ router.post('/', requireAuth, async (req, res) => {
       const membershipId = uuidv4();
       const now = new Date();
 
-      // Insert squad
+      // Insert squad - simplified query
       await client.query(
         `INSERT INTO squads (id, code, leader_id, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [squadId, code, req.user.id, now, now]
+         VALUES ($1, $2, $3, $4, $4)`, // Use same timestamp for both
+        [squadId, code, req.user.id, now]
       );
 
-      // Insert squad member
+      // Insert squad member - simplified query
       await client.query(
         `INSERT INTO squad_members (id, squad_id, user_id, joined_at)
          VALUES ($1, $2, $3, $4)`,
         [membershipId, squadId, req.user.id, now]
       );
 
-      // Get squad with members
-      const squadResult = await client.query(
-        `SELECT s.id, s.code, s.leader_id as "leaderId", s.created_at as "createdAt"
-         FROM squads s
-         WHERE s.id = $1`,
-        [squadId]
-      );
-
-      squad = squadResult.rows[0];
-
-      // Get members
-      const membersResult = await client.query(
-        `SELECT sm.joined_at as "joinedAt", u.id, u.username, u.is_guest as "isGuest"
-         FROM squad_members sm
-         JOIN users u ON sm.user_id = u.id
-         WHERE sm.squad_id = $1`,
-        [squadId]
-      );
-
-      // Add members to squad
-      squad.members = membersResult.rows;
+      // Create a minimal squad object instead of querying again
+      squad = {
+        id: squadId,
+        code: code,
+        leaderId: req.user.id,
+        createdAt: now,
+        members: [{
+          id: req.user.id,
+          username: req.user.username,
+          isGuest: req.user.isGuest,
+          joinedAt: now
+        }]
+      };
 
       await client.query('COMMIT');
+
+      // Clear the timeout since we're done
+      clearTimeout(timeout);
     } catch (error) {
-      await client.query('ROLLBACK');
+      if (client) {
+        try {
+          await client.query('ROLLBACK');
+        } catch (rollbackError) {
+          console.error('Error during rollback:', rollbackError);
+        }
+      }
       throw error;
     } finally {
-      client.release();
+      if (client) {
+        client.release();
+      }
     }
 
-    // Format response
-    const formattedSquad = {
-      id: squad.id,
-      code: squad.code,
-      leaderId: squad.leaderId,
-      createdAt: squad.createdAt,
-      members: squad.members ? squad.members.map(member => ({
-        id: member.id || '',
-        username: member.username || 'Unknown',
-        isGuest: member.isguest || false,
-        joinedAt: member.joinedat || new Date()
-      })) : []
-    };
-
-    res.status(201).json(formattedSquad);
+    // Squad object is already formatted correctly, just return it
+    res.status(201).json(squad);
   } catch (error) {
+    // Clear the timeout if it exists
+    if (timeout) clearTimeout(timeout);
+
     console.error('Create squad error:', error);
-    res.status(500).json({ error: 'Server error' });
+
+    // Provide more specific error messages
+    if (error.code === '57014') {
+      return res.status(504).json({ error: 'Database query timed out. Please try again.' });
+    } else if (error.code === '08006' || error.code === '08001' || error.code === '08004') {
+      return res.status(503).json({ error: 'Database connection issue. Please try again later.' });
+    } else if (error.code === '23505') {
+      return res.status(409).json({ error: 'Squad code already exists. Please try again.' });
+    }
+
+    res.status(500).json({ error: 'Server error', details: error.message });
   }
 });
 
@@ -318,30 +352,64 @@ router.post('/:id/leave', requireAuth, async (req, res) => {
 
 // Get public squads list
 router.get('/public', requireAuth, async (req, res) => {
+  // Set a timeout to prevent long-running requests
+  const timeout = setTimeout(() => {
+    console.log('Get public squads timed out');
+    if (!res.headersSent) {
+      return res.status(504).json({ error: 'Request timed out. Please try again.' });
+    }
+  }, 3000); // 3 second timeout
+
   try {
     const pool = getPool();
     if (!pool) {
+      clearTimeout(timeout);
       return res.status(500).json({ error: 'Database connection not available' });
     }
 
-    // Get squads with member count
-    const squadsResult = await pool.query(
-      `SELECT s.id, s.code, s.leader_id as "leaderId", s.created_at as "createdAt",
-              COUNT(sm.id) as "memberCount"
-       FROM squads s
-       JOIN squad_members sm ON s.id = sm.squad_id
-       GROUP BY s.id
-       HAVING COUNT(sm.id) < 4
-       ORDER BY s.created_at DESC
-       LIMIT 10`
-    );
+    // Get a client from the pool
+    const client = await pool.connect();
 
-    const squads = squadsResult.rows;
+    try {
+      // Set statement timeout to prevent long-running queries
+      await client.query('SET statement_timeout = 2000'); // 2 seconds
 
-    return res.json({ squads });
+      // Simplified query with fewer columns and smaller result set
+      const squadsResult = await client.query(
+        `SELECT s.id, s.code, s.leader_id as "leaderId", s.created_at as "createdAt",
+                COUNT(sm.id) as "memberCount"
+         FROM squads s
+         JOIN squad_members sm ON s.id = sm.squad_id
+         GROUP BY s.id
+         HAVING COUNT(sm.id) < 4
+         ORDER BY s.created_at DESC
+         LIMIT 5`
+      );
+
+      const squads = squadsResult.rows;
+
+      // Clear the timeout since we're done
+      clearTimeout(timeout);
+
+      return res.json({ squads });
+    } finally {
+      // Always release the client back to the pool
+      client.release();
+    }
   } catch (error) {
+    // Clear the timeout if it exists
+    if (timeout) clearTimeout(timeout);
+
     console.error('Get public squads error:', error);
-    return res.status(500).json({ error: 'Failed to get squads' });
+
+    // Provide more specific error messages
+    if (error.code === '57014') {
+      return res.status(504).json({ error: 'Database query timed out. Please try again.' });
+    } else if (error.code === '08006' || error.code === '08001' || error.code === '08004') {
+      return res.status(503).json({ error: 'Database connection issue. Please try again later.' });
+    }
+
+    return res.status(500).json({ error: 'Failed to get squads', details: error.message });
   }
 });
 
