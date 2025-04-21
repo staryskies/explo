@@ -516,24 +516,54 @@
     document.addEventListener('DOMContentLoaded', function() {
       console.log('DOM fully loaded, initializing components');
 
-      // Ensure services are initialized first
-      setTimeout(function() {
-        // Reinitialize components if needed
+      // Initialize components with retry mechanism
+      function initializeComponents(attempt = 1) {
+        console.log(`Initializing components (attempt ${attempt})`);
+
+        let initialized = true;
+
+        // Try to initialize global chat
         if (window.globalChat) {
-          console.log('Ensuring GlobalChat is initialized');
-          window.globalChat.initialize();
+          try {
+            console.log('Ensuring GlobalChat is initialized');
+            window.globalChat.initialize();
+          } catch (error) {
+            console.error('Error initializing GlobalChat:', error);
+            initialized = false;
+          }
         }
 
+        // Try to initialize squad chat
         if (window.squadChat) {
-          console.log('Ensuring SquadChat is initialized');
-          window.squadChat.initialize();
+          try {
+            console.log('Ensuring SquadChat is initialized');
+            window.squadChat.initialize();
+          } catch (error) {
+            console.error('Error initializing SquadChat:', error);
+            initialized = false;
+          }
         }
 
+        // Try to initialize squad game loader
         if (window.squadGameLoader) {
-          console.log('Ensuring SquadGameLoader is initialized');
-          window.squadGameLoader.initialize();
+          try {
+            console.log('Ensuring SquadGameLoader is initialized');
+            window.squadGameLoader.initialize();
+          } catch (error) {
+            console.error('Error initializing SquadGameLoader:', error);
+            initialized = false;
+          }
         }
-      }, 500);
+
+        // Retry if not all components initialized successfully
+        if (!initialized && attempt < 5) {
+          console.log(`Some components failed to initialize, retrying in ${attempt * 500}ms...`);
+          setTimeout(() => initializeComponents(attempt + 1), attempt * 500);
+        }
+      }
+
+      // Start initialization after a delay to ensure services are ready
+      setTimeout(() => initializeComponents(), 1000);
     });
   </script>
 </body>

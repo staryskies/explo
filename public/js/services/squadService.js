@@ -114,10 +114,29 @@ class SquadService {
         credentials: 'include'
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create squad');
+        const statusText = response.statusText || 'Unknown error';
+        const status = response.status;
+        console.error(`Server error: ${status} ${statusText}`);
+        throw new Error(`Server error: ${status} ${statusText}`);
+      }
+
+      let data;
+      try {
+        const responseText = await response.text();
+        if (!responseText) {
+          throw new Error('Empty response from server');
+        }
+
+        try {
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('JSON parse error:', parseError, 'Response text:', responseText);
+          throw new Error('Invalid server response. Please try again later.');
+        }
+      } catch (textError) {
+        console.error('Error reading response:', textError);
+        throw new Error('Failed to read server response. Please try again later.');
       }
 
       this.currentSquad = data;
@@ -154,10 +173,29 @@ class SquadService {
         credentials: 'include'
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to join squad');
+        const statusText = response.statusText || 'Unknown error';
+        const status = response.status;
+        console.error(`Server error: ${status} ${statusText}`);
+        throw new Error(`Server error: ${status} ${statusText}`);
+      }
+
+      let data;
+      try {
+        const responseText = await response.text();
+        if (!responseText) {
+          throw new Error('Empty response from server');
+        }
+
+        try {
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('JSON parse error:', parseError, 'Response text:', responseText);
+          throw new Error('Invalid server response. Please try again later.');
+        }
+      } catch (textError) {
+        console.error('Error reading response:', textError);
+        throw new Error('Failed to read server response. Please try again later.');
       }
 
       this.currentSquad = data;

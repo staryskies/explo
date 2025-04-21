@@ -294,8 +294,31 @@ router.post('/:id/leave', requireAuth, async (req, res) => {
       [id, req.user.id]
     );
 
-    // If user was the only member, delete the squad
-    if (members.length === 1) {
+    // Check if there are any members left after the user leaves
+    const remainingMembersResult = await pool.query(
+      'SELECT COUNT(*) as count FROM squad_members WHERE squad_id = $1',
+      [id]
+    );
+
+    const remainingCount = parseInt(remainingMembersResult.rows[0].count, 10);
+
+    // If no members left, delete the squad
+    if (remainingCount === 0) {
+      console.log(`No members left in squad ${id}, deleting squad`);
+
+      // Delete any game states for this squad
+      await pool.query(
+        'DELETE FROM game_states WHERE squad_id = $1',
+        [id]
+      );
+
+      // Delete any messages for this squad
+      await pool.query(
+        'DELETE FROM messages WHERE squad_id = $1',
+        [id]
+      );
+
+      // Delete the squad
       await pool.query(
         'DELETE FROM squads WHERE id = $1',
         [id]

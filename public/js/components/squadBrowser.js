@@ -43,10 +43,20 @@ class SquadBrowser {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to load squads');
+          console.warn(`Failed to load squads: ${response.status}`);
+          this.squadList.innerHTML = '<p style="color: #f44336; text-align: center;">Failed to load squads. Please try again later.</p>';
+          return [];
         }
 
-        const data = await response.json();
+        let data;
+        try {
+          data = await response.json();
+        } catch (jsonError) {
+          console.warn('Error parsing squads JSON:', jsonError);
+          this.squadList.innerHTML = '<p style="color: #f44336; text-align: center;">Invalid response from server. Please try again later.</p>';
+          return [];
+        }
+
         this.squads = data.squads || [];
         this.updateSquadList();
 

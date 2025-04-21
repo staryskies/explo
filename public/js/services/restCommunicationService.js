@@ -166,6 +166,7 @@ class RestCommunicationService {
 
         if (!response.ok) {
           console.warn(`Failed to poll ${type} messages: ${response.status}`);
+          // Don't throw an error, just return and try again later
           return;
         }
 

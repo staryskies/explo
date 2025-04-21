@@ -157,27 +157,29 @@ class AuthService {
 
       // Check if response is ok before trying to parse JSON
       if (!response.ok) {
-        let errorData;
-        try {
-          // Try to parse as JSON first
-          errorData = await response.json();
-          console.error('Server error response:', errorData);
-          throw new Error(errorData.error || 'Failed to create guest user');
-        } catch (jsonError) {
-          // If not JSON, get as text
-          const errorText = await response.text();
-          console.error('Server error response (text):', errorText);
-          throw new Error('Server error: ' + (errorText.substring(0, 100) || 'Failed to create guest user'));
-        }
+        const statusText = response.statusText || 'Unknown error';
+        const status = response.status;
+        console.error(`Server error: ${status} ${statusText}`);
+        throw new Error(`Server error: ${status} ${statusText}`);
       }
 
       // Try to parse JSON response
       let data;
       try {
-        data = await response.json();
-      } catch (jsonError) {
-        console.error('JSON parse error:', jsonError);
-        throw new Error('Invalid server response. Please try again later.');
+        const responseText = await response.text();
+        if (!responseText) {
+          throw new Error('Empty response from server');
+        }
+
+        try {
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('JSON parse error:', parseError, 'Response text:', responseText);
+          throw new Error('Invalid server response. Please try again later.');
+        }
+      } catch (textError) {
+        console.error('Error reading response:', textError);
+        throw new Error('Failed to read server response. Please try again later.');
       }
 
       this.user = data.user;
