@@ -121,9 +121,7 @@ const io = new Server(server, {
     path: '/',
     httpOnly: true,
     sameSite: 'lax'
-  },
-  // Disable sticky sessions for Vercel
-  adapter: require('socket.io-adapter')()
+  }
 });
 
 // Socket.IO middleware for authentication
