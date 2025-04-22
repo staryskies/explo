@@ -240,8 +240,32 @@ class Projectile {
           const dist = distance(this.x, this.y, enemy.x, enemy.y);
           if (dist <= this.aoeRadius) {
             // Calculate damage falloff based on distance
-            const falloff = 1 - (dist / this.aoeRadius) * 0.7;
-            const actualDamage = Math.floor(this.damage * falloff);
+            // Divine projectiles have less falloff
+            const falloff = this.type === 'divine' ?
+              1 - (dist / this.aoeRadius) * 0.3 : // Only 30% falloff for divine
+              1 - (dist / this.aoeRadius) * 0.7;  // 70% falloff for others
+
+            // Divine projectiles do more damage
+            let actualDamage = Math.floor(this.damage * falloff);
+
+            // Apply critical hit for divine projectiles
+            if (this.type === 'divine' && this.towerType === 'archangel') {
+              // Check for critical hit
+              if (Math.random() < (this.critChance || 0.5)) {
+                actualDamage = Math.floor(actualDamage * (this.critMultiplier || 4.0));
+                this.isCritical = true;
+
+                // Add critical hit effect to the game if available
+                if (window.game && window.game.addEffect) {
+                  window.game.addEffect({
+                    type: 'critical',
+                    x: enemy.x,
+                    y: enemy.y,
+                    duration: 500
+                  });
+                }
+              }
+            }
 
             // Apply stun effect if this projectile has stun chance
             if (this.stunChance && Math.random() < this.stunChance) {
@@ -1027,17 +1051,17 @@ class Projectile {
   }
 
   drawDivineProjectile(ctx) {
-    // Draw divine projectile with holy light effects
+    // Draw divine projectile with spectacular holy light effects
     const time = Date.now() / 100;
 
     // Get base unit for scaling
     const baseUnit = window.getBaseUnit ? window.getBaseUnit() : 5;
-    const scaledSize = this.size * baseUnit / 3; // Scale size based on screen dimensions
+    const scaledSize = this.size * baseUnit / 2; // Larger scaled size
 
     // Draw trail
     if (this.trailLength > 0) {
       // Scale trail length based on screen size
-      const scaledTrailLength = window.toPixels ? window.toPixels(this.trailLength / 5) : this.trailLength;
+      const scaledTrailLength = window.toPixels ? window.toPixels(this.trailLength / 3) : this.trailLength * 1.5;
 
       // Create gradient for trail
       const trailGradient = ctx.createLinearGradient(
@@ -1048,11 +1072,14 @@ class Projectile {
       );
 
       trailGradient.addColorStop(0, 'rgba(255, 255, 255, 0)');
-      trailGradient.addColorStop(0.5, 'rgba(255, 235, 59, 0.3)');
-      trailGradient.addColorStop(1, 'rgba(255, 235, 59, 0.7)');
+      trailGradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.2)');
+      trailGradient.addColorStop(0.6, 'rgba(255, 235, 59, 0.5)');
+      trailGradient.addColorStop(1, 'rgba(255, 235, 59, 0.9)');
 
+      // Draw trail with gradient
+      ctx.globalAlpha = 0.8;
       ctx.strokeStyle = trailGradient;
-      ctx.lineWidth = scaledSize * 2;
+      ctx.lineWidth = scaledSize * 3;
       ctx.lineCap = 'round';
       ctx.beginPath();
       ctx.moveTo(
@@ -1061,15 +1088,41 @@ class Projectile {
       );
       ctx.lineTo(this.x, this.y);
       ctx.stroke();
+
+      // Draw particles along the trail
+      ctx.fillStyle = '#FFFFFF';
+      for (let i = 0; i < 12; i++) { // More particles
+        const distance = Math.random() * scaledTrailLength;
+        const offset = Math.random() * scaledSize - scaledSize / 2;
+        const perpX = -Math.sin(this.angle) * offset;
+        const perpY = Math.cos(this.angle) * offset;
+        const x = this.x - Math.cos(this.angle) * distance + perpX;
+        const y = this.y - Math.sin(this.angle) * distance + perpY;
+        const particleSize = scaledSize * (0.3 + Math.random() * 0.5);
+
+        ctx.globalAlpha = 0.7 * Math.random();
+        ctx.beginPath();
+        ctx.arc(x, y, particleSize, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
     // Draw area effect indicator if applicable
     if (this.aoeRadius) {
       const pulse = Math.sin(time * 0.1) * 0.2 + 0.8;
       // Scale AOE radius based on screen size
-      const scaledAoeRadius = window.toPixels ? window.toPixels(this.aoeRadius / 10) : this.aoeRadius / 2;
+      const scaledAoeRadius = window.toPixels ? window.toPixels(this.aoeRadius / 8) : this.aoeRadius / 1.5;
 
-      ctx.globalAlpha = 0.2 * pulse;
+      // Draw outer ring
+      ctx.globalAlpha = 0.3 * pulse;
+      ctx.strokeStyle = '#FFEB3B';
+      ctx.lineWidth = scaledSize / 2;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, scaledAoeRadius * pulse, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Draw inner area
+      ctx.globalAlpha = 0.15 * pulse;
       ctx.fillStyle = '#FFEB3B';
       ctx.beginPath();
       ctx.arc(this.x, this.y, scaledAoeRadius * pulse, 0, Math.PI * 2);
@@ -1080,14 +1133,14 @@ class Projectile {
     ctx.globalAlpha = 1.0;
 
     // Draw outer glow with scaled size
-    const glowSize = scaledSize * 2 * (1 + 0.2 * Math.sin(time * 0.2));
+    const glowSize = scaledSize * 3 * (1 + 0.3 * Math.sin(time * 0.2));
     const glowGradient = ctx.createRadialGradient(
       this.x, this.y, 0,
       this.x, this.y, glowSize
     );
-
-    glowGradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
-    glowGradient.addColorStop(0.5, 'rgba(255, 235, 59, 0.5)');
+    glowGradient.addColorStop(0, 'rgba(255, 255, 255, 1.0)');
+    glowGradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.9)');
+    glowGradient.addColorStop(0.6, 'rgba(255, 235, 59, 0.7)');
     glowGradient.addColorStop(1, 'rgba(255, 235, 59, 0)');
 
     ctx.fillStyle = glowGradient;
@@ -1095,61 +1148,88 @@ class Projectile {
     ctx.arc(this.x, this.y, glowSize, 0, Math.PI * 2);
     ctx.fill();
 
+    // Draw secondary glow
+    const innerGlowSize = scaledSize * 2 * (1 + 0.2 * Math.sin(time * 0.3));
+    const innerGlowGradient = ctx.createRadialGradient(
+      this.x, this.y, 0,
+      this.x, this.y, innerGlowSize
+    );
+    innerGlowGradient.addColorStop(0, 'rgba(255, 255, 255, 1.0)');
+    innerGlowGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.8)');
+    innerGlowGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+    ctx.fillStyle = innerGlowGradient;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, innerGlowSize, 0, Math.PI * 2);
+    ctx.fill();
+
     // Draw core
     ctx.fillStyle = '#FFFFFF';
     ctx.beginPath();
-    ctx.arc(this.x, this.y, scaledSize, 0, Math.PI * 2);
+    ctx.arc(this.x, this.y, scaledSize * 1.2, 0, Math.PI * 2);
     ctx.fill();
 
     // Draw light rays
+    ctx.globalAlpha = 0.7;
     ctx.strokeStyle = '#FFEB3B';
-    ctx.lineWidth = baseUnit / 10; // Scale line width based on screen size
+    ctx.lineWidth = scaledSize / 2;
 
-    for (let i = 0; i < 12; i++) { // Increased from 8 to 12 rays
-      const angle = this.angle + (Math.PI * 2 / 12) * i + time * 0.01;
-      const length = scaledSize * 4 * (1 + 0.3 * Math.sin(time * 0.1 + i));
+    for (let i = 0; i < 16; i++) { // More rays
+      const rayAngle = this.angle + (Math.PI / 8) * i;
+      const rayLength = scaledSize * 5 * (0.7 + 0.3 * Math.sin(time * 0.1 + i));
 
-      ctx.globalAlpha = 0.7 * (0.5 + 0.5 * Math.sin(time * 0.1 + i));
       ctx.beginPath();
       ctx.moveTo(this.x, this.y);
       ctx.lineTo(
-        this.x + Math.cos(angle) * length,
-        this.y + Math.sin(angle) * length
+        this.x + Math.cos(rayAngle) * rayLength,
+        this.y + Math.sin(rayAngle) * rayLength
       );
       ctx.stroke();
     }
 
-    // Draw small particles
-    ctx.fillStyle = '#FFFFFF';
+    // Draw cross symbol in the center
+    ctx.globalAlpha = 0.9;
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = scaledSize / 1.5;
 
-    for (let i = 0; i < 5; i++) { // Increased from 3 to 5 particles
-      const angle = this.angle + Math.PI * 2 * Math.random();
+    // Vertical line
+    ctx.beginPath();
+    ctx.moveTo(this.x, this.y - scaledSize * 0.8);
+    ctx.lineTo(this.x, this.y + scaledSize * 0.8);
+    ctx.stroke();
+
+    // Horizontal line
+    ctx.beginPath();
+    ctx.moveTo(this.x - scaledSize * 0.8, this.y);
+    ctx.lineTo(this.x + scaledSize * 0.8, this.y);
+    ctx.stroke();
+
+    // Add small particles around the projectile
+    ctx.fillStyle = '#FFFFFF';
+    for (let i = 0; i < 8; i++) {
+      const angle = Math.random() * Math.PI * 2;
       const distance = scaledSize * 2 * Math.random();
-      const particleSize = scaledSize * 0.5 * Math.random();
+      const x = this.x + Math.cos(angle) * distance;
+      const y = this.y + Math.sin(angle) * distance;
+      const particleSize = scaledSize * 0.3 * Math.random();
 
       ctx.globalAlpha = 0.8 * Math.random();
       ctx.beginPath();
-      ctx.arc(
-        this.x + Math.cos(angle) * distance,
-        this.y + Math.sin(angle) * distance,
-        particleSize,
-        0,
-        Math.PI * 2
-      );
+      ctx.arc(x, y, particleSize, 0, Math.PI * 2);
       ctx.fill();
     }
 
     // Add a pulsing halo effect
-    const haloSize = scaledSize * 5 * (0.8 + 0.2 * Math.sin(time * 0.05));
+    const haloSize = scaledSize * 6 * (0.8 + 0.2 * Math.sin(time * 0.05));
     const haloGradient = ctx.createRadialGradient(
       this.x, this.y, scaledSize * 2,
       this.x, this.y, haloSize
     );
 
-    haloGradient.addColorStop(0, 'rgba(255, 235, 59, 0.3)');
+    haloGradient.addColorStop(0, 'rgba(255, 235, 59, 0.4)');
     haloGradient.addColorStop(1, 'rgba(255, 235, 59, 0)');
 
-    ctx.globalAlpha = 0.5 * (0.7 + 0.3 * Math.sin(time * 0.05));
+    ctx.globalAlpha = 0.6 * (0.7 + 0.3 * Math.sin(time * 0.05));
     ctx.fillStyle = haloGradient;
     ctx.beginPath();
     ctx.arc(this.x, this.y, haloSize, 0, Math.PI * 2);

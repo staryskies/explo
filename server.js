@@ -490,6 +490,73 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Handle money sharing between squad members
+  socket.on('share-money', async (data) => {
+    try {
+      const { squadId, targetUserId, amount } = data;
+
+      // Validate input
+      if (!squadId || !targetUserId || !amount || amount <= 0) {
+        socket.emit('error', { message: 'Invalid money sharing data' });
+        return;
+      }
+
+      // Check if user is authenticated
+      if (!socket.user || !socket.user.id) {
+        socket.emit('error', { message: 'Authentication required' });
+        return;
+      }
+
+      // Check if database is available
+      if (!pool) {
+        console.log('Database not available, allowing money sharing without verification');
+        // Send money without verification
+        io.to(`user:${targetUserId}`).emit('money-shared', {
+          amount,
+          fromUserId: socket.user.id,
+          fromUsername: socket.user.username,
+          timestamp: new Date().toISOString()
+        });
+        return;
+      }
+
+      // Check if both users are members of the squad
+      const membershipResult = await pool.query(
+        `SELECT * FROM squad_members WHERE squad_id = $1 AND user_id IN ($2, $3)`,
+        [squadId, socket.user.id, targetUserId]
+      );
+
+      // Ensure both users are in the squad
+      const senderMembership = membershipResult.rows.find(row => row.user_id === socket.user.id);
+      const receiverMembership = membershipResult.rows.find(row => row.user_id === targetUserId);
+
+      if (!senderMembership || !receiverMembership) {
+        socket.emit('error', { message: 'Both users must be members of the squad' });
+        return;
+      }
+
+      // Send money to target user
+      io.to(`user:${targetUserId}`).emit('money-shared', {
+        amount,
+        fromUserId: socket.user.id,
+        fromUsername: socket.user.username,
+        timestamp: new Date().toISOString()
+      });
+
+      // Notify sender of success
+      socket.emit('money-shared-success', {
+        amount,
+        toUserId: targetUserId,
+        timestamp: new Date().toISOString()
+      });
+
+      console.log(`User ${socket.user.username} shared ${amount} silver with user ${targetUserId}`);
+    } catch (error) {
+      console.error('Money sharing error:', error);
+      socket.emit('error', { message: 'Failed to share money' });
+    }
+  });
+
   // Handle errors
   socket.on('error', (error) => {
     console.error('Socket error:', error);

@@ -204,20 +204,20 @@ const towerStats = {
     description: "Divine tower that smites enemies with holy light and blesses nearby towers",
     persistentCost: 600,
     ability: "Divine Judgment",
-    range: 350, // Increased range
-    damage: 1200, // 3x damage
-    fireRate: 4.0, // Faster fire rate
-    projectileSpeed: 40, // Faster projectiles
+    range: 400, // Increased range even more
+    damage: 2500, // Significantly increased damage
+    fireRate: 4.5, // Faster fire rate
+    projectileSpeed: 50, // Faster projectiles
     canTargetFlying: true,
-    pierceCount: 5, // Pierces through more enemies
-    critChance: 0.5, // Higher crit chance
-    critMultiplier: 4.0, // Higher crit multiplier
-    aoeRadius: 80, // Larger area damage
-    chainCount: 5, // Can chain to more enemies
-    chainRange: 350, // Longer chain range
-    buffRadius: 200, // Larger buff radius
-    buffDamage: 0.3, // 30% damage buff to nearby towers
-    buffRange: 0.2, // 20% range buff to nearby towers
+    pierceCount: 8, // Pierces through more enemies
+    critChance: 0.6, // Higher crit chance
+    critMultiplier: 5.0, // Higher crit multiplier
+    aoeRadius: 120, // Larger area damage
+    chainCount: 8, // Can chain to more enemies
+    chainRange: 400, // Longer chain range
+    buffRadius: 250, // Larger buff radius
+    buffDamage: 0.4, // 40% damage buff to nearby towers
+    buffRange: 0.3, // 30% range buff to nearby towers
     color: '#FFEB3B', // Bright yellow/gold
     tier: 'divine'
   }

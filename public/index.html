@@ -500,6 +500,7 @@
   <script src="js/components/squadChat.js"></script>
   <script src="js/components/squadBrowser.js"></script>
   <script src="js/components/squadGameLoader.js"></script>
+  <script src="js/components/moneySharing.js"></script>
 
   <!-- Load game scripts -->
   <script src="js/towerData.js"></script>
@@ -551,6 +552,17 @@
             window.squadGameLoader.initialize();
           } catch (error) {
             console.error('Error initializing SquadGameLoader:', error);
+            initialized = false;
+          }
+        }
+
+        // Try to initialize money sharing
+        if (window.moneySharing) {
+          try {
+            console.log('Ensuring MoneySharing is initialized');
+            // MoneySharing initializes itself when created
+          } catch (error) {
+            console.error('Error initializing MoneySharing:', error);
             initialized = false;
           }
         }

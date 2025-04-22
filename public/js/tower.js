@@ -615,7 +615,8 @@ class Tower {
       // Keep the current target if it's still valid
       if (this.target && this.target.alive) {
         const dist = distance(this.x, this.y, this.target.x, this.target.y);
-        if (dist <= this.range && (!this.target.flying || this.canTargetFlying)) {
+        // Archangel tower can hit all enemy types
+        if (dist <= this.range && (this.type === 'archangel' || (!this.target.flying || this.canTargetFlying))) {
           return this.target;
         }
       }
@@ -625,6 +626,14 @@ class Tower {
     // Filter enemies that are in range and can be targeted
     const validTargets = enemies.filter(enemy => {
       if (!enemy.alive) return false;
+
+      // Archangel tower can target all enemy types
+      if (this.type === 'archangel') {
+        const dist = distance(this.x, this.y, enemy.x, enemy.y);
+        return dist <= this.range;
+      }
+
+      // Normal targeting rules for other towers
       if (enemy.flying && !this.canTargetFlying) return false;
 
       // Check if this is a shadow enemy and if the tower can target it
@@ -1103,7 +1112,7 @@ class Tower {
   // Check if this tower can target shadow enemies
   canTargetShadow() {
     // Only certain tower types can target shadow enemies
-    const shadowTargetingTowers = ['tesla', 'laser', 'flame'];
+    const shadowTargetingTowers = ['tesla', 'laser', 'flame', 'archangel'];
     return shadowTargetingTowers.includes(this.type);
   }
 
