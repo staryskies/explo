@@ -5,14 +5,23 @@
 // Log that mythicTowers.js is loaded
 console.log('Mythic and Divine Towers loaded');
 
+// Create placeholder objects if they don't exist yet
+if (typeof towerStats === 'undefined') {
+  window.towerStats = {};
+  console.log('Created placeholder towerStats object');
+}
+
+if (typeof gachaSystem === 'undefined') {
+  window.gachaSystem = {
+    getTowerPool: function() { return { mythic: [], divine: [] }; },
+    rollTower: function() { return 'basic'; }
+  };
+  console.log('Created placeholder gachaSystem object');
+}
+
 // Add mythic and divine towers to the towerStats object
 (function() {
-  // Make sure towerStats exists
-  if (!window.towerStats) {
-    console.error('towerStats not found, cannot add mythic towers');
-    return;
-  }
-  
+
   // Add False God tower (Mythic)
   towerStats.falseGod = {
     name: "False God",
@@ -61,7 +70,7 @@ console.log('Mythic and Divine Towers loaded');
       effectChance: 0.3
     }
   };
-  
+
   // Add Cupid tower (Mythic)
   towerStats.cupid = {
     name: "Cupid",
@@ -109,7 +118,7 @@ console.log('Mythic and Divine Towers loaded');
       damageMultiplier: 0.5
     }
   };
-  
+
   // Add Archangel tower (Divine)
   towerStats.archangel = {
     name: "Archangel",
@@ -158,7 +167,7 @@ console.log('Mythic and Divine Towers loaded');
       buffAmount: 0.3
     }
   };
-  
+
   // Add Seraphim tower (Divine)
   towerStats.seraphim = {
     name: "Seraphim",
@@ -208,68 +217,58 @@ console.log('Mythic and Divine Towers loaded');
       buffAmount: 0.25
     }
   };
-  
+
   console.log('Added mythic and divine towers to towerStats');
 })();
 
 // Add mythic and divine towers to the gacha pool
 (function() {
-  // Make sure gachaSystem exists
-  if (!window.gachaSystem) {
-    console.error('gachaSystem not found, cannot add mythic towers to gacha pool');
-    return;
-  }
-  
+
   // Add the new towers to the tower pool
   const towerPool = gachaSystem.getTowerPool();
-  
+
   // Add mythic towers
   if (!towerPool.mythic.includes('falseGod')) {
     towerPool.mythic.push('falseGod');
   }
-  
+
   if (!towerPool.mythic.includes('cupid')) {
     towerPool.mythic.push('cupid');
   }
-  
+
   // Add divine towers (only available through premium currency)
   if (!towerPool.divine.includes('archangel')) {
     towerPool.divine.push('archangel');
   }
-  
+
   if (!towerPool.divine.includes('seraphim')) {
     towerPool.divine.push('seraphim');
   }
-  
+
   console.log('Added mythic and divine towers to gacha pool');
 })();
 
 // Make divine towers only available through premium currency
 (function() {
-  // Make sure gachaSystem exists
-  if (!window.gachaSystem) {
-    console.error('gachaSystem not found, cannot modify gacha rates');
-    return;
-  }
-  
+
   // Store the original roll function
   const originalRollTower = gachaSystem.rollTower;
-  
+
   // Override the roll function to exclude divine towers from regular rolls
   gachaSystem.rollTower = function(usePremiumCurrency = false) {
     // If using premium currency, use the original function
     if (usePremiumCurrency) {
       return originalRollTower.call(this, usePremiumCurrency);
     }
-    
+
     // For regular currency, roll until we get a non-divine tower
     let result;
     do {
       result = originalRollTower.call(this, usePremiumCurrency);
     } while (towerStats[result]?.tier === 'divine');
-    
+
     return result;
   };
-  
+
   console.log('Modified gacha system to make divine towers premium-only');
 })();
