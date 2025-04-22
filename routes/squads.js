@@ -22,19 +22,28 @@ const generateSquadCode = () => {
 
 // Create a new squad
 router.post('/', requireAuth, async (req, res) => {
-  try {
-    // Set a timeout to prevent long-running requests
-    const timeout = setTimeout(() => {
-      console.log('Squad creation timed out');
-      if (!res.headersSent) {
-        return res.status(504).json({ error: 'Request timed out. Please try again.' });
-      }
-    }, 4000); // 4 second timeout
+  // Flag to track if response has been sent
+  let responseSent = false;
 
+  // Helper function to send response only if not already sent
+  const sendResponse = (status, data) => {
+    if (!responseSent) {
+      responseSent = true;
+      if (timeout) clearTimeout(timeout);
+      res.status(status).json(data);
+    }
+  };
+
+  // Set a timeout to prevent long-running requests
+  const timeout = setTimeout(() => {
+    console.log('Squad creation timed out');
+    sendResponse(504, { error: 'Request timed out. Please try again.' });
+  }, 12000); // 12 second timeout for Neon
+
+  try {
     const pool = getPool();
     if (!pool) {
-      clearTimeout(timeout);
-      return res.status(500).json({ error: 'Database connection not available' });
+      return sendResponse(500, { error: 'Database connection not available' });
     }
 
     // Generate a unique squad code - limit attempts to prevent infinite loops
@@ -119,8 +128,7 @@ router.post('/', requireAuth, async (req, res) => {
 
       await client.query('COMMIT');
 
-      // Clear the timeout since we're done
-      clearTimeout(timeout);
+      // We'll use sendResponse to clear the timeout
     } catch (error) {
       if (client) {
         try {
@@ -137,23 +145,20 @@ router.post('/', requireAuth, async (req, res) => {
     }
 
     // Squad object is already formatted correctly, just return it
-    res.status(201).json(squad);
+    return sendResponse(201, squad);
   } catch (error) {
-    // Clear the timeout if it exists
-    if (timeout) clearTimeout(timeout);
-
     console.error('Create squad error:', error);
 
     // Provide more specific error messages
     if (error.code === '57014') {
-      return res.status(504).json({ error: 'Database query timed out. Please try again.' });
+      return sendResponse(504, { error: 'Database query timed out. Please try again.' });
     } else if (error.code === '08006' || error.code === '08001' || error.code === '08004') {
-      return res.status(503).json({ error: 'Database connection issue. Please try again later.' });
+      return sendResponse(503, { error: 'Database connection issue. Please try again later.' });
     } else if (error.code === '23505') {
-      return res.status(409).json({ error: 'Squad code already exists. Please try again.' });
+      return sendResponse(409, { error: 'Squad code already exists. Please try again.' });
     }
 
-    res.status(500).json({ error: 'Server error', details: error.message });
+    return sendResponse(500, { error: 'Server error', details: error.message });
   }
 });
 
@@ -161,28 +166,36 @@ router.post('/', requireAuth, async (req, res) => {
 router.post('/join', requireAuth, [
   body('code').trim().isLength({ min: 6, max: 6 }).withMessage('Invalid squad code')
 ], async (req, res) => {
+  // Flag to track if response has been sent
+  let responseSent = false;
+
+  // Helper function to send response only if not already sent
+  const sendResponse = (status, data) => {
+    if (!responseSent) {
+      responseSent = true;
+      if (timeout) clearTimeout(timeout);
+      res.status(status).json(data);
+    }
+  };
+
   // Set a timeout to prevent long-running requests
   const timeout = setTimeout(() => {
     console.log('Join squad timed out');
-    if (!res.headersSent) {
-      return res.status(504).json({ error: 'Request timed out. Please try again.' });
-    }
-  }, 3000); // 3 second timeout
+    sendResponse(504, { error: 'Request timed out. Please try again.' });
+  }, 12000); // 12 second timeout for Neon
 
   try {
     // Validate request
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      clearTimeout(timeout);
-      return res.status(400).json({ errors: errors.array() });
+      return sendResponse(400, { errors: errors.array() });
     }
 
     const { code } = req.body;
 
     const pool = getPool();
     if (!pool) {
-      clearTimeout(timeout);
-      return res.status(500).json({ error: 'Database connection not available' });
+      return sendResponse(500, { error: 'Database connection not available' });
     }
 
     // Get a client from the pool
@@ -190,9 +203,8 @@ router.post('/join', requireAuth, [
     try {
       client = await pool.connect();
     } catch (connError) {
-      clearTimeout(timeout);
       console.error('Database connection error in join squad:', connError);
-      return res.status(503).json({ error: 'Database connection issue. Please try again later.' });
+      return sendResponse(503, { error: 'Database connection issue. Please try again later.' });
     }
 
     try {
@@ -210,8 +222,7 @@ router.post('/join', requireAuth, [
 
       if (squadResult.rows.length === 0) {
         await client.query('ROLLBACK');
-        clearTimeout(timeout);
-        return res.status(404).json({ error: 'Squad not found' });
+        return sendResponse(404, { error: 'Squad not found' });
       }
 
       const squad = squadResult.rows[0];
@@ -227,16 +238,14 @@ router.post('/join', requireAuth, [
       // Check if squad is full (max 4 members)
       if (members.length >= 4) {
         await client.query('ROLLBACK');
-        clearTimeout(timeout);
-        return res.status(400).json({ error: 'Squad is full' });
+        return sendResponse(400, { error: 'Squad is full' });
       }
 
       // Check if user is already a member
       const existingMember = members.find(member => member.user_id === req.user.id);
       if (existingMember) {
         await client.query('ROLLBACK');
-        clearTimeout(timeout);
-        return res.status(400).json({ error: 'You are already a member of this squad' });
+        return sendResponse(400, { error: 'You are already a member of this squad' });
       }
 
       // Add user to squad
@@ -268,8 +277,7 @@ router.post('/join', requireAuth, [
       };
 
       await client.query('COMMIT');
-      clearTimeout(timeout);
-      res.json(formattedSquad);
+      return sendResponse(200, formattedSquad);
     } catch (error) {
       // Rollback transaction on error
       if (client) {
@@ -285,41 +293,47 @@ router.post('/join', requireAuth, [
       if (client) client.release();
     }
   } catch (error) {
-    // Clear the timeout if it exists
-    if (timeout) clearTimeout(timeout);
-
     console.error('Join squad error:', error);
 
     // Provide more specific error messages
     if (error.code === '57014') {
-      return res.status(504).json({ error: 'Database query timed out. Please try again.' });
+      return sendResponse(504, { error: 'Database query timed out. Please try again.' });
     } else if (error.code === '08006' || error.code === '08001' || error.code === '08004') {
-      return res.status(503).json({ error: 'Database connection issue. Please try again later.' });
+      return sendResponse(503, { error: 'Database connection issue. Please try again later.' });
     } else if (error.code === '23505') {
-      return res.status(409).json({ error: 'You are already a member of this squad.' });
+      return sendResponse(409, { error: 'You are already a member of this squad.' });
     }
 
-    res.status(500).json({ error: 'Server error', details: error.message });
+    return sendResponse(500, { error: 'Server error', details: error.message });
   }
 });
 
 // Leave a squad
 router.post('/:id/leave', requireAuth, async (req, res) => {
+  // Flag to track if response has been sent
+  let responseSent = false;
+
+  // Helper function to send response only if not already sent
+  const sendResponse = (status, data) => {
+    if (!responseSent) {
+      responseSent = true;
+      if (timeout) clearTimeout(timeout);
+      res.status(status).json(data);
+    }
+  };
+
   // Set a timeout to prevent long-running requests
   const timeout = setTimeout(() => {
     console.log('Leave squad timed out');
-    if (!res.headersSent) {
-      return res.status(504).json({ error: 'Request timed out. Please try again.' });
-    }
-  }, 3000); // 3 second timeout
+    sendResponse(504, { error: 'Request timed out. Please try again.' });
+  }, 12000); // 12 second timeout for Neon
 
   try {
     const { id } = req.params;
 
     const pool = getPool();
     if (!pool) {
-      clearTimeout(timeout);
-      return res.status(500).json({ error: 'Database connection not available' });
+      return sendResponse(500, { error: 'Database connection not available' });
     }
 
     // Get a client from the pool
@@ -327,9 +341,8 @@ router.post('/:id/leave', requireAuth, async (req, res) => {
     try {
       client = await pool.connect();
     } catch (connError) {
-      clearTimeout(timeout);
       console.error('Database connection error in leave squad:', connError);
-      return res.status(503).json({ error: 'Database connection issue. Please try again later.' });
+      return sendResponse(503, { error: 'Database connection issue. Please try again later.' });
     }
 
     try {
@@ -347,8 +360,7 @@ router.post('/:id/leave', requireAuth, async (req, res) => {
 
       if (squadResult.rows.length === 0) {
         await client.query('ROLLBACK');
-        clearTimeout(timeout);
-        return res.status(404).json({ error: 'Squad not found' });
+        return sendResponse(404, { error: 'Squad not found' });
       }
 
       const squad = squadResult.rows[0];
@@ -365,8 +377,7 @@ router.post('/:id/leave', requireAuth, async (req, res) => {
       const member = members.find(member => member.user_id === req.user.id);
       if (!member) {
         await client.query('ROLLBACK');
-        clearTimeout(timeout);
-        return res.status(400).json({ error: 'You are not a member of this squad' });
+        return sendResponse(400, { error: 'You are not a member of this squad' });
       }
 
       // If user is the leader and there are other members, transfer leadership
@@ -418,13 +429,11 @@ router.post('/:id/leave', requireAuth, async (req, res) => {
         );
 
         await client.query('COMMIT');
-        clearTimeout(timeout);
-        return res.json({ message: 'Squad deleted' });
+        return sendResponse(200, { message: 'Squad deleted' });
       }
 
       await client.query('COMMIT');
-      clearTimeout(timeout);
-      res.json({ message: 'Left squad successfully' });
+      return sendResponse(200, { message: 'Left squad successfully' });
     } catch (error) {
       // Rollback transaction on error
       if (client) {
@@ -440,37 +449,43 @@ router.post('/:id/leave', requireAuth, async (req, res) => {
       if (client) client.release();
     }
   } catch (error) {
-    // Clear the timeout if it exists
-    if (timeout) clearTimeout(timeout);
-
     console.error('Leave squad error:', error);
 
     // Provide more specific error messages
     if (error.code === '57014') {
-      return res.status(504).json({ error: 'Database query timed out. Please try again.' });
+      return sendResponse(504, { error: 'Database query timed out. Please try again.' });
     } else if (error.code === '08006' || error.code === '08001' || error.code === '08004') {
-      return res.status(503).json({ error: 'Database connection issue. Please try again later.' });
+      return sendResponse(503, { error: 'Database connection issue. Please try again later.' });
     }
 
-    res.status(500).json({ error: 'Server error', details: error.message });
+    return sendResponse(500, { error: 'Server error', details: error.message });
   }
 });
 
 // Get public squads list
 router.get('/public', requireAuth, async (req, res) => {
+  // Flag to track if response has been sent
+  let responseSent = false;
+
+  // Helper function to send response only if not already sent
+  const sendResponse = (status, data) => {
+    if (!responseSent) {
+      responseSent = true;
+      if (timeout) clearTimeout(timeout);
+      res.status(status).json(data);
+    }
+  };
+
   // Set a timeout to prevent long-running requests
   const timeout = setTimeout(() => {
     console.log('Get public squads timed out');
-    if (!res.headersSent) {
-      return res.status(504).json({ error: 'Request timed out. Please try again.' });
-    }
-  }, 3000); // 3 second timeout
+    sendResponse(504, { error: 'Request timed out. Please try again.' });
+  }, 12000); // 12 second timeout for Neon
 
   try {
     const pool = getPool();
     if (!pool) {
-      clearTimeout(timeout);
-      return res.status(500).json({ error: 'Database connection not available' });
+      return sendResponse(500, { error: 'Database connection not available' });
     }
 
     // Get a client from the pool
@@ -494,28 +509,22 @@ router.get('/public', requireAuth, async (req, res) => {
 
       const squads = squadsResult.rows;
 
-      // Clear the timeout since we're done
-      clearTimeout(timeout);
-
-      return res.json({ squads });
+      return sendResponse(200, { squads });
     } finally {
       // Always release the client back to the pool
       client.release();
     }
   } catch (error) {
-    // Clear the timeout if it exists
-    if (timeout) clearTimeout(timeout);
-
     console.error('Get public squads error:', error);
 
     // Provide more specific error messages
     if (error.code === '57014') {
-      return res.status(504).json({ error: 'Database query timed out. Please try again.' });
+      return sendResponse(504, { error: 'Database query timed out. Please try again.' });
     } else if (error.code === '08006' || error.code === '08001' || error.code === '08004') {
-      return res.status(503).json({ error: 'Database connection issue. Please try again later.' });
+      return sendResponse(503, { error: 'Database connection issue. Please try again later.' });
     }
 
-    return res.status(500).json({ error: 'Failed to get squads', details: error.message });
+    return sendResponse(500, { error: 'Failed to get squads', details: error.message });
   }
 });
 
