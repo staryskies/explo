@@ -178,14 +178,14 @@ const rollUntilSystem = {
     }
 
     // Check if player has enough currency
-    const cost = usePremium ? 
-      gachaSystem.costs.premium[type].single : 
+    const cost = usePremium ?
+      gachaSystem.costs.premium[type].single :
       gachaSystem.costs[type].single;
-    
-    const hasSufficientFunds = usePremium ? 
-      playerData.gems >= cost : 
+
+    const hasSufficientFunds = usePremium ?
+      playerData.gems >= cost :
       playerData.silver >= cost;
-    
+
     if (!hasSufficientFunds) {
       alert(`Not enough ${usePremium ? 'gems' : 'silver'} to start rolling!`);
       return;
@@ -232,14 +232,14 @@ const rollUntilSystem = {
     if (!this.state.isRolling) return;
 
     // Check if player has enough currency
-    const cost = this.state.usePremiumCurrency ? 
-      gachaSystem.costs.premium[this.state.targetType].single : 
+    const cost = this.state.usePremiumCurrency ?
+      gachaSystem.costs.premium[this.state.targetType].single :
       gachaSystem.costs[this.state.targetType].single;
-    
-    const hasSufficientFunds = this.state.usePremiumCurrency ? 
-      playerData.gems >= cost : 
+
+    const hasSufficientFunds = this.state.usePremiumCurrency ?
+      playerData.gems >= cost :
       playerData.silver >= cost;
-    
+
     if (!hasSufficientFunds) {
       alert(`Not enough ${this.state.usePremiumCurrency ? 'gems' : 'silver'} to continue rolling!`);
       this.stopRollUntil();
@@ -273,10 +273,10 @@ const rollUntilSystem = {
     this.showCurrentRoll(result);
 
     // Check if target tier is obtained
-    const resultTier = this.state.targetType === 'tower' ? 
-      towerStats[result]?.tier : 
+    const resultTier = this.state.targetType === 'tower' ?
+      towerStats[result]?.tier :
       towerVariants[result]?.tier;
-    
+
     // Get tier rank for comparison
     const tierRanks = {
       'common': 0,
@@ -294,12 +294,12 @@ const rollUntilSystem = {
     if (resultTierRank >= targetTierRank) {
       // Success! Show final animation and stop
       this.showSuccessAnimation(result);
-      
+
       // Schedule stop after animation
       setTimeout(() => {
         this.stopRollUntil();
       }, 3000);
-      
+
       return;
     }
 
@@ -346,7 +346,7 @@ const rollUntilSystem = {
     }
   },
 
-  // Show current roll
+  // Show current roll with enhanced animation
   showCurrentRoll(result) {
     // Update roll count display
     const rollCountDisplay = document.getElementById('roll-until-count');
@@ -364,25 +364,66 @@ const rollUntilSystem = {
     // Update current roll display
     const currentRollDisplay = document.getElementById('roll-until-current');
     if (currentRollDisplay) {
-      // Clear previous content
-      currentRollDisplay.innerHTML = '';
+      // Show animation of cycling through multiple towers/variants
+      this.showCyclingAnimation(currentRollDisplay, result);
+    }
+  },
 
-      // Create roll animation
-      const rollAnimation = document.createElement('div');
-      rollAnimation.className = 'roll-animation';
+  // Show animation of cycling through multiple towers/variants
+  showCyclingAnimation(container, finalResult) {
+    // Clear previous content
+    container.innerHTML = '';
+
+    // Create animation container
+    const animationContainer = document.createElement('div');
+    animationContainer.className = 'cycling-animation';
+    container.appendChild(animationContainer);
+
+    // Get all possible results based on target type
+    const allPossibleResults = this.state.targetType === 'tower' ?
+      Object.keys(towerStats) :
+      Object.keys(towerVariants);
+
+    // Randomly select some results to show in the animation (excluding the final result)
+    const animationResults = [];
+    const numAnimationResults = Math.min(10, Math.max(5, Math.floor(Math.random() * 15)));
+
+    for (let i = 0; i < numAnimationResults; i++) {
+      let randomIndex = Math.floor(Math.random() * allPossibleResults.length);
+      let randomResult = allPossibleResults[randomIndex];
+
+      // Avoid duplicates and the final result
+      while (animationResults.includes(randomResult) || randomResult === finalResult) {
+        randomIndex = Math.floor(Math.random() * allPossibleResults.length);
+        randomResult = allPossibleResults[randomIndex];
+      }
+
+      animationResults.push(randomResult);
+    }
+
+    // Add the final result at the end
+    animationResults.push(finalResult);
+
+    // Function to show a single result in the animation
+    const showResult = (index) => {
+      if (index >= animationResults.length) return;
+
+      // Clear container
+      animationContainer.innerHTML = '';
 
       // Get result data
-      const resultData = this.state.targetType === 'tower' ? 
-        towerStats[result] : 
+      const result = animationResults[index];
+      const resultData = this.state.targetType === 'tower' ?
+        towerStats[result] :
         towerVariants[result];
-      
+
       const resultTier = resultData?.tier || 'common';
 
       // Create result element
       const resultElement = document.createElement('div');
       resultElement.className = `roll-result ${resultTier}`;
       resultElement.style.backgroundColor = resultData?.color || '#CCCCCC';
-      
+
       // Add name
       const nameElement = document.createElement('div');
       nameElement.className = 'roll-result-name';
@@ -395,21 +436,31 @@ const rollUntilSystem = {
       tierElement.textContent = resultTier.charAt(0).toUpperCase() + resultTier.slice(1);
       resultElement.appendChild(tierElement);
 
-      // Add to animation
-      rollAnimation.appendChild(resultElement);
+      // Add to animation container
+      animationContainer.appendChild(resultElement);
 
-      // Add to display
-      currentRollDisplay.appendChild(rollAnimation);
-    }
+      // Calculate delay for next result
+      // Speed up as we go through the animation
+      const isLast = index === animationResults.length - 1;
+      const delay = isLast ? 0 : Math.max(50, 300 - (index * 20));
+
+      // Show next result after delay
+      if (!isLast) {
+        setTimeout(() => showResult(index + 1), delay);
+      }
+    };
+
+    // Start the animation
+    showResult(0);
   },
 
   // Show success animation
   showSuccessAnimation(result) {
     // Get result data
-    const resultData = this.state.targetType === 'tower' ? 
-      towerStats[result] : 
+    const resultData = this.state.targetType === 'tower' ?
+      towerStats[result] :
       towerVariants[result];
-    
+
     const resultTier = resultData?.tier || 'common';
 
     // Play animation based on tier
@@ -434,10 +485,10 @@ const rollUntilSystem = {
   // Show final results
   showFinalResults() {
     // Get result container
-    const resultContainer = this.state.targetType === 'tower' ? 
-      document.getElementById('tower-result') : 
+    const resultContainer = this.state.targetType === 'tower' ?
+      document.getElementById('tower-result') :
       document.getElementById('variant-result');
-    
+
     if (!resultContainer) return;
 
     // Clear container
@@ -455,7 +506,7 @@ const rollUntilSystem = {
     // Add stats
     const stats = document.createElement('div');
     stats.className = 'roll-until-stats';
-    
+
     // Add roll count
     const rollCount = document.createElement('div');
     rollCount.className = 'roll-until-stat';
@@ -484,10 +535,10 @@ const rollUntilSystem = {
 
     // Count results by tier
     this.state.results.forEach(result => {
-      const resultData = this.state.targetType === 'tower' ? 
-        towerStats[result] : 
+      const resultData = this.state.targetType === 'tower' ?
+        towerStats[result] :
         towerVariants[result];
-      
+
       const resultTier = resultData?.tier || 'common';
       tierCounts[resultTier]++;
     });
@@ -495,7 +546,7 @@ const rollUntilSystem = {
     // Add tier counts
     const tierCountsElement = document.createElement('div');
     tierCountsElement.className = 'roll-until-tier-counts';
-    
+
     // Add header
     const tierCountsHeader = document.createElement('h4');
     tierCountsHeader.textContent = 'Tier Distribution';

@@ -75,6 +75,10 @@ class Game {
     this.map = new GameMap(canvas, this.ctx, mapTemplate);
     console.log('Map created with dimensions:', this.map.gridWidth, 'x', this.map.gridHeight);
 
+    // Apply difficulty-specific map settings
+    this.applyDifficultyMap();
+    console.log('Difficulty map applied');
+
     // Initialize event listeners
     this.initEventListeners();
 
@@ -381,7 +385,8 @@ class Game {
       medium: [10, 20, 30], // Wave 30: Medium boss (final)
       hard: [10, 20, 30, 40], // Wave 40: Hard boss (final)
       nightmare: [10, 20, 30, 40, 50], // Wave 50: Nightmare boss (final)
-      void: [10, 20, 30, 40, 50] // Wave 50: Void boss (final)
+      void: [10, 20, 30, 40, 50], // Wave 50: Void boss (final)
+      trial: [10, 20, 30, 40, 50, 60] // Wave 60: Dual boss (final)
     };
 
     return bossWaves[this.difficulty] || [10, 20];
@@ -1349,10 +1354,23 @@ class Game {
     }, 3000);
   }
 
-  // Initialize infinite mode
-  initializeInfiniteMode() {
-    // This is a placeholder for future infinite mode implementation
-    console.log('Infinite mode initialized');
+  // Apply map based on difficulty
+  applyDifficultyMap() {
+    if (!this.map) return;
+
+    // Use the difficultyMaps to apply the appropriate map template
+    if (window.applyMapTemplate && window.difficultyMaps) {
+      console.log(`Applying map template for difficulty: ${this.difficulty}`);
+      window.applyMapTemplate(this.map, this.difficulty);
+    } else {
+      console.warn('difficultyMaps or applyMapTemplate not found');
+    }
+
+    // Initialize dual path mode for Hell and Heaven's Trial
+    if (this.difficulty === 'trial' && this.initializeDualPathMode) {
+      this.dualPathMode = true;
+      console.log('Dual path mode enabled for Hell and Heaven\'s Trial');
+    }
   }
 
   // Restart the game
@@ -1365,6 +1383,10 @@ class Game {
 
     // Reset game objects
     this.map = new GameMap(this.canvas, this.ctx);
+
+    // Apply difficulty-specific map settings
+    this.applyDifficultyMap();
+
     this.towers = [];
     this.enemies = [];
     this.projectiles = [];
@@ -1415,6 +1437,7 @@ class Game {
       case 'hard': return 4; // Much harder
       case 'nightmare': return 3;
       case 'void': return 2;
+      case 'trial': return 4; // Dual paths need more lives
       default: return 10;
     }
   }
@@ -1427,6 +1450,7 @@ class Game {
       case 'hard': return 370; // Much harder
       case 'nightmare': return 560;
       case 'void': return 800;
+      case 'trial': return 1000; // Need more gold for dual paths
       default: return 100;
     }
   }
@@ -1442,6 +1466,7 @@ class Game {
       case 'hard': return Math.floor(baseEnemies * 1.3); // 30% more enemies
       case 'nightmare': return Math.floor(baseEnemies * 1.4);
       case 'void': return Math.floor(baseEnemies * 1.5);
+      case 'trial': return Math.floor(baseEnemies * 1.6); // 60% more enemies for dual paths
       default: return baseEnemies;
     }
   }
@@ -1507,6 +1532,21 @@ class Game {
           'flying': Math.min(0.1 + (waveProgress * 0.05), 0.15),
           'armored': Math.min(0.1 + (waveProgress * 0.05), 0.15),
           'healing': Math.min(0.1 + (waveProgress * 0.05), 0.15),
+          'spawner': Math.min(0.05 + (waveProgress * 0.05), 0.1),
+          'invisible': Math.min(0.05 + (waveProgress * 0.05), 0.1),
+          'explosive': Math.min(0.05 + (waveProgress * 0.05), 0.1)
+        };
+
+      case 'trial':
+        // For Hell and Heaven's Trial, we use the getRandomEnemyType function in dualPathMode.js
+        // which modifies these probabilities based on the path (heaven or hell)
+        return {
+          'normal': Math.max(0.25 - (waveProgress * 0.15), 0.1),
+          'fast': Math.min(0.15 + (waveProgress * 0.05), 0.2),
+          'tank': Math.min(0.15 + (waveProgress * 0.05), 0.2),
+          'flying': Math.min(0.1 + (waveProgress * 0.05), 0.15),
+          'armored': Math.min(0.1 + (waveProgress * 0.05), 0.15),
+          'healing': Math.min(0.05 + (waveProgress * 0.05), 0.1),
           'spawner': Math.min(0.05 + (waveProgress * 0.05), 0.1),
           'invisible': Math.min(0.05 + (waveProgress * 0.05), 0.1),
           'explosive': Math.min(0.05 + (waveProgress * 0.05), 0.1)
