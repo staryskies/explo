@@ -17,7 +17,9 @@ if (process.env.DATABASE_URL) {
     user: url.username,
     password: url.password,
     ssl: true,
-    connectionTimeoutMillis: 10000 // 10 seconds
+    connectionTimeoutMillis: 30000, // 30 seconds
+    query_timeout: 20000, // 20 seconds
+    statement_timeout: 20000 // 20 seconds
   };
 
   // Create a new pool
@@ -35,10 +37,32 @@ const messageCache = {
   squad: {}
 };
 
+// In-memory response cache to reduce database load
+const responseCache = new Map();
+const RESPONSE_CACHE_TTL = 10000; // 10 seconds
+
+// Performance monitoring
+const { performance } = require('perf_hooks');
+
 // Get global messages
 router.get('/global', requireAuth, async (req, res) => {
+  // Performance monitoring
+  const startTime = performance.now();
+
   try {
     const since = req.query.since ? parseInt(req.query.since) : 0;
+
+    // Generate cache key
+    const cacheKey = `global:${since}`;
+
+    // Check cache first
+    const cachedResponse = responseCache.get(cacheKey);
+    if (cachedResponse) {
+      // Log cache hit
+      const duration = Math.round(performance.now() - startTime);
+      console.log(`Global messages cache hit (${duration}ms)`);
+      return res.json(cachedResponse);
+    }
 
     // Check if database is available
     if (!pool) {
@@ -67,6 +91,18 @@ router.get('/global', requireAuth, async (req, res) => {
         username: row.username,
         timestamp: row.created_at
       }));
+
+      // Cache the response
+      responseCache.set(cacheKey, messages);
+
+      // Set timeout to remove from cache after TTL
+      setTimeout(() => {
+        responseCache.delete(cacheKey);
+      }, RESPONSE_CACHE_TTL);
+
+      // Log performance
+      const duration = Math.round(performance.now() - startTime);
+      console.log(`Global messages database query (${duration}ms)`);
 
       res.json(messages);
     } catch (dbError) {
@@ -160,9 +196,24 @@ router.post('/global', requireAuth, async (req, res) => {
 
 // Get squad messages
 router.get('/squad/:squadId', requireAuth, async (req, res) => {
+  // Performance monitoring
+  const startTime = performance.now();
+
   try {
     const { squadId } = req.params;
     const since = req.query.since ? parseInt(req.query.since) : 0;
+
+    // Generate cache key
+    const cacheKey = `squad:${squadId}:${since}`;
+
+    // Check cache first
+    const cachedResponse = responseCache.get(cacheKey);
+    if (cachedResponse) {
+      // Log cache hit
+      const duration = Math.round(performance.now() - startTime);
+      console.log(`Squad messages cache hit (${duration}ms)`);
+      return res.json(cachedResponse);
+    }
 
     // Check if user is a member of the squad
     let isMember = false;
@@ -217,6 +268,18 @@ router.get('/squad/:squadId', requireAuth, async (req, res) => {
         squadId: row.squad_id,
         timestamp: row.created_at
       }));
+
+      // Cache the response
+      responseCache.set(cacheKey, messages);
+
+      // Set timeout to remove from cache after TTL
+      setTimeout(() => {
+        responseCache.delete(cacheKey);
+      }, RESPONSE_CACHE_TTL);
+
+      // Log performance
+      const duration = Math.round(performance.now() - startTime);
+      console.log(`Squad messages database query (${duration}ms)`);
 
       res.json(messages);
     } catch (dbError) {

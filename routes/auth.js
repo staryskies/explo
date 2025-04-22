@@ -477,9 +477,26 @@ router.post('/logout', async (req, res) => {
   }
 });
 
+// Simple in-memory cache for user data
+const userCache = new Map();
+const USER_CACHE_TTL = 60000; // 1 minute
+
 // Get current user
 router.get('/me', requireAuth, async (req, res) => {
+  // Performance monitoring
+  const startTime = Date.now();
   try {
+    // Check cache first
+    const cacheKey = `user:${req.user.id}`;
+    const cachedData = userCache.get(cacheKey);
+
+    if (cachedData) {
+      // Log cache hit and return cached data
+      const duration = Date.now() - startTime;
+      console.log(`/me endpoint cache hit (${duration}ms)`);
+      return res.json(cachedData);
+    }
+
     // Get database pool
     const pool = getPool();
     if (!pool) {
@@ -500,7 +517,8 @@ router.get('/me', requireAuth, async (req, res) => {
 
     const playerData = playerDataResult.rows[0];
 
-    res.json({
+    // Prepare response data
+    const responseData = {
       user: {
         id: req.user.id,
         username: req.user.username,
@@ -508,7 +526,22 @@ router.get('/me', requireAuth, async (req, res) => {
         isGuest: req.user.isGuest
       },
       playerData: playerData ? playerData.game_data : null
-    });
+    };
+
+    // Cache the response
+    userCache.set(cacheKey, responseData);
+
+    // Set timeout to remove from cache after TTL
+    setTimeout(() => {
+      userCache.delete(cacheKey);
+    }, USER_CACHE_TTL);
+
+    // Log performance
+    const duration = Date.now() - startTime;
+    console.log(`/me endpoint database query (${duration}ms)`);
+
+    // Send response
+    res.json(responseData);
   } catch (error) {
     console.error('Get user error:', error);
     res.status(500).json({ error: 'Server error' });

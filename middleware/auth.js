@@ -1,19 +1,55 @@
 // middleware/auth.js
 const jwt = require('jsonwebtoken');
+const { performance } = require('perf_hooks');
 
 // Use the centralized database pool
 const { getPool } = require('../lib/db-pool');
 
+// Simple in-memory cache for authentication
+const authCache = new Map();
+const AUTH_CACHE_TTL = 60000; // 1 minute
+
 // Middleware to authenticate users via JWT
 const authenticate = async (req, res, next) => {
-  // Use a faster timeout and Promise.race for the entire authentication process
+  const startTime = performance.now();
+  // Get token from cookies or authorization header
+  const token = req.cookies.token ||
+               (req.headers.authorization && req.headers.authorization.split(' ')[1]);
+
+  // If no token, set user to null and continue
+  if (!token) {
+    req.user = null;
+    return next();
+  }
+
+  // Check cache first
+  const cacheKey = `auth:${token}`;
+  const cachedUser = authCache.get(cacheKey);
+  if (cachedUser) {
+    req.user = cachedUser;
+    return next();
+  }
+
+  // Use a longer timeout and Promise.race for the entire authentication process
   try {
     await Promise.race([
-      authenticateWithTimeout(req),
+      authenticateWithTimeout(req, token),
       new Promise((_, reject) => setTimeout(() => {
         console.log('Authentication timed out at top level');
-        // Don't actually reject, just log
-      }, 1500)) // 1.5 second timeout for the entire process
+        // Don't actually reject, just log and continue with token data
+        try {
+          // Try to extract basic user info from token as fallback
+          const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret-key');
+          req.user = {
+            id: decoded.userId,
+            username: 'User',
+            isGuest: false
+          };
+        } catch (jwtError) {
+          console.error('JWT verification error during timeout fallback:', jwtError);
+          req.user = null;
+        }
+      }, 5000)) // 5 second timeout for the entire process (increased from 1.5s)
     ]);
   } catch (error) {
     console.error('Authentication error (caught at top level):', error);
@@ -21,16 +57,31 @@ const authenticate = async (req, res, next) => {
     if (!req.user) req.user = null;
   }
 
+  // If we have a valid user, cache it
+  if (req.user) {
+    authCache.set(cacheKey, req.user, AUTH_CACHE_TTL);
+
+    // Set timeout to remove from cache after TTL
+    setTimeout(() => {
+      authCache.delete(cacheKey);
+    }, AUTH_CACHE_TTL);
+  }
+
+  // Log authentication performance
+  const endTime = performance.now();
+  const duration = Math.round(endTime - startTime);
+
+  // Only log slow authentications (> 100ms)
+  if (duration > 100) {
+    console.log(`Authentication took ${duration}ms (${req.user ? 'authenticated' : 'unauthenticated'}, cache: ${cachedUser ? 'hit' : 'miss'})`);
+  }
+
   // Always continue to the next middleware
   return next();
 };
 
 // Helper function to handle authentication with timeout
-async function authenticateWithTimeout(req) {
-  // Get token from cookies or authorization header
-  const token = req.cookies.token ||
-               (req.headers.authorization && req.headers.authorization.split(' ')[1]);
-
+async function authenticateWithTimeout(req, token) {
   if (!token) {
     req.user = null;
     return; // Exit early
@@ -64,13 +115,13 @@ async function authenticateWithTimeout(req) {
     return; // Exit early, keeping the user from the token
   }
 
-  // Get a client from the pool with a very short timeout
+  // Get a client from the pool with a longer timeout for Neon
   let client;
   try {
     client = await Promise.race([
       pool.connect(),
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Database connection timeout')), 500)
+        setTimeout(() => reject(new Error('Database connection timeout')), 3000)
       )
     ]);
   } catch (connError) {
@@ -79,8 +130,8 @@ async function authenticateWithTimeout(req) {
   }
 
   try {
-    // Set a very short query timeout
-    await client.query('SET statement_timeout = 500');
+    // Set a query timeout appropriate for Neon
+    await client.query('SET statement_timeout = 3000');
 
     // Use a simpler query that doesn't join tables for better performance
     const sessionResult = await client.query(
