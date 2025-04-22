@@ -139,15 +139,15 @@ const gachaSystem = {
       rare: 0.20,      // 20%
       epic: 0.08,      // 8%
       legendary: 0.018, // 1.8%
-      mythic: 0.002,   // 0.2%
-      divine: 0.001    // 0.1%
+      mythic: 0.003,   // 0.3%
+      divine: 0.0      // 0% - Only available through premium rolls
     },
     variant: {
       common: 0.649,   // 64.9%
       rare: 0.25,      // 25%
       epic: 0.08,      // 8%
-      legendary: 0.02,  // 2%
-      divine: 0.001    // 0.1%
+      legendary: 0.021, // 2.1%
+      divine: 0.0      // 0% - Only available through premium rolls
     }
   },
 
@@ -214,14 +214,14 @@ const gachaSystem = {
       const rand = Math.random();
       let rates = { ...this.dropRates.tower };
 
-      // Apply premium bonus (1.5x for rare+ tiers)
+      // Apply premium bonus (1.5x for rare+ tiers and add divine chance)
       if (isPremium) {
         // Increase rates for rare+ tiers
         rates.rare *= 1.5;
         rates.epic *= 1.5;
         rates.legendary *= 1.5;
         rates.mythic *= 1.5;
-        rates.divine *= 1.5;
+        rates.divine = 0.005; // 0.5% chance for divine tier (only available in premium rolls)
 
         // Adjust common rate to ensure total is still 1.0
         const totalRarePlus = rates.rare + rates.epic + rates.legendary + rates.mythic + rates.divine;
@@ -255,17 +255,28 @@ const gachaSystem = {
       return this.rollTower(); // Try again
     }
 
-    // Special case for divine tier - always return Archangel
+    // Special case for divine tier - select a random divine tower
     if (tier === 'divine') {
-      const divineTower = 'archangel';
+      // Only available through premium rolls
+      if (!isPremium) {
+        // Fallback to mythic for non-premium rolls
+        tier = 'mythic';
+      } else {
+        // Get all divine towers
+        const divineTowers = Object.keys(towerStats).filter(tower => towerStats[tower].tier === 'divine');
 
-      // Unlock the tower if not already unlocked
-      if (!playerData.unlockedTowers.includes(divineTower)) {
-        playerData.unlockedTowers.push(divineTower);
-        savePlayerData();
+        // Randomly select one
+        const randomIndex = Math.floor(Math.random() * divineTowers.length);
+        const divineTower = divineTowers[randomIndex];
+
+        // Unlock the tower if not already unlocked
+        if (!playerData.unlockedTowers.includes(divineTower)) {
+          playerData.unlockedTowers.push(divineTower);
+          savePlayerData();
+        }
+
+        return divineTower;
       }
-
-      return divineTower;
     }
 
     // Randomly select one tower from the tier
@@ -326,13 +337,13 @@ const gachaSystem = {
       const rand = Math.random();
       let rates = { ...this.dropRates.variant };
 
-      // Apply premium bonus (1.5x for rare+ tiers)
+      // Apply premium bonus (1.5x for rare+ tiers and add divine chance)
       if (isPremium) {
         // Increase rates for rare+ tiers
         rates.rare *= 1.5;
         rates.epic *= 1.5;
         rates.legendary *= 1.5;
-        rates.divine *= 1.5;
+        rates.divine = 0.005; // 0.5% chance for divine tier (only available in premium rolls)
 
         // Adjust common rate to ensure total is still 1.0
         const totalRarePlus = rates.rare + rates.epic + rates.legendary + rates.divine;

@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="css/auth.css">
   <link rel="stylesheet" href="css/market.css">
   <link rel="stylesheet" href="css/leaderboard.css">
+  <link rel="stylesheet" href="css/rollUntil.css">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -159,6 +160,25 @@
                   <button id="roll-tower-100" class="gacha-btn">Roll 100 Towers (12000 Silver)</button>
                   <button id="roll-tower-premium-100" class="gacha-btn premium">Roll 100 Towers (1200 Gems)</button>
                 </div>
+
+                <div class="roll-until-buttons">
+                  <div class="roll-until-buttons-header">Roll Until (Silver):</div>
+                  <div class="roll-until-button-group">
+                    <button id="roll-until-tower-rare" class="roll-until-btn">Roll Until Rare</button>
+                    <button id="roll-until-tower-epic" class="roll-until-btn">Roll Until Epic</button>
+                    <button id="roll-until-tower-legendary" class="roll-until-btn">Roll Until Legendary</button>
+                    <button id="roll-until-tower-mythic" class="roll-until-btn">Roll Until Mythic</button>
+                  </div>
+
+                  <div class="roll-until-buttons-header">Roll Until (Gems):</div>
+                  <div class="roll-until-button-group">
+                    <button id="roll-until-tower-premium-rare" class="roll-until-btn premium">Roll Until Rare</button>
+                    <button id="roll-until-tower-premium-epic" class="roll-until-btn premium">Roll Until Epic</button>
+                    <button id="roll-until-tower-premium-legendary" class="roll-until-btn premium">Roll Until Legendary</button>
+                    <button id="roll-until-tower-premium-mythic" class="roll-until-btn premium">Roll Until Mythic</button>
+                    <button id="roll-until-tower-premium-divine" class="roll-until-btn premium">Roll Until Divine</button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -285,6 +305,23 @@
                 <div class="gacha-button-group">
                   <button id="roll-variant-100" class="gacha-btn">Roll 100 Variants (16000 Silver)</button>
                   <button id="roll-variant-premium-100" class="gacha-btn premium">Roll 100 Variants (1600 Gems)</button>
+                </div>
+
+                <div class="roll-until-buttons">
+                  <div class="roll-until-buttons-header">Roll Until (Silver):</div>
+                  <div class="roll-until-button-group">
+                    <button id="roll-until-variant-rare" class="roll-until-btn">Roll Until Rare</button>
+                    <button id="roll-until-variant-epic" class="roll-until-btn">Roll Until Epic</button>
+                    <button id="roll-until-variant-legendary" class="roll-until-btn">Roll Until Legendary</button>
+                  </div>
+
+                  <div class="roll-until-buttons-header">Roll Until (Gems):</div>
+                  <div class="roll-until-button-group">
+                    <button id="roll-until-variant-premium-rare" class="roll-until-btn premium">Roll Until Rare</button>
+                    <button id="roll-until-variant-premium-epic" class="roll-until-btn premium">Roll Until Epic</button>
+                    <button id="roll-until-variant-premium-legendary" class="roll-until-btn premium">Roll Until Legendary</button>
+                    <button id="roll-until-variant-premium-divine" class="roll-until-btn premium">Roll Until Divine</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -603,6 +640,9 @@
   <script src="js/towerHelper.js"></script>
   <script src="js/gacha.js"></script>
   <script src="js/gachaEvents.js"></script>
+  <script src="js/rollUntil.js"></script>
+  <script src="js/difficultyMaps.js"></script>
+  <script src="js/dualPathMode.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/menu.js"></script>
 
@@ -628,38 +668,7 @@
           }
         }
 
-        // Try to initialize squad chat
-        if (window.squadChat) {
-          try {
-            console.log('Ensuring SquadChat is initialized');
-            window.squadChat.initialize();
-          } catch (error) {
-            console.error('Error initializing SquadChat:', error);
-            initialized = false;
-          }
-        }
-
-        // Try to initialize squad game loader
-        if (window.squadGameLoader) {
-          try {
-            console.log('Ensuring SquadGameLoader is initialized');
-            window.squadGameLoader.initialize();
-          } catch (error) {
-            console.error('Error initializing SquadGameLoader:', error);
-            initialized = false;
-          }
-        }
-
-        // Try to initialize money sharing
-        if (window.moneySharing) {
-          try {
-            console.log('Ensuring MoneySharing is initialized');
-            // MoneySharing initializes itself when created
-          } catch (error) {
-            console.error('Error initializing MoneySharing:', error);
-            initialized = false;
-          }
-        }
+        // Squad functionality has been removed
 
         // Retry if not all components initialized successfully
         if (!initialized && attempt < 5) {
@@ -672,5 +681,32 @@
       setTimeout(() => initializeComponents(), 1000);
     });
   </script>
+
+  <!-- Roll Until Container -->
+  <div id="roll-until-container" class="roll-until-container" style="display: none;">
+    <div class="roll-until-header">
+      <h2>Rolling Until...</h2>
+      <div id="roll-until-target" class="roll-until-target">Rare Tower</div>
+    </div>
+
+    <div class="roll-until-stats">
+      <div class="roll-until-stat">
+        <div class="roll-until-stat-label">Rolls:</div>
+        <div id="roll-until-count" class="roll-until-stat-value">0</div>
+      </div>
+      <div class="roll-until-stat">
+        <div class="roll-until-stat-label">Spent:</div>
+        <div id="roll-until-spent" class="roll-until-stat-value">0 Silver</div>
+      </div>
+    </div>
+
+    <div id="roll-until-current" class="roll-until-animation"></div>
+
+    <div id="roll-until-success" class="roll-until-success" style="display: none;"></div>
+
+    <div class="roll-until-controls">
+      <button id="stop-roll-until" class="roll-until-btn stop-roll-until">Stop Rolling</button>
+    </div>
+  </div>
 </body>
 </html>

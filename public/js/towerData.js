@@ -220,6 +220,87 @@ const towerStats = {
     buffRange: 0.3, // 30% range buff to nearby towers
     color: '#FFEB3B', // Bright yellow/gold
     tier: 'divine'
+  },
+
+  // New Mythic Towers
+  falseGod: {
+    name: "False God Tower",
+    description: "Mythic tower that deceives enemies with illusions and drains their life force",
+    persistentCost: 550,
+    ability: "Soul Drain",
+    range: 350,
+    damage: 1800,
+    fireRate: 3.0,
+    projectileSpeed: 45,
+    canTargetFlying: true,
+    pierceCount: 5,
+    critChance: 0.4,
+    critMultiplier: 3.0,
+    aoeRadius: 80,
+    lifeSteal: 0.2, // 20% of damage dealt is converted to gold
+    illusionChance: 0.3, // 30% chance to create an illusion that distracts enemies
+    illusionDuration: 5000, // 5 seconds
+    color: '#9C27B0', // Purple
+    tier: 'mythic'
+  },
+
+  cupid: {
+    name: "Cupid Tower",
+    description: "Mythic tower that fires enchanted arrows that charm enemies to fight for you",
+    persistentCost: 550,
+    ability: "Love's Arrow",
+    range: 320,
+    damage: 1500,
+    fireRate: 2.5,
+    projectileSpeed: 60,
+    canTargetFlying: true,
+    charmChance: 0.25, // 25% chance to charm enemies
+    charmDuration: 8000, // 8 seconds
+    buffRadius: 200,
+    buffFireRate: 0.2, // 20% fire rate buff to nearby towers
+    color: '#E91E63', // Pink
+    tier: 'mythic'
+  },
+
+  // New Divine Towers
+  seraphim: {
+    name: "Seraphim Tower",
+    description: "Divine tower with six wings that unleashes heavenly fire upon enemies",
+    persistentCost: 650,
+    ability: "Heavenly Fire",
+    range: 450,
+    damage: 3000,
+    fireRate: 5.0,
+    projectileSpeed: 55,
+    canTargetFlying: true,
+    pierceCount: 10,
+    critChance: 0.7,
+    critMultiplier: 6.0,
+    aoeRadius: 150,
+    burnDamage: 500, // Damage per second
+    burnDuration: 5000, // 5 seconds
+    purifyChance: 0.4, // 40% chance to remove special abilities from enemies
+    color: '#FF9800', // Orange
+    tier: 'divine'
+  },
+
+  demonLord: {
+    name: "Demon Lord Tower",
+    description: "Divine tower that commands legions of demons to torment enemies",
+    persistentCost: 650,
+    ability: "Legion Command",
+    range: 380,
+    damage: 2800,
+    fireRate: 4.0,
+    projectileSpeed: 40,
+    canTargetFlying: true,
+    summonCount: 3, // Summons 3 demon minions
+    summonDuration: 10000, // 10 seconds
+    summonDamage: 500, // Damage per demon
+    fearChance: 0.5, // 50% chance to cause fear
+    fearDuration: 3000, // 3 seconds
+    color: '#F44336', // Red
+    tier: 'divine'
   }
 };
 
