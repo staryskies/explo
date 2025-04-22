@@ -305,6 +305,7 @@ class GlobalChat {
       const messageElement = document.createElement('div');
       messageElement.className = 'chat-message';
       messageElement.style.marginBottom = '10px';
+      messageElement.dataset.messageId = message.id || Date.now().toString();
 
       const username = document.createElement('span');
       username.className = 'chat-username';
@@ -338,6 +339,22 @@ class GlobalChat {
 
       // Scroll to bottom
       this.messageList.scrollTop = this.messageList.scrollHeight;
+
+      // Set a timeout to remove the message after 5 minutes (300000 ms)
+      setTimeout(() => {
+        try {
+          // Find the message element by ID and remove it
+          const messageToRemove = this.messageList.querySelector(`[data-message-id="${message.id || Date.now().toString()}"]`);
+          if (messageToRemove && messageToRemove.parentNode === this.messageList) {
+            this.messageList.removeChild(messageToRemove);
+          }
+
+          // Also remove from messages array
+          this.messages = this.messages.filter(m => m.id !== message.id);
+        } catch (removeError) {
+          console.error('Error removing message:', removeError);
+        }
+      }, 300000); // 5 minutes
     } catch (error) {
       console.error('Error adding message to UI:', error);
     }
@@ -360,5 +377,9 @@ class GlobalChat {
   }
 }
 
-// Create a singleton instance
-window.globalChat = new GlobalChat();
+// Create a singleton instance only if it doesn't already exist
+if (!window.globalChat) {
+  window.globalChat = new GlobalChat();
+} else {
+  console.log('GlobalChat instance already exists, reusing existing instance');
+}

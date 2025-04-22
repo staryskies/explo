@@ -355,33 +355,76 @@ class RestCommunicationService {
     }
   }
 
-  // Send game state update
-  async sendGameState(gameState, squadId) {
-    if (!squadId) return false;
+  // Send game state update with debouncing and retry
+  sendGameState(gameState, squadId) {
+    if (!squadId) return Promise.resolve(false);
 
-    try {
-      const token = window.authService.getToken();
-      if (!token) return false;
-
-      const response = await fetch(`/api/squads/${squadId}/game-state`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ gameState }),
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to send game state: ${response.status}`);
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Send game state error:', error);
-      return false;
+    // Use debouncing to prevent too many updates
+    if (this._gameStateDebounceTimer) {
+      clearTimeout(this._gameStateDebounceTimer);
+      this._pendingGameState = gameState;
     }
+
+    return new Promise((resolve) => {
+      this._gameStateDebounceTimer = setTimeout(async () => {
+        const stateToSend = this._pendingGameState || gameState;
+        this._pendingGameState = null;
+
+        try {
+          const token = window.authService.getToken();
+          if (!token) {
+            resolve(false);
+            return;
+          }
+
+          // Add retry logic
+          let retries = 3;
+          let success = false;
+
+          while (retries > 0 && !success) {
+            try {
+              const response = await fetch(`/api/squads/${squadId}/game-state`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ gameState: stateToSend }),
+                credentials: 'include',
+                // Add timeout to the fetch request
+                signal: AbortSignal.timeout(5000) // 5 second timeout
+              });
+
+              if (response.ok) {
+                success = true;
+              } else if (response.status === 503 || response.status === 429) {
+                // Server is busy, wait longer before retry
+                retries--;
+                if (retries > 0) {
+                  console.log(`Server busy, retrying game state update in ${(4-retries) * 1000}ms...`);
+                  await new Promise(r => setTimeout(r, (4-retries) * 1000));
+                }
+              } else {
+                console.error(`Failed to send game state: ${response.status}`);
+                retries = 0; // Don't retry other errors
+              }
+            } catch (fetchError) {
+              console.error('Fetch error during game state update:', fetchError);
+              retries--;
+              if (retries > 0) {
+                console.log(`Network error, retrying game state update in ${(4-retries) * 1000}ms...`);
+                await new Promise(r => setTimeout(r, (4-retries) * 1000));
+              }
+            }
+          }
+
+          resolve(success);
+        } catch (error) {
+          console.error('Send game state error:', error);
+          resolve(false);
+        }
+      }, 500); // 500ms debounce
+    });
   }
 
   // Set current squad

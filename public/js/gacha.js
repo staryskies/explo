@@ -174,6 +174,11 @@ const gachaSystem = {
 
   // Roll a single tower
   rollTower: function() {
+    // Sync pity counters with playerData if available
+    if (window.playerData && window.playerData.towerPity) {
+      this.pityCounter.tower = { ...window.playerData.towerPity };
+    }
+
     // Check pity system first
     let tier = this.checkPity('tower');
 
@@ -185,6 +190,12 @@ const gachaSystem = {
       this.pityCounter.tower.legendary++;
       this.pityCounter.tower.mythic++;
       this.pityCounter.tower.divine++;
+
+      // Update playerData pity counters
+      if (window.playerData && window.playerData.towerPity) {
+        window.playerData.towerPity = { ...this.pityCounter.tower };
+        if (window.savePlayerData) window.savePlayerData();
+      }
 
       // Determine tier based on random chance
       const rand = Math.random();
@@ -264,6 +275,11 @@ const gachaSystem = {
       return null;
     }
 
+    // Sync pity counters with playerData if available
+    if (window.playerData && window.playerData.variantPity) {
+      this.pityCounter.variant = { ...window.playerData.variantPity };
+    }
+
     // Check pity system first
     let tier = this.checkPity('variant');
 
@@ -274,6 +290,12 @@ const gachaSystem = {
       this.pityCounter.variant.epic++;
       this.pityCounter.variant.legendary++;
       this.pityCounter.variant.divine++;
+
+      // Update playerData pity counters
+      if (window.playerData && window.playerData.variantPity) {
+        window.playerData.variantPity = { ...this.pityCounter.variant };
+        if (window.savePlayerData) window.savePlayerData();
+      }
 
       // Determine tier based on random chance
       const rand = Math.random();
@@ -395,6 +417,17 @@ const gachaSystem = {
       default:
         // Common tier doesn't reset any pity counters
         break;
+    }
+
+    // Update playerData pity counters
+    if (window.playerData) {
+      if (type === 'tower' && window.playerData.towerPity) {
+        window.playerData.towerPity = { ...pityCounters };
+      } else if (type === 'variant' && window.playerData.variantPity) {
+        window.playerData.variantPity = { ...pityCounters };
+      }
+
+      if (window.savePlayerData) window.savePlayerData();
     }
   },
 

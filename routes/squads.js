@@ -519,6 +519,10 @@ router.get('/public', requireAuth, async (req, res) => {
   }
 });
 
+// Import the request queue and cache
+const requestQueue = require('../lib/request-queue');
+const cache = require('../lib/cache');
+
 // Get squad state
 router.get('/:id/state', requireAuth, async (req, res) => {
   // Set a timeout to prevent long-running requests
@@ -531,11 +535,23 @@ router.get('/:id/state', requireAuth, async (req, res) => {
 
   try {
     const { id } = req.params;
+    const { t: timestamp } = req.query; // Get timestamp from query for cache busting
 
     // Validate user ID from token
     if (!req.user || !req.user.id) {
       clearTimeout(timeout);
       return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    // Generate cache key
+    const cacheKey = `squad_state:${id}`;
+
+    // Check if we have a cached version
+    const cachedSquad = cache.get(cacheKey);
+    if (cachedSquad) {
+      console.log(`Using cached squad state for ${id}`);
+      clearTimeout(timeout);
+      return res.json(cachedSquad);
     }
 
     const pool = getPool();
@@ -544,97 +560,117 @@ router.get('/:id/state', requireAuth, async (req, res) => {
       return res.status(500).json({ error: 'Database connection not available' });
     }
 
-    // Get a client from the pool with a short timeout
-    let client;
+    // Use the request queue for database operations
     try {
-      client = await Promise.race([
-        pool.connect(),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Database connection timeout')), 500)
-        )
-      ]);
-    } catch (connError) {
+      // Enqueue the database operation with priority 2 (higher than normal)
+      const squad = await requestQueue.enqueueRequest(async () => {
+        let client;
+        try {
+          // Get a client from the pool with a short timeout
+          client = await Promise.race([
+            pool.connect(),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Database connection timeout')), 500)
+            )
+          ]);
+
+          // Set a short query timeout
+          await client.query('SET statement_timeout = 1000');
+
+          // Begin transaction for consistent reads
+          await client.query('BEGIN');
+
+          // Check if user is a member of the squad
+          const membershipResult = await client.query(
+            'SELECT * FROM squad_members WHERE squad_id = $1 AND user_id = $2 LIMIT 1',
+            [id, req.user.id]
+          );
+
+          if (membershipResult.rows.length === 0) {
+            await client.query('ROLLBACK');
+            throw new Error('You are not a member of this squad');
+          }
+
+          // Get squad data
+          const squadResult = await client.query(
+            `SELECT s.id, s.code, s.leader_id as "leaderId", s.created_at as "createdAt"
+             FROM squads s
+             WHERE s.id = $1`,
+            [id]
+          );
+
+          if (squadResult.rows.length === 0) {
+            await client.query('ROLLBACK');
+            throw new Error('Squad not found');
+          }
+
+          const squad = squadResult.rows[0];
+
+          // Get squad members
+          const membersResult = await client.query(
+            `SELECT sm.joined_at as "joinedAt", u.id, u.username, u.is_guest as "isGuest"
+             FROM squad_members sm
+             JOIN users u ON sm.user_id = u.id
+             WHERE sm.squad_id = $1`,
+            [id]
+          );
+
+          // Add members to squad
+          squad.members = membersResult.rows;
+
+          // Get latest game state
+          const gameStateResult = await client.query(
+            `SELECT state FROM game_states
+             WHERE squad_id = $1
+             ORDER BY created_at DESC
+             LIMIT 1`,
+            [id]
+          );
+
+          if (gameStateResult.rows.length > 0) {
+            squad.gameState = gameStateResult.rows[0].state;
+          }
+
+          // Commit transaction
+          await client.query('COMMIT');
+
+          return squad;
+        } catch (error) {
+          // Rollback transaction on error
+          if (client) {
+            try {
+              await client.query('ROLLBACK');
+            } catch (rollbackError) {
+              console.error('Error during rollback:', rollbackError);
+            }
+          }
+          throw error;
+        } finally {
+          // Always release the client back to the pool
+          if (client) client.release();
+        }
+      }, 2); // Priority 2 (higher)
+
+      // Cache the result for 5 seconds
+      cache.set(cacheKey, squad, 5000);
+
       clearTimeout(timeout);
-      console.error('Database connection error in get squad state:', connError);
-      return res.status(503).json({ error: 'Database connection issue. Please try again later.' });
-    }
+      return res.json(squad);
+    } catch (queueError) {
+      console.error('Queue error in get squad state:', queueError);
 
-    try {
-      // Set a short query timeout
-      await client.query('SET statement_timeout = 1000');
-
-      // Begin transaction for consistent reads
-      await client.query('BEGIN');
-
-      // Check if user is a member of the squad
-      const membershipResult = await client.query(
-        'SELECT * FROM squad_members WHERE squad_id = $1 AND user_id = $2 LIMIT 1',
-        [id, req.user.id]
-      );
-
-      if (membershipResult.rows.length === 0) {
-        await client.query('ROLLBACK');
+      if (queueError.message === 'You are not a member of this squad') {
         clearTimeout(timeout);
         return res.status(403).json({ error: 'You are not a member of this squad' });
       }
 
-      // Get squad data
-      const squadResult = await client.query(
-        `SELECT s.id, s.code, s.leader_id as "leaderId", s.created_at as "createdAt"
-         FROM squads s
-         WHERE s.id = $1`,
-        [id]
-      );
-
-      if (squadResult.rows.length === 0) {
-        await client.query('ROLLBACK');
+      if (queueError.message === 'Squad not found') {
         clearTimeout(timeout);
         return res.status(404).json({ error: 'Squad not found' });
       }
 
-      const squad = squadResult.rows[0];
-
-      // Get squad members
-      const membersResult = await client.query(
-        `SELECT sm.joined_at as "joinedAt", u.id, u.username, u.is_guest as "isGuest"
-         FROM squad_members sm
-         JOIN users u ON sm.user_id = u.id
-         WHERE sm.squad_id = $1`,
-        [id]
-      );
-
-      // Add members to squad
-      squad.members = membersResult.rows;
-
-      // Get latest game state
-      const gameStateResult = await client.query(
-        `SELECT state FROM game_states
-         WHERE squad_id = $1
-         ORDER BY created_at DESC
-         LIMIT 1`,
-        [id]
-      );
-
-      if (gameStateResult.rows.length > 0) {
-        squad.gameState = gameStateResult.rows[0].state;
-      }
-
-      await client.query('COMMIT');
       clearTimeout(timeout);
-      res.json(squad);
-    } catch (error) {
-      // Rollback transaction on error
-      if (client) {
-        try {
-          await client.query('ROLLBACK');
-        } catch (rollbackError) {
-          console.error('Error during rollback:', rollbackError);
-        }
-      }
-      throw error;
-    } finally {
-      // Always release the client back to the pool
-      if (client) client.release();
+      return res.status(503).json({ error: 'Database connection issue. Please try again later.' });
     }
   } catch (error) {
     // Clear the timeout if it exists
@@ -655,38 +691,108 @@ router.get('/:id/state', requireAuth, async (req, res) => {
 
 // Update game state
 router.post('/:id/game-state', requireAuth, async (req, res) => {
+  // Set a timeout to prevent long-running requests
+  const timeout = setTimeout(() => {
+    console.log('Update game state timed out');
+    if (!res.headersSent) {
+      return res.status(504).json({ error: 'Request timed out. Please try again.' });
+    }
+  }, 2000); // 2 second timeout
+
   try {
     const { id } = req.params;
     const { gameState } = req.body;
 
     if (!gameState) {
+      clearTimeout(timeout);
       return res.status(400).json({ error: 'Game state is required' });
     }
 
+    // Generate cache key for invalidation
+    const cacheKey = `squad_state:${id}`;
+
     const pool = getPool();
     if (!pool) {
+      clearTimeout(timeout);
       return res.status(500).json({ error: 'Database connection not available' });
     }
 
-    // Check if user is a member of the squad
-    const membershipResult = await pool.query(
-      'SELECT * FROM squad_members WHERE squad_id = $1 AND user_id = $2 LIMIT 1',
-      [id, req.user.id]
-    );
+    // Use the request queue for database operations
+    try {
+      // Enqueue the database operation with priority 1 (normal)
+      await requestQueue.enqueueRequest(async () => {
+        let client;
+        try {
+          // Get a client from the pool with a short timeout
+          client = await Promise.race([
+            pool.connect(),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Database connection timeout')), 500)
+            )
+          ]);
 
-    if (membershipResult.rows.length === 0) {
-      return res.status(403).json({ error: 'You are not a member of this squad' });
+          // Set a short query timeout
+          await client.query('SET statement_timeout = 1000');
+
+          // Begin transaction
+          await client.query('BEGIN');
+
+          // Check if user is a member of the squad
+          const membershipResult = await client.query(
+            'SELECT * FROM squad_members WHERE squad_id = $1 AND user_id = $2 LIMIT 1',
+            [id, req.user.id]
+          );
+
+          if (membershipResult.rows.length === 0) {
+            await client.query('ROLLBACK');
+            throw new Error('You are not a member of this squad');
+          }
+
+          // Save game state
+          await client.query(
+            `INSERT INTO game_states (id, squad_id, user_id, state, created_at)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [require('uuid').v4(), id, req.user.id, gameState, new Date()]
+          );
+
+          // Commit transaction
+          await client.query('COMMIT');
+        } catch (error) {
+          // Rollback transaction on error
+          if (client) {
+            try {
+              await client.query('ROLLBACK');
+            } catch (rollbackError) {
+              console.error('Error during rollback:', rollbackError);
+            }
+          }
+          throw error;
+        } finally {
+          // Always release the client back to the pool
+          if (client) client.release();
+        }
+      }, 1); // Priority 1 (normal)
+
+      // Invalidate cache
+      cache.delete(cacheKey);
+
+      clearTimeout(timeout);
+      return res.json({ success: true });
+    } catch (queueError) {
+      console.error('Queue error in update game state:', queueError);
+
+      if (queueError.message === 'You are not a member of this squad') {
+        clearTimeout(timeout);
+        return res.status(403).json({ error: 'You are not a member of this squad' });
+      }
+
+      clearTimeout(timeout);
+      return res.status(503).json({ error: 'Database connection issue. Please try again later.' });
     }
-
-    // Save game state
-    await pool.query(
-      `INSERT INTO game_states (id, squad_id, user_id, state, created_at)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [require('uuid').v4(), id, req.user.id, gameState, new Date()]
-    );
-
-    res.json({ success: true });
   } catch (error) {
+    // Clear the timeout if it exists
+    if (timeout) clearTimeout(timeout);
+
     console.error('Update game state error:', error);
     res.status(500).json({ error: 'Failed to update game state' });
   }

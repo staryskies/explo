@@ -23,12 +23,15 @@ const playerData = {
   towerPity: {
     rare: 0,
     epic: 0,
-    legendary: 0
+    legendary: 0,
+    mythic: 0,
+    divine: 0
   },
   variantPity: {
     rare: 0,
     epic: 0,
-    legendary: 0
+    legendary: 0,
+    divine: 0
   },
 
   // Unlocked towers (basic is always unlocked)

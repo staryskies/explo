@@ -5,7 +5,7 @@
 class MoneySharing {
   // Static initialization flag to prevent multiple initializations
   static initialized = false;
-  
+
   constructor() {
     // Prevent multiple initializations
     if (MoneySharing.initialized) {
@@ -258,7 +258,7 @@ class MoneySharing {
         // Member name
         const nameElement = document.createElement('div');
         nameElement.textContent = member.username + (member.id === this.currentSquad.leaderId ? ' (Leader)' : '');
-        
+
         // Share button
         const shareButton = document.createElement('button');
         shareButton.textContent = 'Share';
@@ -320,7 +320,7 @@ class MoneySharing {
         // Get all squad members except current user
         const currentUserId = window.authService ? window.authService.getCurrentUser()?.id : null;
         const otherMembers = this.currentSquad.members.filter(member => member.id !== currentUserId);
-        
+
         if (otherMembers.length === 0) {
           alert('No other members in the squad');
           return;
@@ -468,5 +468,9 @@ class MoneySharing {
   }
 }
 
-// Create a singleton instance
-window.moneySharing = new MoneySharing();
+// Create a singleton instance only if it doesn't already exist
+if (!window.moneySharing) {
+  window.moneySharing = new MoneySharing();
+} else {
+  console.log('MoneySharing instance already exists, reusing existing instance');
+}

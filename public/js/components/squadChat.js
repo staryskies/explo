@@ -384,6 +384,7 @@ class SquadChat {
     const messageElement = document.createElement('div');
     messageElement.className = 'chat-message';
     messageElement.style.marginBottom = '10px';
+    messageElement.dataset.messageId = message.id || Date.now().toString();
 
     const username = document.createElement('span');
     username.className = 'chat-username';
@@ -416,6 +417,22 @@ class SquadChat {
 
     // Notify listeners
     this.notifyListeners();
+
+    // Set a timeout to remove the message after 5 minutes (300000 ms)
+    setTimeout(() => {
+      try {
+        // Find the message element by ID and remove it
+        const messageToRemove = this.messageList.querySelector(`[data-message-id="${message.id || Date.now().toString()}"]`);
+        if (messageToRemove && messageToRemove.parentNode === this.messageList) {
+          this.messageList.removeChild(messageToRemove);
+        }
+
+        // Also remove from messages array
+        this.messages = this.messages.filter(m => m.id !== message.id);
+      } catch (removeError) {
+        console.error('Error removing message:', removeError);
+      }
+    }, 300000); // 5 minutes
   }
 
   // Leave the current squad
@@ -464,5 +481,9 @@ class SquadChat {
   }
 }
 
-// Create a singleton instance
-window.squadChat = new SquadChat();
+// Create a singleton instance only if it doesn't already exist
+if (!window.squadChat) {
+  window.squadChat = new SquadChat();
+} else {
+  console.log('SquadChat instance already exists, reusing existing instance');
+}
