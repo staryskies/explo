@@ -8,11 +8,11 @@ class SquadService {
     this.messageListeners = [];
     this.gameStateListeners = [];
     this.pollInterval = null;
-    this.pollFrequency = 5000; // 5 seconds
+    this.pollFrequency = 8000; // 8 seconds (increased for Neon)
     this.consecutiveErrors = 0;
     this.maxConsecutiveErrors = 5;
     this.errorBackoffFactor = 1.5;
-    this.maxPollFrequency = 30000; // 30 seconds max
+    this.maxPollFrequency = 45000; // 45 seconds max (increased for Neon)
 
     // Initialize when auth service is ready
     if (window.authService && window.authService.isLoggedIn()) {
@@ -53,7 +53,7 @@ class SquadService {
     if (!this.currentSquad) return;
 
     // Use a more conservative polling approach
-    const basePollFrequency = 5000; // 5 seconds base
+    const basePollFrequency = 8000; // 8 seconds base (increased for Neon)
 
     // If we're already at a higher frequency due to errors, keep it
     if (this.pollFrequency < basePollFrequency) {
@@ -124,7 +124,7 @@ class SquadService {
       }
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout (increased from 5s)
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout for Neon
 
       try {
         const response = await fetch(`/api/squads/${this.currentSquad.id}/state?t=${timestamp}`, {

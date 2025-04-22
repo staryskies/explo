@@ -541,7 +541,7 @@ router.get('/:id/state', requireAuth, async (req, res) => {
   const timeout = setTimeout(() => {
     console.log('Get squad state timed out');
     sendResponse(504, { error: 'Request timed out. Please try again.' });
-  }, 3000); // Increased to 3 seconds
+  }, 12000); // Increased to 12 seconds for Neon
 
   try {
     const { id } = req.params;
@@ -573,16 +573,16 @@ router.get('/:id/state', requireAuth, async (req, res) => {
       const squad = await requestQueue.enqueueRequest(async () => {
         let client;
         try {
-          // Get a client from the pool with a short timeout
+          // Get a client from the pool with a timeout appropriate for Neon
           client = await Promise.race([
             pool.connect(),
             new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('Database connection timeout')), 1000)
+              setTimeout(() => reject(new Error('Database connection timeout')), 5000)
             )
           ]);
 
-          // Set a short query timeout
-          await client.query('SET statement_timeout = 1500');
+          // Set a query timeout appropriate for Neon
+          await client.query('SET statement_timeout = 8000');
 
           // Begin transaction for consistent reads
           await client.query('BEGIN');
@@ -707,7 +707,7 @@ router.post('/:id/game-state', requireAuth, async (req, res) => {
   const timeout = setTimeout(() => {
     console.log('Update game state timed out');
     sendResponse(504, { error: 'Request timed out. Please try again.' });
-  }, 3000); // Increased to 3 seconds
+  }, 12000); // Increased to 12 seconds for Neon
 
   try {
     const { id } = req.params;
@@ -731,16 +731,16 @@ router.post('/:id/game-state', requireAuth, async (req, res) => {
       await requestQueue.enqueueRequest(async () => {
         let client;
         try {
-          // Get a client from the pool with a short timeout
+          // Get a client from the pool with a timeout appropriate for Neon
           client = await Promise.race([
             pool.connect(),
             new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('Database connection timeout')), 1000)
+              setTimeout(() => reject(new Error('Database connection timeout')), 5000)
             )
           ]);
 
-          // Set a short query timeout
-          await client.query('SET statement_timeout = 1500');
+          // Set a query timeout appropriate for Neon
+          await client.query('SET statement_timeout = 8000');
 
           // Begin transaction
           await client.query('BEGIN');

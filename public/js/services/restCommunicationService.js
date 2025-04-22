@@ -392,7 +392,7 @@ class RestCommunicationService {
                 body: JSON.stringify({ gameState: stateToSend }),
                 credentials: 'include',
                 // Add timeout to the fetch request
-                signal: AbortSignal.timeout(5000) // 5 second timeout
+                signal: AbortSignal.timeout(15000) // 15 second timeout for Neon
               });
 
               if (response.ok) {
