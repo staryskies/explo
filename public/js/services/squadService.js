@@ -9,6 +9,10 @@ class SquadService {
     this.gameStateListeners = [];
     this.pollInterval = null;
     this.pollFrequency = 5000; // 5 seconds
+    this.consecutiveErrors = 0;
+    this.maxConsecutiveErrors = 5;
+    this.errorBackoffFactor = 1.5;
+    this.maxPollFrequency = 30000; // 30 seconds max
 
     // Initialize when auth service is ready
     if (window.authService && window.authService.isLoggedIn()) {
@@ -48,36 +52,47 @@ class SquadService {
 
     if (!this.currentSquad) return;
 
-    // Use exponential backoff for polling
-    let pollCount = 0;
-    const maxPollFrequency = 30000; // 30 seconds max
+    // Use a more conservative polling approach
     const basePollFrequency = 5000; // 5 seconds base
 
-    this.pollInterval = setInterval(() => {
-      // Increase poll frequency over time to reduce server load
-      pollCount++;
-      const currentFrequency = Math.min(
-        basePollFrequency * Math.pow(1.2, Math.min(pollCount, 10)),
-        maxPollFrequency
-      );
+    // If we're already at a higher frequency due to errors, keep it
+    if (this.pollFrequency < basePollFrequency) {
+      this.pollFrequency = basePollFrequency;
+    }
 
-      // Update the interval if needed
-      if (currentFrequency > this.pollFrequency) {
-        this.pollFrequency = currentFrequency;
-        this.stopPolling();
-        this.startPolling();
-        return;
-      }
+    // Add some randomness to the polling interval to prevent synchronized requests
+    const randomizedFrequency = this.pollFrequency + (Math.random() * 1000 - 500); // +/- 500ms
 
-      this.refreshSquadData();
-    }, this.pollFrequency);
+    console.log(`Starting squad polling with frequency: ${Math.round(randomizedFrequency)}ms`);
+
+    // Use a more reliable polling mechanism
+    const poll = () => {
+      if (!this.pollInterval) return; // Stop if polling has been cancelled
+
+      // Schedule the next poll first, so if refreshSquadData throws, we still continue polling
+      this.pollInterval = setTimeout(() => {
+        poll();
+      }, this.pollFrequency + (Math.random() * 1000 - 500)); // Add jitter to each interval
+
+      // Then do the actual data refresh
+      this.refreshSquadData().catch(error => {
+        console.error('Error in poll cycle:', error);
+        // Errors are already handled in refreshSquadData
+      });
+    };
+
+    // Start the polling cycle
+    this.pollInterval = setTimeout(() => {
+      poll();
+    }, randomizedFrequency);
   }
 
   // Stop polling
   stopPolling() {
     if (this.pollInterval) {
-      clearInterval(this.pollInterval);
+      clearTimeout(this.pollInterval); // Changed from clearInterval to clearTimeout
       this.pollInterval = null;
+      console.log('Stopped squad polling');
     }
   }
 
@@ -86,7 +101,7 @@ class SquadService {
     if (!this.currentSquad) return;
 
     // Add jitter to prevent all clients from hitting the server at the same time
-    const jitter = Math.floor(Math.random() * 1000); // 0-1000ms jitter
+    const jitter = Math.floor(Math.random() * 2000); // 0-2000ms jitter (increased from 1000ms)
     await new Promise(resolve => setTimeout(resolve, jitter));
 
     try {
@@ -95,57 +110,101 @@ class SquadService {
 
       // Add timestamp to prevent caching and track request time
       const timestamp = Date.now();
-      const response = await fetch(`/api/squads/${this.currentSquad.id}/state?t=${timestamp}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        credentials: 'include',
-        // Add timeout to the fetch request
-        signal: AbortSignal.timeout(5000) // 5 second timeout
-      });
 
-      if (!response.ok) {
-        if (response.status === 404) {
-          // Squad no longer exists
-          this.currentSquad = null;
-          this.notifyListeners();
-          this.stopPolling();
-          return;
+      // Check if we've had too many consecutive errors
+      if (this.consecutiveErrors >= this.maxConsecutiveErrors) {
+        console.log(`Too many consecutive errors (${this.consecutiveErrors}), pausing polling for 10 seconds`);
+        // Pause polling for a while
+        this.stopPolling();
+        setTimeout(() => {
+          this.consecutiveErrors = 0; // Reset error count
+          this.startPolling(); // Restart polling
+        }, 10000); // 10 second pause
+        return;
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout (increased from 5s)
+
+      try {
+        const response = await fetch(`/api/squads/${this.currentSquad.id}/state?t=${timestamp}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          credentials: 'include',
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId); // Clear the timeout
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            // Squad no longer exists
+            this.currentSquad = null;
+            this.notifyListeners();
+            this.stopPolling();
+            this.consecutiveErrors = 0; // Reset error count
+            return;
+          }
+
+          if (response.status === 503 || response.status === 429 || response.status === 500 || response.status === 504) {
+            // Server is overloaded or rate limiting, back off polling
+            this.consecutiveErrors++;
+            const backoffFactor = Math.pow(this.errorBackoffFactor, Math.min(this.consecutiveErrors, 5));
+            this.pollFrequency = Math.min(this.pollFrequency * backoffFactor, this.maxPollFrequency);
+            console.log(`Server error (${response.status}), increasing poll frequency to ${this.pollFrequency}ms (consecutive errors: ${this.consecutiveErrors})`);
+            this.stopPolling();
+            this.startPolling();
+            return;
+          }
+
+          throw new Error(`Failed to refresh squad data: ${response.status}`);
         }
 
-        if (response.status === 503 || response.status === 429) {
-          // Server is overloaded or rate limiting, back off polling
-          this.pollFrequency = Math.min(this.pollFrequency * 1.5, 30000); // Increase up to 30s max
-          console.log(`Server busy, increasing poll frequency to ${this.pollFrequency}ms`);
+        const data = await response.json();
+
+        // Update squad data
+        this.currentSquad = data;
+        this.notifyListeners();
+
+        // Reset consecutive errors on success
+        this.consecutiveErrors = 0;
+
+        // If we got a successful response, we can gradually decrease the polling frequency
+        // back to normal if it was increased due to errors
+        if (this.pollFrequency > 5000) {
+          this.pollFrequency = Math.max(this.pollFrequency * 0.9, 5000); // Decrease gradually, min 5s
+          this.stopPolling();
+          this.startPolling();
+        }
+      } catch (fetchError) {
+        clearTimeout(timeoutId); // Make sure to clear the timeout
+
+        if (fetchError.name === 'AbortError') {
+          console.error('Fetch aborted due to timeout');
+          this.consecutiveErrors++;
+          const backoffFactor = Math.pow(this.errorBackoffFactor, Math.min(this.consecutiveErrors, 5));
+          this.pollFrequency = Math.min(this.pollFrequency * backoffFactor, this.maxPollFrequency);
+          console.log(`Fetch timeout, increasing poll frequency to ${this.pollFrequency}ms (consecutive errors: ${this.consecutiveErrors})`);
           this.stopPolling();
           this.startPolling();
           return;
         }
 
-        throw new Error(`Failed to refresh squad data: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      // Update squad data
-      this.currentSquad = data;
-      this.notifyListeners();
-
-      // If we got a successful response, we can gradually decrease the polling frequency
-      // back to normal if it was increased due to errors
-      if (this.pollFrequency > 5000) {
-        this.pollFrequency = Math.max(this.pollFrequency * 0.9, 5000); // Decrease gradually, min 5s
-        this.stopPolling();
-        this.startPolling();
+        throw fetchError; // Re-throw for the outer catch
       }
     } catch (error) {
       console.error('Refresh squad data error:', error);
 
+      // Increment consecutive errors
+      this.consecutiveErrors++;
+
       // Increase polling interval on error to reduce server load
-      this.pollFrequency = Math.min(this.pollFrequency * 1.5, 30000); // Increase up to 30s max
-      console.log(`Error refreshing data, increasing poll frequency to ${this.pollFrequency}ms`);
+      const backoffFactor = Math.pow(this.errorBackoffFactor, Math.min(this.consecutiveErrors, 5));
+      this.pollFrequency = Math.min(this.pollFrequency * backoffFactor, this.maxPollFrequency);
+      console.log(`Error refreshing data, increasing poll frequency to ${this.pollFrequency}ms (consecutive errors: ${this.consecutiveErrors})`);
       this.stopPolling();
       this.startPolling();
     }

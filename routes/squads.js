@@ -525,13 +525,23 @@ const cache = require('../lib/cache');
 
 // Get squad state
 router.get('/:id/state', requireAuth, async (req, res) => {
+  // Flag to track if response has been sent
+  let responseSent = false;
+
+  // Helper function to send response only if not already sent
+  const sendResponse = (status, data) => {
+    if (!responseSent) {
+      responseSent = true;
+      if (timeout) clearTimeout(timeout);
+      res.status(status).json(data);
+    }
+  };
+
   // Set a timeout to prevent long-running requests
   const timeout = setTimeout(() => {
     console.log('Get squad state timed out');
-    if (!res.headersSent) {
-      return res.status(504).json({ error: 'Request timed out. Please try again.' });
-    }
-  }, 2000); // 2 second timeout
+    sendResponse(504, { error: 'Request timed out. Please try again.' });
+  }, 3000); // Increased to 3 seconds
 
   try {
     const { id } = req.params;
@@ -539,8 +549,7 @@ router.get('/:id/state', requireAuth, async (req, res) => {
 
     // Validate user ID from token
     if (!req.user || !req.user.id) {
-      clearTimeout(timeout);
-      return res.status(401).json({ error: 'Authentication required' });
+      return sendResponse(401, { error: 'Authentication required' });
     }
 
     // Generate cache key
@@ -550,14 +559,12 @@ router.get('/:id/state', requireAuth, async (req, res) => {
     const cachedSquad = cache.get(cacheKey);
     if (cachedSquad) {
       console.log(`Using cached squad state for ${id}`);
-      clearTimeout(timeout);
-      return res.json(cachedSquad);
+      return sendResponse(200, cachedSquad);
     }
 
     const pool = getPool();
     if (!pool) {
-      clearTimeout(timeout);
-      return res.status(500).json({ error: 'Database connection not available' });
+      return sendResponse(500, { error: 'Database connection not available' });
     }
 
     // Use the request queue for database operations
@@ -570,12 +577,12 @@ router.get('/:id/state', requireAuth, async (req, res) => {
           client = await Promise.race([
             pool.connect(),
             new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('Database connection timeout')), 500)
+              setTimeout(() => reject(new Error('Database connection timeout')), 1000)
             )
           ]);
 
           // Set a short query timeout
-          await client.query('SET statement_timeout = 1000');
+          await client.query('SET statement_timeout = 1500');
 
           // Begin transaction for consistent reads
           await client.query('BEGIN');
@@ -654,58 +661,60 @@ router.get('/:id/state', requireAuth, async (req, res) => {
       // Cache the result for 5 seconds
       cache.set(cacheKey, squad, 5000);
 
-      clearTimeout(timeout);
-      return res.json(squad);
+      return sendResponse(200, squad);
     } catch (queueError) {
       console.error('Queue error in get squad state:', queueError);
 
       if (queueError.message === 'You are not a member of this squad') {
-        clearTimeout(timeout);
-        return res.status(403).json({ error: 'You are not a member of this squad' });
+        return sendResponse(403, { error: 'You are not a member of this squad' });
       }
 
       if (queueError.message === 'Squad not found') {
-        clearTimeout(timeout);
-        return res.status(404).json({ error: 'Squad not found' });
+        return sendResponse(404, { error: 'Squad not found' });
       }
 
-      clearTimeout(timeout);
-      return res.status(503).json({ error: 'Database connection issue. Please try again later.' });
+      return sendResponse(503, { error: 'Database connection issue. Please try again later.' });
     }
   } catch (error) {
-    // Clear the timeout if it exists
-    if (timeout) clearTimeout(timeout);
-
     console.error('Get squad state error:', error);
 
     // Provide more specific error messages
     if (error.code === '57014') {
-      return res.status(504).json({ error: 'Database query timed out. Please try again.' });
+      return sendResponse(504, { error: 'Database query timed out. Please try again.' });
     } else if (error.code === '08006' || error.code === '08001' || error.code === '08004') {
-      return res.status(503).json({ error: 'Database connection issue. Please try again later.' });
+      return sendResponse(503, { error: 'Database connection issue. Please try again later.' });
     }
 
-    res.status(500).json({ error: 'Failed to get squad state', details: error.message });
+    return sendResponse(500, { error: 'Failed to get squad state', details: error.message });
   }
 });
 
 // Update game state
 router.post('/:id/game-state', requireAuth, async (req, res) => {
+  // Flag to track if response has been sent
+  let responseSent = false;
+
+  // Helper function to send response only if not already sent
+  const sendResponse = (status, data) => {
+    if (!responseSent) {
+      responseSent = true;
+      if (timeout) clearTimeout(timeout);
+      res.status(status).json(data);
+    }
+  };
+
   // Set a timeout to prevent long-running requests
   const timeout = setTimeout(() => {
     console.log('Update game state timed out');
-    if (!res.headersSent) {
-      return res.status(504).json({ error: 'Request timed out. Please try again.' });
-    }
-  }, 2000); // 2 second timeout
+    sendResponse(504, { error: 'Request timed out. Please try again.' });
+  }, 3000); // Increased to 3 seconds
 
   try {
     const { id } = req.params;
     const { gameState } = req.body;
 
     if (!gameState) {
-      clearTimeout(timeout);
-      return res.status(400).json({ error: 'Game state is required' });
+      return sendResponse(400, { error: 'Game state is required' });
     }
 
     // Generate cache key for invalidation
@@ -713,8 +722,7 @@ router.post('/:id/game-state', requireAuth, async (req, res) => {
 
     const pool = getPool();
     if (!pool) {
-      clearTimeout(timeout);
-      return res.status(500).json({ error: 'Database connection not available' });
+      return sendResponse(500, { error: 'Database connection not available' });
     }
 
     // Use the request queue for database operations
@@ -727,12 +735,12 @@ router.post('/:id/game-state', requireAuth, async (req, res) => {
           client = await Promise.race([
             pool.connect(),
             new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('Database connection timeout')), 500)
+              setTimeout(() => reject(new Error('Database connection timeout')), 1000)
             )
           ]);
 
           // Set a short query timeout
-          await client.query('SET statement_timeout = 1000');
+          await client.query('SET statement_timeout = 1500');
 
           // Begin transaction
           await client.query('BEGIN');
@@ -776,25 +784,19 @@ router.post('/:id/game-state', requireAuth, async (req, res) => {
       // Invalidate cache
       cache.delete(cacheKey);
 
-      clearTimeout(timeout);
-      return res.json({ success: true });
+      return sendResponse(200, { success: true });
     } catch (queueError) {
       console.error('Queue error in update game state:', queueError);
 
       if (queueError.message === 'You are not a member of this squad') {
-        clearTimeout(timeout);
-        return res.status(403).json({ error: 'You are not a member of this squad' });
+        return sendResponse(403, { error: 'You are not a member of this squad' });
       }
 
-      clearTimeout(timeout);
-      return res.status(503).json({ error: 'Database connection issue. Please try again later.' });
+      return sendResponse(503, { error: 'Database connection issue. Please try again later.' });
     }
   } catch (error) {
-    // Clear the timeout if it exists
-    if (timeout) clearTimeout(timeout);
-
     console.error('Update game state error:', error);
-    res.status(500).json({ error: 'Failed to update game state' });
+    return sendResponse(500, { error: 'Failed to update game state' });
   }
 });
 
