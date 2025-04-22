@@ -45,6 +45,10 @@ class SquadChat {
     if (window.squadService) {
       window.squadService.addListener(squad => {
         console.log('Squad updated:', squad);
+
+        // Check if we're joining a new squad
+        const joiningNewSquad = squad && (!this.currentSquad || this.currentSquad.id !== squad.id);
+
         this.currentSquad = squad;
 
         // Only update UI if elements are created
@@ -55,6 +59,12 @@ class SquadChat {
         // If we have a squad, tell the REST communication service about it
         if (window.restCommunicationService && squad) {
           window.restCommunicationService.setCurrentSquad(squad);
+
+          // If joining a new squad, clear the message list first
+          if (joiningNewSquad && this.messageList) {
+            this.messageList.innerHTML = '';
+            this.messages = [];
+          }
 
           // Load existing messages for this squad
           if (this.messageList) {
@@ -257,6 +267,12 @@ class SquadChat {
     if (this.currentSquad) {
       this.headerTitle.textContent = `Squad Chat (${this.currentSquad.code})`;
       this.toggleButton.style.display = 'block';
+
+      // Clear any previous "No Squad" messages
+      if (this.messageList) {
+        const noSquadMessages = Array.from(this.messageList.querySelectorAll('.no-squad-message'));
+        noSquadMessages.forEach(msg => msg.remove());
+      }
     } else {
       this.headerTitle.textContent = 'Squad Chat (No Squad)';
       this.toggleButton.style.display = 'none';
@@ -264,6 +280,18 @@ class SquadChat {
       // Hide chat if visible
       if (this.isVisible) {
         this.toggle();
+      }
+
+      // Add a "No Squad" message to the chat if it's not already there
+      if (this.messageList && !this.messageList.querySelector('.no-squad-message')) {
+        const noSquadMessage = document.createElement('div');
+        noSquadMessage.className = 'chat-message no-squad-message';
+        noSquadMessage.textContent = 'You are not in a squad. Join or create a squad to chat.';
+        noSquadMessage.style.color = '#999';
+        noSquadMessage.style.fontStyle = 'italic';
+        noSquadMessage.style.textAlign = 'center';
+        noSquadMessage.style.padding = '10px';
+        this.messageList.appendChild(noSquadMessage);
       }
     }
 

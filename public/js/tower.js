@@ -1112,8 +1112,13 @@ class Tower {
     // Update tile size in case it changed
     this.tileSize = window.game?.map?.tileSize || 40;
 
+    // Define scale factor at the class level if not already defined
+    if (!this.scaleFactor) {
+      this.scaleFactor = 1;
+    }
+
     // Calculate scale factor based on tile size (40 is the reference size)
-    const scaleFactor = this.tileSize / 40;
+    this.scaleFactor = this.tileSize / 40;
 
     // Draw range indicator if requested
     if (showRange) {
@@ -2044,9 +2049,7 @@ class Tower {
 
       case 'archangel':
         // Archangel tower with divine effects
-        // Get base unit for scaling
-        const baseUnit = window.getBaseUnit ? window.getBaseUnit() : 5;
-        const scaleFactor = baseUnit / 5; // Scale factor for all dimensions
+        // Use the existing scaleFactor from the class
 
         // Base tower body with enhanced design
         const archangelGradient = ctx.createLinearGradient(

@@ -8,13 +8,13 @@ console.log('Tower data loaded');
 const towerStats = {
   basic: {
     name: "Basic Tower",
-    description: "A very weak tower with poor stats",
+    description: "A basic tower with decent stats",
     persistentCost: 50,
-    ability: "Weak shot",
-    range: 150, // Reduced range
-    damage: 10, // Significantly reduced damage
-    fireRate: 0.6, // Slower fire rate
-    projectileSpeed: 8, // Slower projectiles
+    ability: "Basic shot",
+    range: 180, // Increased range
+    damage: 30, // 3x damage
+    fireRate: 1.2, // Faster fire rate
+    projectileSpeed: 12, // Faster projectiles
     canTargetFlying: true, // Allow targeting flying enemies
     color: '#4CAF50',
     tier: 'common'
@@ -24,10 +24,10 @@ const towerStats = {
     description: "Fires multiple arrows in quick succession",
     persistentCost: 225,
     ability: "Triple shot",
-    range: 250, // Increased range
-    damage: 30, // Increased damage
-    fireRate: 2.0, // Faster fire rate
-    projectileSpeed: 18, // Faster projectiles
+    range: 300, // Increased range
+    damage: 90, // 3x damage
+    fireRate: 2.5, // Faster fire rate
+    projectileSpeed: 22, // Faster projectiles
     canTargetFlying: true,
     multiShot: 3, // Now fires 3 arrows by default
     color: '#8BC34A',
@@ -38,13 +38,13 @@ const towerStats = {
     description: "Deals massive splash damage to enemies",
     persistentCost: 300,
     ability: "Heavy splash damage",
-    range: 200, // Increased range
-    damage: 60, // Significantly increased damage
-    fireRate: 1.0, // Faster fire rate
-    projectileSpeed: 12, // Faster projectiles
+    range: 240, // Increased range
+    damage: 180, // 3x damage
+    fireRate: 1.5, // Faster fire rate
+    projectileSpeed: 15, // Faster projectiles
     canTargetFlying: true, // Allow targeting flying enemies
-    aoeRadius: 60, // Larger splash radius
-    stunChance: 0.15, // Added stun chance
+    aoeRadius: 80, // Larger splash radius
+    stunChance: 0.25, // Increased stun chance
     color: '#795548',
     tier: 'common'
   },
@@ -53,14 +53,14 @@ const towerStats = {
     description: "Extreme range with high chance for devastating critical hits",
     persistentCost: 350,
     ability: "Deadly precision",
-    range: 400, // Greatly increased range
-    damage: 80, // Significantly increased damage
-    fireRate: 0.8, // Faster fire rate
-    projectileSpeed: 25, // Faster projectiles
+    range: 450, // Even greater range
+    damage: 240, // 3x damage
+    fireRate: 1.0, // Faster fire rate
+    projectileSpeed: 30, // Faster projectiles
     canTargetFlying: true,
-    critChance: 0.4, // Double crit chance
-    critMultiplier: 3.5, // Higher crit multiplier
-    pierceCount: 1, // Added pierce ability
+    critChance: 0.5, // 50% chance for critical hit
+    critMultiplier: 4.0, // 400% damage on critical hit
+    pierceCount: 2, // Increased pierce ability
     color: '#2196F3',
     tier: 'rare'
   },
@@ -69,14 +69,14 @@ const towerStats = {
     description: "Severely slows and damages enemies in its range",
     persistentCost: 400,
     ability: "Arctic blast",
-    range: 220, // Increased range
-    damage: 25, // Increased damage
-    fireRate: 1.5, // Faster fire rate
-    projectileSpeed: 15, // Faster projectiles
+    range: 260, // Increased range
+    damage: 75, // 3x damage
+    fireRate: 2.0, // Faster fire rate
+    projectileSpeed: 18, // Faster projectiles
     canTargetFlying: true,
-    slowFactor: 0.7, // Stronger slow effect
-    slowDuration: 3500, // Longer slow duration
-    aoeRadius: 40, // Added area effect
+    slowFactor: 0.8, // Stronger slow effect
+    slowDuration: 4500, // Longer slow duration
+    aoeRadius: 60, // Larger area effect
     color: '#00BCD4',
     tier: 'rare'
   },
@@ -85,14 +85,14 @@ const towerStats = {
     description: "Deals devastating splash damage across a massive area",
     persistentCost: 450,
     ability: "Massive bombardment",
-    range: 300, // Increased range
-    damage: 100, // Significantly increased damage
-    fireRate: 0.7, // Faster fire rate
-    projectileSpeed: 10, // Faster projectiles
+    range: 350, // Increased range
+    damage: 300, // 3x damage
+    fireRate: 1.0, // Faster fire rate
+    projectileSpeed: 15, // Faster projectiles
     canTargetFlying: true, // Allow targeting flying enemies
-    aoeRadius: 100, // Much larger splash radius
-    stunChance: 0.25, // Added stun chance
-    stunDuration: 1000, // Added stun duration
+    aoeRadius: 120, // Larger splash radius
+    stunChance: 0.35, // Increased stun chance
+    stunDuration: 1500, // Longer stun duration
     color: '#607D8B',
     tier: 'rare'
   },
@@ -101,14 +101,14 @@ const towerStats = {
     description: "Fires a powerful continuous beam that pierces through enemies",
     persistentCost: 500,
     ability: "Piercing beam",
-    range: 250, // Increased range
-    damage: 12, // More than doubled damage
-    fireRate: 15, // Faster fire rate
-    projectileSpeed: 30, // Faster projectiles
+    range: 300, // Increased range
+    damage: 36, // 3x damage
+    fireRate: 20, // Even faster fire rate
+    projectileSpeed: 40, // Faster projectiles
     canTargetFlying: true,
-    pierceCount: 3, // Can hit multiple enemies in a line
-    rampUpRate: 0.1, // Damage increases the longer it fires
-    maxRampUp: 1.0, // Up to double damage
+    pierceCount: 5, // Can hit more enemies in a line
+    rampUpRate: 0.2, // Damage increases faster
+    maxRampUp: 2.0, // Up to triple damage
     color: '#E91E63',
     tier: 'epic'
   },
@@ -117,15 +117,15 @@ const towerStats = {
     description: "Extremely rare tower that unleashes devastating chain lightning",
     persistentCost: 1000,
     ability: "Mythic chain lightning",
-    range: 250, // Greatly increased range
-    damage: 80, // Significantly increased damage
-    fireRate: 1.5, // Much faster fire rate
-    projectileSpeed: 25, // Much faster projectiles
+    range: 300, // Even greater range
+    damage: 240, // 3x damage
+    fireRate: 2.0, // Even faster fire rate
+    projectileSpeed: 30, // Faster projectiles
     canTargetFlying: true,
-    chainCount: 8, // Many more chain targets
-    chainRange: 150, // Much longer chain range
-    stunChance: 0.5, // High stun chance
-    stunDuration: 1200, // Longer stun duration
+    chainCount: 10, // More chain targets
+    chainRange: 180, // Even longer chain range
+    stunChance: 0.7, // Higher stun chance
+    stunDuration: 1800, // Longer stun duration
     color: '#9C27B0', // More vibrant purple
     tier: 'mythic'
   },
@@ -134,16 +134,16 @@ const towerStats = {
     description: "Engulfs enemies in a raging inferno, dealing massive damage over time",
     persistentCost: 350,
     ability: "Inferno",
-    range: 180, // Increased range
-    damage: 25, // Increased initial damage
-    fireRate: 2.5, // Faster fire rate
-    projectileSpeed: 12, // Faster projectiles
+    range: 220, // Increased range
+    damage: 75, // 3x damage
+    fireRate: 3.0, // Faster fire rate
+    projectileSpeed: 15, // Faster projectiles
     canTargetFlying: true, // Now can target flying enemies
-    burnDuration: 5000, // Much longer burn duration
-    burnDamage: 12, // More than doubled burn damage
-    aoeRadius: 30, // Added splash damage
-    spreadChance: 0.2, // Chance to spread to nearby enemies
-    spreadRadius: 40, // Radius for spreading
+    burnDuration: 6000, // Even longer burn duration
+    burnDamage: 36, // 3x burn damage
+    aoeRadius: 45, // Larger splash damage
+    spreadChance: 0.3, // Higher chance to spread
+    spreadRadius: 60, // Larger spread radius
     color: '#FF5722',
     tier: 'epic'
   },
@@ -152,14 +152,14 @@ const towerStats = {
     description: "Launches devastating guided missiles that obliterate groups of enemies",
     persistentCost: 650,
     ability: "Guided destruction",
-    range: 280, // Increased range
-    damage: 150, // Nearly doubled damage
-    fireRate: 0.6, // Faster fire rate
-    projectileSpeed: 12, // Faster projectiles
+    range: 320, // Increased range
+    damage: 450, // 3x damage
+    fireRate: 0.9, // Faster fire rate
+    projectileSpeed: 15, // Faster projectiles
     canTargetFlying: true,
-    aoeRadius: 80, // Much larger splash radius
-    trackingStrength: 0.4, // Added tracking ability
-    multiHit: 1, // Hits twice
+    aoeRadius: 100, // Larger splash radius
+    trackingStrength: 0.6, // Better tracking ability
+    multiHit: 2, // Hits three times
     color: '#F44336',
     tier: 'legendary'
   },
@@ -204,20 +204,20 @@ const towerStats = {
     description: "Divine tower that smites enemies with holy light and blesses nearby towers",
     persistentCost: 600,
     ability: "Divine Judgment",
-    range: 300, // Excellent range
-    damage: 400, // High base damage
-    fireRate: 3.0, // Fast fire rate
-    projectileSpeed: 30, // Very fast projectiles
+    range: 350, // Increased range
+    damage: 1200, // 3x damage
+    fireRate: 4.0, // Faster fire rate
+    projectileSpeed: 40, // Faster projectiles
     canTargetFlying: true,
-    pierceCount: 3, // Pierces through multiple enemies
-    critChance: 0.3, // High crit chance
-    critMultiplier: 3.0, // High crit multiplier
-    aoeRadius: 50, // Area damage
-    chainCount: 3, // Can chain to nearby enemies
-    chainRange: 300, // Good chain range
-    buffRadius: 150, // Radius for buffing nearby towers
-    buffDamage: 0.2, // 20% damage buff to nearby towers
-    buffRange: 0.1, // 10% range buff to nearby towers
+    pierceCount: 5, // Pierces through more enemies
+    critChance: 0.5, // Higher crit chance
+    critMultiplier: 4.0, // Higher crit multiplier
+    aoeRadius: 80, // Larger area damage
+    chainCount: 5, // Can chain to more enemies
+    chainRange: 350, // Longer chain range
+    buffRadius: 200, // Larger buff radius
+    buffDamage: 0.3, // 30% damage buff to nearby towers
+    buffRange: 0.2, // 20% range buff to nearby towers
     color: '#FFEB3B', // Bright yellow/gold
     tier: 'divine'
   }
