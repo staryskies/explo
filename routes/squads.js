@@ -41,6 +41,11 @@ router.post('/', requireAuth, async (req, res) => {
   }, 12000); // 12 second timeout for Neon
 
   try {
+    // Validate user ID from token
+    if (!req.user || !req.user.id) {
+      return sendResponse(401, { error: 'Authentication required' });
+    }
+
     const pool = getPool();
     if (!pool) {
       return sendResponse(500, { error: 'Database connection not available' });
@@ -89,9 +94,20 @@ router.post('/', requireAuth, async (req, res) => {
       client = await pool.connect();
 
       // Set statement timeout to prevent long-running queries
-      await client.query('SET statement_timeout = 3000'); // 3 seconds
+      await client.query('SET statement_timeout = 8000'); // 8 seconds for Neon
 
       await client.query('BEGIN');
+
+      // Verify that the user exists in the database
+      const userResult = await client.query(
+        'SELECT id FROM users WHERE id = $1 LIMIT 1',
+        [req.user.id]
+      );
+
+      if (userResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return sendResponse(400, { error: 'User account not found. Please try logging out and back in.' });
+      }
 
       // Generate IDs
       const squadId = uuidv4();
@@ -156,6 +172,12 @@ router.post('/', requireAuth, async (req, res) => {
       return sendResponse(503, { error: 'Database connection issue. Please try again later.' });
     } else if (error.code === '23505') {
       return sendResponse(409, { error: 'Squad code already exists. Please try again.' });
+    } else if (error.code === '23503') {
+      // Foreign key constraint violation
+      console.error('Foreign key violation details:', error.detail);
+      if (error.detail && error.detail.includes('leader_id')) {
+        return sendResponse(400, { error: 'User account not found. Please try logging out and back in.' });
+      }
     }
 
     return sendResponse(500, { error: 'Server error', details: error.message });
@@ -191,6 +213,11 @@ router.post('/join', requireAuth, [
       return sendResponse(400, { errors: errors.array() });
     }
 
+    // Validate user ID from token
+    if (!req.user || !req.user.id) {
+      return sendResponse(401, { error: 'Authentication required' });
+    }
+
     const { code } = req.body;
 
     const pool = getPool();
@@ -209,10 +236,21 @@ router.post('/join', requireAuth, [
 
     try {
       // Set statement timeout to prevent long-running queries
-      await client.query('SET statement_timeout = 2000'); // 2 seconds
+      await client.query('SET statement_timeout = 8000'); // 8 seconds for Neon
 
       // Begin transaction
       await client.query('BEGIN');
+
+      // Verify that the user exists in the database
+      const userResult = await client.query(
+        'SELECT id FROM users WHERE id = $1 LIMIT 1',
+        [req.user.id]
+      );
+
+      if (userResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return sendResponse(400, { error: 'User account not found. Please try logging out and back in.' });
+      }
 
       // Find squad
       const squadResult = await client.query(
@@ -302,6 +340,12 @@ router.post('/join', requireAuth, [
       return sendResponse(503, { error: 'Database connection issue. Please try again later.' });
     } else if (error.code === '23505') {
       return sendResponse(409, { error: 'You are already a member of this squad.' });
+    } else if (error.code === '23503') {
+      // Foreign key constraint violation
+      console.error('Foreign key violation details:', error.detail);
+      if (error.detail && error.detail.includes('user_id')) {
+        return sendResponse(400, { error: 'User account not found. Please try logging out and back in.' });
+      }
     }
 
     return sendResponse(500, { error: 'Server error', details: error.message });
@@ -331,6 +375,11 @@ router.post('/:id/leave', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Validate user ID from token
+    if (!req.user || !req.user.id) {
+      return sendResponse(401, { error: 'Authentication required' });
+    }
+
     const pool = getPool();
     if (!pool) {
       return sendResponse(500, { error: 'Database connection not available' });
@@ -347,10 +396,21 @@ router.post('/:id/leave', requireAuth, async (req, res) => {
 
     try {
       // Set statement timeout to prevent long-running queries
-      await client.query('SET statement_timeout = 2000'); // 2 seconds
+      await client.query('SET statement_timeout = 8000'); // 8 seconds for Neon
 
       // Begin transaction
       await client.query('BEGIN');
+
+      // Verify that the user exists in the database
+      const userResult = await client.query(
+        'SELECT id FROM users WHERE id = $1 LIMIT 1',
+        [req.user.id]
+      );
+
+      if (userResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return sendResponse(400, { error: 'User account not found. Please try logging out and back in.' });
+      }
 
       // Find squad
       const squadResult = await client.query(
@@ -456,6 +516,12 @@ router.post('/:id/leave', requireAuth, async (req, res) => {
       return sendResponse(504, { error: 'Database query timed out. Please try again.' });
     } else if (error.code === '08006' || error.code === '08001' || error.code === '08004') {
       return sendResponse(503, { error: 'Database connection issue. Please try again later.' });
+    } else if (error.code === '23503') {
+      // Foreign key constraint violation
+      console.error('Foreign key violation details:', error.detail);
+      if (error.detail && error.detail.includes('user_id')) {
+        return sendResponse(400, { error: 'User account not found. Please try logging out and back in.' });
+      }
     }
 
     return sendResponse(500, { error: 'Server error', details: error.message });
@@ -483,6 +549,11 @@ router.get('/public', requireAuth, async (req, res) => {
   }, 12000); // 12 second timeout for Neon
 
   try {
+    // Validate user ID from token
+    if (!req.user || !req.user.id) {
+      return sendResponse(401, { error: 'Authentication required' });
+    }
+
     const pool = getPool();
     if (!pool) {
       return sendResponse(500, { error: 'Database connection not available' });
@@ -493,7 +564,17 @@ router.get('/public', requireAuth, async (req, res) => {
 
     try {
       // Set statement timeout to prevent long-running queries
-      await client.query('SET statement_timeout = 2000'); // 2 seconds
+      await client.query('SET statement_timeout = 8000'); // 8 seconds for Neon
+
+      // Verify that the user exists in the database
+      const userResult = await client.query(
+        'SELECT id FROM users WHERE id = $1 LIMIT 1',
+        [req.user.id]
+      );
+
+      if (userResult.rows.length === 0) {
+        return sendResponse(400, { error: 'User account not found. Please try logging out and back in.' });
+      }
 
       // Simplified query with fewer columns and smaller result set
       const squadsResult = await client.query(
@@ -811,25 +892,33 @@ router.post('/:id/game-state', requireAuth, async (req, res) => {
 
 // Get user's current squad
 router.get('/my-squad', requireAuth, async (req, res) => {
+  // Flag to track if response has been sent
+  let responseSent = false;
+
+  // Helper function to send response only if not already sent
+  const sendResponse = (status, data) => {
+    if (!responseSent) {
+      responseSent = true;
+      if (timeout) clearTimeout(timeout);
+      res.status(status).json(data);
+    }
+  };
+
   // Set a timeout to prevent long-running requests
   const timeout = setTimeout(() => {
     console.log('Get my squad timed out');
-    if (!res.headersSent) {
-      return res.status(504).json({ error: 'Request timed out. Please try again.' });
-    }
-  }, 2000); // 2 second timeout
+    sendResponse(504, { error: 'Request timed out. Please try again.' });
+  }, 12000); // 12 second timeout for Neon
 
   try {
     // Validate user ID from token
     if (!req.user || !req.user.id) {
-      clearTimeout(timeout);
-      return res.status(401).json({ error: 'Authentication required' });
+      return sendResponse(401, { error: 'Authentication required' });
     }
 
     const pool = getPool();
     if (!pool) {
-      clearTimeout(timeout);
-      return res.status(500).json({ error: 'Database connection not available' });
+      return sendResponse(500, { error: 'Database connection not available' });
     }
 
     // Get a client from the pool with a short timeout
@@ -838,18 +927,27 @@ router.get('/my-squad', requireAuth, async (req, res) => {
       client = await Promise.race([
         pool.connect(),
         new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Database connection timeout')), 500)
+          setTimeout(() => reject(new Error('Database connection timeout')), 5000)
         )
       ]);
     } catch (connError) {
-      clearTimeout(timeout);
       console.error('Database connection error in get my squad:', connError);
-      return res.status(503).json({ error: 'Database connection issue. Please try again later.' });
+      return sendResponse(503, { error: 'Database connection issue. Please try again later.' });
     }
 
     try {
-      // Set a short query timeout
-      await client.query('SET statement_timeout = 1000');
+      // Set a query timeout appropriate for Neon
+      await client.query('SET statement_timeout = 8000');
+
+      // Verify that the user exists in the database
+      const userResult = await client.query(
+        'SELECT id FROM users WHERE id = $1 LIMIT 1',
+        [req.user.id]
+      );
+
+      if (userResult.rows.length === 0) {
+        return sendResponse(400, { error: 'User account not found. Please try logging out and back in.' });
+      }
 
       // Find user's squad membership
       const membershipResult = await client.query(
@@ -858,8 +956,7 @@ router.get('/my-squad', requireAuth, async (req, res) => {
       );
 
       if (membershipResult.rows.length === 0) {
-        clearTimeout(timeout);
-        return res.json({ squad: null });
+        return sendResponse(200, { squad: null });
       }
 
       const squadId = membershipResult.rows[0].squad_id;
@@ -892,8 +989,7 @@ router.get('/my-squad', requireAuth, async (req, res) => {
       // Add members to squad
       squad.members = membersResult.rows;
 
-      clearTimeout(timeout);
-      res.json({ squad });
+      return sendResponse(200, { squad });
     } catch (error) {
       throw error;
     } finally {
@@ -901,19 +997,22 @@ router.get('/my-squad', requireAuth, async (req, res) => {
       if (client) client.release();
     }
   } catch (error) {
-    // Clear the timeout if it exists
-    if (timeout) clearTimeout(timeout);
-
     console.error('Get my squad error:', error);
 
     // Provide more specific error messages
     if (error.code === '57014') {
-      return res.status(504).json({ error: 'Database query timed out. Please try again.' });
+      return sendResponse(504, { error: 'Database query timed out. Please try again.' });
     } else if (error.code === '08006' || error.code === '08001' || error.code === '08004') {
-      return res.status(503).json({ error: 'Database connection issue. Please try again later.' });
+      return sendResponse(503, { error: 'Database connection issue. Please try again later.' });
+    } else if (error.code === '23503') {
+      // Foreign key constraint violation
+      console.error('Foreign key violation details:', error.detail);
+      if (error.detail && error.detail.includes('user_id')) {
+        return sendResponse(400, { error: 'User account not found. Please try logging out and back in.' });
+      }
     }
 
-    res.status(500).json({ error: 'Server error', details: error.message });
+    return sendResponse(500, { error: 'Server error', details: error.message });
   }
 });
 
