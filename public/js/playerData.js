@@ -8,6 +8,7 @@ console.log('Player data loaded');
 const playerData = {
   // Currency
   silver: 1000, // Start with some silver for testing
+  gems: 50, // Premium currency
 
   // Game stats
   highScore: 0,
@@ -16,6 +17,10 @@ const playerData = {
   enemiesKilled: 0,
   highestWaveCompleted: 0,
   completedDifficulties: [],
+
+  // Market data
+  marketListings: [], // Player's active market listings
+  marketHistory: [], // History of player's market transactions
 
   // Gacha system stats
   towerRolls: 0,
@@ -36,6 +41,11 @@ const playerData = {
 
   // Unlocked towers (basic is always unlocked)
   unlockedTowers: ['basic'],
+
+  // Tower inventory with counts
+  towerInventory: {
+    basic: { count: 1, variants: { normal: 1 } }
+  },
 
   // Tower variants for each tower
   towerVariants: {
@@ -189,8 +199,9 @@ function loadPlayerData() {
 // Add silver to player's account
 function addSilver(amount) {
   playerData.silver += amount;
+  playerData.totalSilverEarned = (playerData.totalSilverEarned || 0) + amount;
   savePlayerData();
-  updateSilverDisplay();
+  updateCurrencyDisplay();
   return playerData.silver;
 }
 
@@ -199,17 +210,22 @@ function spendSilver(amount) {
   if (playerData.silver >= amount) {
     playerData.silver -= amount;
     savePlayerData();
-    updateSilverDisplay();
+    updateCurrencyDisplay();
     return true;
   }
   return false;
 }
 
-// Update silver display in UI
-function updateSilverDisplay() {
+// Update currency display in UI
+function updateCurrencyDisplay() {
   // Update all silver displays
   document.querySelectorAll('[id$="silver-amount"]').forEach(element => {
     element.textContent = playerData.silver;
+  });
+
+  // Update all gems displays
+  document.querySelectorAll('[id$="gems-amount"]').forEach(element => {
+    element.textContent = playerData.gems;
   });
 }
 
@@ -276,21 +292,6 @@ function getTotalTowerCount() {
   return Object.keys(playerData.towerPrices).length;
 }
 
-// Add silver to player's account
-function addSilver(amount) {
-  playerData.silver += amount;
-  playerData.totalSilverEarned = (playerData.totalSilverEarned || 0) + amount;
-  savePlayerData();
-
-  // Update silver display if it exists
-  const silverDisplay = document.getElementById('silver-display');
-  if (silverDisplay) {
-    silverDisplay.textContent = playerData.silver;
-  }
-
-  return amount;
-}
-
 // Complete a difficulty level
 function completeDifficulty(difficulty) {
   if (!playerData.completedDifficulties.includes(difficulty)) {
@@ -349,6 +350,145 @@ function getWaveLimit(difficulty) {
   };
 
   return waveLimits[difficulty] || 20;
+}
+
+// Add gems to player's account
+function addGems(amount) {
+  playerData.gems += amount;
+  playerData.totalGemsEarned = (playerData.totalGemsEarned || 0) + amount;
+  savePlayerData();
+  updateCurrencyDisplay();
+  return amount;
+}
+
+// Spend gems from player's account
+function spendGems(amount) {
+  if (playerData.gems >= amount) {
+    playerData.gems -= amount;
+    savePlayerData();
+    updateCurrencyDisplay();
+    return true;
+  }
+  return false;
+}
+
+// Add tower to inventory
+function addTowerToInventory(towerType, variant = 'normal') {
+  // Initialize tower in inventory if it doesn't exist
+  if (!playerData.towerInventory[towerType]) {
+    playerData.towerInventory[towerType] = {
+      count: 0,
+      variants: {}
+    };
+  }
+
+  // Increment tower count
+  playerData.towerInventory[towerType].count++;
+
+  // Initialize variant count if it doesn't exist
+  if (!playerData.towerInventory[towerType].variants[variant]) {
+    playerData.towerInventory[towerType].variants[variant] = 0;
+  }
+
+  // Increment variant count
+  playerData.towerInventory[towerType].variants[variant]++;
+
+  // Make sure the tower is in unlockedTowers
+  if (!playerData.unlockedTowers.includes(towerType)) {
+    playerData.unlockedTowers.push(towerType);
+  }
+
+  // Make sure the variant is in towerVariants
+  if (!playerData.towerVariants[towerType].includes(variant)) {
+    playerData.towerVariants[towerType].push(variant);
+  }
+
+  savePlayerData();
+  return playerData.towerInventory[towerType];
+}
+
+// Remove tower from inventory
+function removeTowerFromInventory(towerType, variant = 'normal') {
+  // Check if tower exists in inventory
+  if (!playerData.towerInventory[towerType] ||
+      playerData.towerInventory[towerType].count <= 0 ||
+      !playerData.towerInventory[towerType].variants[variant] ||
+      playerData.towerInventory[towerType].variants[variant] <= 0) {
+    return false;
+  }
+
+  // Decrement tower count
+  playerData.towerInventory[towerType].count--;
+
+  // Decrement variant count
+  playerData.towerInventory[towerType].variants[variant]--;
+
+  savePlayerData();
+  return true;
+}
+
+// Get tower count from inventory
+function getTowerCount(towerType, variant = null) {
+  if (!playerData.towerInventory[towerType]) {
+    return 0;
+  }
+
+  if (variant) {
+    return playerData.towerInventory[towerType].variants[variant] || 0;
+  }
+
+  return playerData.towerInventory[towerType].count;
+}
+
+// Create a market listing
+function createMarketListing(towerType, variant, price) {
+  // Check if player has the tower in inventory
+  if (!getTowerCount(towerType, variant)) {
+    return false;
+  }
+
+  // Remove the tower from inventory
+  if (!removeTowerFromInventory(towerType, variant)) {
+    return false;
+  }
+
+  // Create the listing
+  const listing = {
+    id: Date.now().toString(36) + Math.random().toString(36).substring(2, 7),
+    towerType,
+    variant,
+    price,
+    sellerId: window.authService?.getCurrentUser()?.id || 'guest',
+    sellerName: window.authService?.getCurrentUser()?.username || 'Guest',
+    createdAt: new Date().toISOString()
+  };
+
+  // Add to player's listings
+  playerData.marketListings.push(listing);
+  savePlayerData();
+
+  return listing;
+}
+
+// Cancel a market listing
+function cancelMarketListing(listingId) {
+  // Find the listing
+  const listingIndex = playerData.marketListings.findIndex(listing => listing.id === listingId);
+  if (listingIndex === -1) {
+    return false;
+  }
+
+  // Get the listing
+  const listing = playerData.marketListings[listingIndex];
+
+  // Add the tower back to inventory
+  addTowerToInventory(listing.towerType, listing.variant);
+
+  // Remove the listing
+  playerData.marketListings.splice(listingIndex, 1);
+  savePlayerData();
+
+  return true;
 }
 
 // Initialize player data

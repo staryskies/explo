@@ -151,6 +151,35 @@ class Tower {
   applyVariantProperties() {
     if (!this.variant || this.variant === this.type) return;
 
+    // Get variant data from towerVariants.js
+    const variantData = towerVariants[this.variant];
+    if (variantData) {
+      // Apply bonus multiplier from variant data
+      if (variantData.bonusMultiplier) {
+        this.damage = Math.floor(this.damage * variantData.bonusMultiplier);
+        console.log(`Applied ${variantData.name} variant multiplier: ${variantData.bonusMultiplier}x damage`);
+      }
+
+      // Apply range bonus from variant data
+      if (variantData.rangeBonus) {
+        this.range += variantData.rangeBonus;
+        console.log(`Applied ${variantData.name} variant range bonus: +${variantData.rangeBonus}`);
+      }
+
+      // Apply fire rate bonus from variant data
+      if (variantData.fireRateBonus) {
+        this.fireRate *= (1 + variantData.fireRateBonus);
+        this.cooldown = 1000 / this.fireRate;
+        console.log(`Applied ${variantData.name} variant fire rate bonus: +${variantData.fireRateBonus * 100}%`);
+      }
+
+      // Store variant display info
+      this.variantName = variantData.name;
+      this.variantColor = variantData.color || '#FFFFFF';
+      this.variantEffect = variantData.visualEffect || 'none';
+      this.variantTier = variantData.tier || 'common';
+    }
+
     // Define variant colors and effects
     const variantColors = {
       // Basic tower variants
@@ -1128,6 +1157,63 @@ class Tower {
 
     // Calculate scale factor based on tile size (40 is the reference size)
     this.scaleFactor = this.tileSize / 40;
+
+    // Draw variant indicator above tower if it has a variant
+    if (this.variant && this.variant !== 'normal') {
+      // Get variant data
+      const variantData = towerVariants[this.variant];
+      if (variantData) {
+        // Draw variant icon based on tier
+        const tierColors = {
+          'common': '#AAAAAA',
+          'rare': '#4CAF50',
+          'epic': '#3F51B5',
+          'legendary': '#FFC107',
+          'divine': '#E91E63'
+        };
+
+        const tierIcons = {
+          'common': '★',
+          'rare': '★★',
+          'epic': '★★★',
+          'legendary': '✦',
+          'divine': '✧'
+        };
+
+        // Draw variant background
+        ctx.fillStyle = variantData.color || '#FFFFFF';
+        ctx.globalAlpha = 0.7;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y - 45 * this.scaleFactor, 10 * this.scaleFactor, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+
+        // Draw variant border
+        ctx.strokeStyle = tierColors[variantData.tier] || '#FFFFFF';
+        ctx.lineWidth = 2 * this.scaleFactor;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y - 45 * this.scaleFactor, 10 * this.scaleFactor, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Draw variant icon
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = `${12 * this.scaleFactor}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(tierIcons[variantData.tier] || '★', this.x, this.y - 45 * this.scaleFactor);
+
+        // Add pulsing effect for legendary and divine variants
+        if (variantData.tier === 'legendary' || variantData.tier === 'divine') {
+          const pulseIntensity = 0.3 + Math.sin(currentTime / 500) * 0.2;
+          ctx.fillStyle = tierColors[variantData.tier];
+          ctx.globalAlpha = pulseIntensity;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y - 45 * this.scaleFactor, 15 * this.scaleFactor, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1.0;
+        }
+      }
+    }
 
     // Draw range indicator if requested
     if (showRange) {

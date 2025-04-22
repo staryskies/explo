@@ -510,11 +510,30 @@ class Game {
           // Calculate silver earned (10% of score + 5 per wave completed) with difficulty multiplier
           this.silverEarned = Math.floor((this.score * 0.1) + (this.wave * 5)) * this.silverMultiplier;
 
+          // Calculate gems earned based on wave progress (half of what you'd get for victory)
+          let gemsEarned = 0;
+          const waveProgress = this.wave / this.waveLimit;
+          switch(this.difficulty) {
+            case 'easy': gemsEarned = Math.ceil(5 * waveProgress); break;
+            case 'medium': gemsEarned = Math.ceil(10 * waveProgress); break;
+            case 'hard': gemsEarned = Math.ceil(20 * waveProgress); break;
+            case 'nightmare': gemsEarned = Math.ceil(50 * waveProgress); break;
+            case 'void': gemsEarned = Math.ceil(100 * waveProgress); break;
+            default: gemsEarned = Math.ceil(5 * waveProgress);
+          }
+
+          // Ensure at least 1 gem is awarded
+          gemsEarned = Math.max(1, gemsEarned);
+
           // Update player data if available
-          if (typeof addSilver === 'function') {
+          if (typeof addSilver === 'function' && typeof addGems === 'function') {
             addSilver(this.silverEarned);
+            addGems(gemsEarned);
             updateHighScore(this.score);
             updateHighestWave(this.wave);
+
+            // Show gems earned notification
+            this.showGemsReward(gemsEarned);
           }
 
           // Show game over screen
@@ -528,6 +547,12 @@ class Game {
           const silverElement = document.getElementById('silver-earned');
           if (silverElement) {
             silverElement.textContent = this.silverEarned;
+          }
+
+          // Add gems earned to game over screen
+          const gemsElement = document.getElementById('gems-earned');
+          if (gemsElement) {
+            gemsElement.textContent = gemsEarned;
           }
 
           console.log(`Game over! Final score: ${this.score}, Silver earned: ${this.silverEarned}`);
@@ -602,14 +627,29 @@ class Game {
         // Calculate silver earned with difficulty multiplier
         this.silverEarned = Math.floor((this.score * 0.1) + (this.wave * 5)) * this.silverMultiplier;
 
+        // Calculate gems earned based on difficulty
+        let gemsEarned = 0;
+        switch(this.difficulty) {
+          case 'easy': gemsEarned = 5; break;
+          case 'medium': gemsEarned = 10; break;
+          case 'hard': gemsEarned = 20; break;
+          case 'nightmare': gemsEarned = 50; break;
+          case 'void': gemsEarned = 100; break;
+          default: gemsEarned = 5;
+        }
+
         // Update player data
-        if (typeof addSilver === 'function') {
+        if (typeof addSilver === 'function' && typeof addGems === 'function') {
           addSilver(this.silverEarned);
+          addGems(gemsEarned);
           updateHighScore(this.score);
           updateHighestWave(this.wave);
 
           // Mark this difficulty as completed
           completeDifficulty(this.difficulty);
+
+          // Show gems earned notification
+          this.showGemsReward(gemsEarned);
         }
 
         // Show victory screen
@@ -623,6 +663,12 @@ class Game {
         const silverElement = document.getElementById('silver-earned');
         if (silverElement) {
           silverElement.textContent = this.silverEarned;
+        }
+
+        // Add gems earned to victory screen
+        const gemsElement = document.getElementById('gems-earned');
+        if (gemsElement) {
+          gemsElement.textContent = gemsEarned;
         }
 
         console.log(`Victory! Completed ${this.difficulty} difficulty. Final score: ${this.score}, Silver earned: ${this.silverEarned}`);
@@ -1258,6 +1304,41 @@ class Game {
 
     // Set notification content
     notification.textContent = `+ ${amount} Silver!`;
+
+    // Show notification
+    notification.style.opacity = '1';
+
+    // Hide notification after 3 seconds
+    setTimeout(() => {
+      notification.style.opacity = '0';
+    }, 3000);
+  }
+
+  // Show gems reward notification
+  showGemsReward(amount) {
+    // Create notification element if it doesn't exist
+    let notification = document.getElementById('gems-notification');
+    if (!notification) {
+      notification = document.createElement('div');
+      notification.id = 'gems-notification';
+      notification.style.position = 'absolute';
+      notification.style.top = '150px';
+      notification.style.left = '50%';
+      notification.style.transform = 'translateX(-50%)';
+      notification.style.backgroundColor = '#E91E63';
+      notification.style.color = '#FFF';
+      notification.style.padding = '10px 20px';
+      notification.style.borderRadius = '5px';
+      notification.style.fontWeight = 'bold';
+      notification.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+      notification.style.zIndex = '1000';
+      notification.style.opacity = '0';
+      notification.style.transition = 'opacity 0.5s';
+      document.body.appendChild(notification);
+    }
+
+    // Set notification content
+    notification.textContent = `+ ${amount} Gems!`;
 
     // Show notification
     notification.style.opacity = '1';

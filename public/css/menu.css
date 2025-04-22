@@ -267,15 +267,20 @@ h1 {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
-.silver-display {
+.silver-display, .currency-display {
   font-size: 18px;
   color: #8B4513; /* SaddleBrown */
 }
 
-.silver-display span:last-child {
+.silver-display span:last-child, .currency-display span:nth-child(2), .currency-display span:nth-child(5) {
   color: #A0522D; /* Sienna */
   font-weight: 600;
   margin-left: 5px;
+}
+
+.currency-separator {
+  margin: 0 10px;
+  color: #D2B48C; /* Tan */
 }
 
 /* Map Grid Styles */
@@ -1377,11 +1382,46 @@ h1 {
   100% { height: 30%; opacity: 0.7; }
 }
 
-/* Cooldown Styles */
+/* Gacha Button Styles */
+.gacha-button-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
 .gacha-btn {
   position: relative;
   overflow: hidden;
+  flex: 1;
+  padding: 10px;
+  background: linear-gradient(45deg, #D2B48C, #CD853F);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  font-size: 14px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
+
+.gacha-btn:hover {
+  background: linear-gradient(45deg, #DEB887, #D2691E);
+  transform: translateY(-2px);
+}
+
+.gacha-btn.premium {
+  background: linear-gradient(45deg, #E91E63, #9C27B0);
+  border: 1px solid #E91E63;
+}
+
+.gacha-btn.premium:hover {
+  background: linear-gradient(45deg, #F06292, #BA68C8);
+  box-shadow: 0 0 15px rgba(233, 30, 99, 0.5);
+}
+
+/* Cooldown Styles */
 
 .gacha-btn.cooldown::before {
   content: '';

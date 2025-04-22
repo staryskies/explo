@@ -7,6 +7,8 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/menu.css">
   <link rel="stylesheet" href="css/auth.css">
+  <link rel="stylesheet" href="css/market.css">
+  <link rel="stylesheet" href="css/leaderboard.css">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -18,13 +20,18 @@
         <button id="tower-gacha-button" class="menu-btn">Tower Gacha</button>
         <button id="variant-gacha-button" class="menu-btn">Variant Gacha</button>
         <button id="inventory-button" class="menu-btn">Inventory</button>
-        <button id="squad-button" class="menu-btn">Squads</button>
+        <button id="market-button" class="menu-btn">Market</button>
+        <button id="leaderboard-button" class="menu-btn">Leaderboard</button>
       </div>
 
       <div class="player-stats">
         <div class="stat-item">
           <span class="stat-label">Silver:</span>
           <span id="silver-amount" class="stat-value">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Gems:</span>
+          <span id="gems-amount" class="stat-value">0</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">Towers Unlocked:</span>
@@ -140,9 +147,18 @@
                 <div id="tower-result" class="gacha-result"></div>
               </div>
               <div class="gacha-buttons">
-                <button id="roll-tower-1" class="gacha-btn">Roll 1 Tower (150 Silver)</button>
-                <button id="roll-tower-10" class="gacha-btn">Roll 10 Towers (1350 Silver)</button>
-                <button id="roll-tower-100" class="gacha-btn">Roll 100 Towers (12000 Silver)</button>
+                <div class="gacha-button-group">
+                  <button id="roll-tower-1" class="gacha-btn">Roll 1 Tower (150 Silver)</button>
+                  <button id="roll-tower-premium-1" class="gacha-btn premium">Roll 1 Tower (15 Gems)</button>
+                </div>
+                <div class="gacha-button-group">
+                  <button id="roll-tower-10" class="gacha-btn">Roll 10 Towers (1350 Silver)</button>
+                  <button id="roll-tower-premium-10" class="gacha-btn premium">Roll 10 Towers (135 Gems)</button>
+                </div>
+                <div class="gacha-button-group">
+                  <button id="roll-tower-100" class="gacha-btn">Roll 100 Towers (12000 Silver)</button>
+                  <button id="roll-tower-premium-100" class="gacha-btn premium">Roll 100 Towers (1200 Gems)</button>
+                </div>
               </div>
             </div>
           </div>
@@ -223,9 +239,12 @@
         </div>
 
         <div class="modal-footer">
-          <div class="silver-display">
+          <div class="currency-display">
             <span>Silver: </span>
             <span id="tower-gacha-silver-amount">0</span>
+            <span class="currency-separator">|</span>
+            <span>Gems: </span>
+            <span id="tower-gacha-gems-amount">0</span>
           </div>
         </div>
       </div>
@@ -255,9 +274,18 @@
                 <div id="variant-result" class="gacha-result"></div>
               </div>
               <div class="gacha-buttons">
-                <button id="roll-variant-1" class="gacha-btn">Roll 1 Variant (200 Silver)</button>
-                <button id="roll-variant-10" class="gacha-btn">Roll 10 Variants (1800 Silver)</button>
-                <button id="roll-variant-100" class="gacha-btn">Roll 100 Variants (16000 Silver)</button>
+                <div class="gacha-button-group">
+                  <button id="roll-variant-1" class="gacha-btn">Roll 1 Variant (200 Silver)</button>
+                  <button id="roll-variant-premium-1" class="gacha-btn premium">Roll 1 Variant (20 Gems)</button>
+                </div>
+                <div class="gacha-button-group">
+                  <button id="roll-variant-10" class="gacha-btn">Roll 10 Variants (1800 Silver)</button>
+                  <button id="roll-variant-premium-10" class="gacha-btn premium">Roll 10 Variants (180 Gems)</button>
+                </div>
+                <div class="gacha-button-group">
+                  <button id="roll-variant-100" class="gacha-btn">Roll 100 Variants (16000 Silver)</button>
+                  <button id="roll-variant-premium-100" class="gacha-btn premium">Roll 100 Variants (1600 Gems)</button>
+                </div>
               </div>
             </div>
           </div>
@@ -327,9 +355,12 @@
         </div>
 
         <div class="modal-footer">
-          <div class="silver-display">
+          <div class="currency-display">
             <span>Silver: </span>
             <span id="variant-gacha-silver-amount">0</span>
+            <span class="currency-separator">|</span>
+            <span>Gems: </span>
+            <span id="variant-gacha-gems-amount">0</span>
           </div>
         </div>
       </div>
@@ -370,9 +401,12 @@
         </div>
 
         <div class="modal-footer">
-          <div class="silver-display">
+          <div class="currency-display">
             <span>Silver: </span>
             <span id="inventory-silver-amount">0</span>
+            <span class="currency-separator">|</span>
+            <span>Gems: </span>
+            <span id="inventory-gems-amount">0</span>
           </div>
         </div>
       </div>
@@ -434,51 +468,117 @@
       </div>
     </div>
 
-    <!-- Squad Modal -->
-    <div id="squad-modal" class="modal">
+    <!-- Market Modal -->
+    <div id="market-modal" class="modal">
       <div class="modal-content">
         <div class="modal-header">
-          <h2>Squads</h2>
-          <span class="close-btn" id="close-squad">&times;</span>
+          <h2>Tower Market</h2>
+          <span class="close-btn" id="close-market">&times;</span>
         </div>
         <div class="modal-body">
-          <div id="no-squad" style="display: none;">
-            <p>You are not in a squad. Create a new squad or join an existing one.</p>
-            <div class="squad-actions">
-              <button id="create-squad-btn" class="primary-btn">Create Squad</button>
-              <div class="join-squad-form">
-                <input type="text" id="squad-code-input" placeholder="Enter squad code" maxlength="6">
-                <button id="join-squad-btn" class="primary-btn">Join Squad</button>
-              </div>
+          <div class="market-tabs">
+            <button class="market-tab active" data-tab="buy-tab">Buy Towers</button>
+            <button class="market-tab" data-tab="sell-tab">Sell Towers</button>
+            <button class="market-tab" data-tab="listings-tab">Your Listings</button>
+          </div>
+
+          <!-- Buy Tab Content -->
+          <div class="market-tab-content active" id="buy-tab">
+            <div class="market-filters">
+              <select id="market-tower-filter">
+                <option value="all">All Towers</option>
+                <!-- Tower options will be generated here -->
+              </select>
+              <select id="market-variant-filter">
+                <option value="all">All Variants</option>
+                <!-- Variant options will be generated here -->
+              </select>
+              <select id="market-sort">
+                <option value="price-asc">Price: Low to High</option>
+                <option value="price-desc">Price: High to Low</option>
+                <option value="newest">Newest First</option>
+              </select>
+            </div>
+            <div class="market-listings" id="market-buy-listings">
+              <!-- Market listings will be generated here -->
             </div>
           </div>
-          <div id="current-squad" style="display: none;">
-            <div class="squad-info">
-              <h3>Your Squad</h3>
-              <div class="squad-code-display">
-                <span>Squad Code: </span>
-                <span id="squad-code" class="squad-code"></span>
-                <button id="copy-code-btn" class="icon-btn">📋</button>
+
+          <!-- Sell Tab Content -->
+          <div class="market-tab-content" id="sell-tab">
+            <div class="sell-form">
+              <h3>List a Tower for Sale</h3>
+              <div class="form-group">
+                <label for="sell-tower-select">Select Tower:</label>
+                <select id="sell-tower-select">
+                  <!-- Tower options will be generated here -->
+                </select>
               </div>
-            </div>
-            <div class="squad-members">
-              <h4>Members</h4>
-              <ul id="squad-members-list">
-                <!-- Squad members will be listed here -->
-              </ul>
-            </div>
-            <div class="squad-chat">
-              <h4>Squad Chat</h4>
-              <div id="chat-messages" class="chat-messages">
-                <!-- Chat messages will appear here -->
+              <div class="form-group">
+                <label for="sell-variant-select">Select Variant:</label>
+                <select id="sell-variant-select">
+                  <!-- Variant options will be generated here -->
+                </select>
               </div>
-              <div class="chat-input">
-                <input type="text" id="chat-input" placeholder="Type a message...">
-                <button id="send-message-btn" class="primary-btn">Send</button>
+              <div class="form-group">
+                <label for="sell-price">Price (Gems):</label>
+                <input type="number" id="sell-price" min="1" max="10000" value="10">
               </div>
+              <button id="create-listing-btn" class="primary-btn">Create Listing</button>
             </div>
-            <div class="squad-actions">
-              <button id="leave-squad-btn" class="danger-btn">Leave Squad</button>
+          </div>
+
+          <!-- Your Listings Tab Content -->
+          <div class="market-tab-content" id="listings-tab">
+            <div class="your-listings" id="your-listings">
+              <!-- Your listings will be generated here -->
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div class="currency-display">
+            <span>Silver: </span>
+            <span id="market-silver-amount">0</span>
+            <span class="currency-separator">|</span>
+            <span>Gems: </span>
+            <span id="market-gems-amount">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leaderboard Modal -->
+    <div id="leaderboard-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Leaderboard</h2>
+          <span class="close-btn" id="close-leaderboard">&times;</span>
+        </div>
+        <div class="modal-body">
+          <div class="leaderboard-tabs">
+            <button class="leaderboard-tab active" data-tab="highscore-tab">High Scores</button>
+            <button class="leaderboard-tab" data-tab="waves-tab">Max Wave</button>
+            <button class="leaderboard-tab" data-tab="towers-tab">Tower Collection</button>
+          </div>
+
+          <!-- High Score Tab Content -->
+          <div class="leaderboard-tab-content active" id="highscore-tab">
+            <div class="leaderboard-list" id="highscore-leaderboard">
+              <!-- High score leaderboard will be generated here -->
+            </div>
+          </div>
+
+          <!-- Max Wave Tab Content -->
+          <div class="leaderboard-tab-content" id="waves-tab">
+            <div class="leaderboard-list" id="waves-leaderboard">
+              <!-- Max wave leaderboard will be generated here -->
+            </div>
+          </div>
+
+          <!-- Tower Collection Tab Content -->
+          <div class="leaderboard-tab-content" id="towers-tab">
+            <div class="leaderboard-list" id="towers-leaderboard">
+              <!-- Tower collection leaderboard will be generated here -->
             </div>
           </div>
         </div>
@@ -486,21 +586,15 @@
     </div>
   </div>
 
-  <!-- Load Socket.IO client -->
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-
   <!-- Load services -->
   <script src="js/services/authService.js"></script>
-  <script src="js/services/restCommunicationService.js"></script>
-  <script src="js/services/squadService.js"></script>
   <script src="js/services/playerDataService.js"></script>
+  <script src="js/services/marketService.js"></script>
+  <script src="js/services/leaderboardService.js"></script>
 
   <!-- Load components -->
-  <script src="js/components/globalChat.js"></script>
-  <script src="js/components/squadChat.js"></script>
-  <script src="js/components/squadBrowser.js"></script>
-  <script src="js/components/squadGameLoader.js"></script>
-  <script src="js/components/moneySharing.js"></script>
+  <script src="js/components/market.js"></script>
+  <script src="js/components/leaderboard.js"></script>
 
   <!-- Load game scripts -->
   <script src="js/towerData.js"></script>
@@ -508,8 +602,8 @@
   <script src="js/playerData.js"></script>
   <script src="js/towerHelper.js"></script>
   <script src="js/gacha.js"></script>
+  <script src="js/gachaEvents.js"></script>
   <script src="js/auth.js"></script>
-  <script src="js/squad.js"></script>
   <script src="js/menu.js"></script>
 
   <!-- Initialize components after DOM is loaded -->

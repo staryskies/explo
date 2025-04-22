@@ -13,24 +13,27 @@ const towerVariants = {
     tier: "common",
     bonusMultiplier: 1.0, // No bonus
     visualEffect: "none",
-    color: "#FFFFFF"
+    color: "#FFFFFF",
+    dropRate: 60 // 60% drop rate
   },
   bronze: {
     name: "Bronze",
-    description: "Bronze-plated tower with slight damage bonus",
+    description: "Bronze-plated tower with damage bonus",
     tier: "common",
-    bonusMultiplier: 1.05, // 5% bonus
+    bonusMultiplier: 1.15, // 15% bonus
     visualEffect: "metallic",
-    color: "#CD7F32"
+    color: "#CD7F32",
+    dropRate: 30 // 30% drop rate
   },
   silver: {
     name: "Silver",
     description: "Silver-plated tower with improved range",
     tier: "common",
-    bonusMultiplier: 1.05, // 5% bonus
-    rangeBonus: 10, // +10 range
+    bonusMultiplier: 1.15, // 15% bonus
+    rangeBonus: 20, // +20 range
     visualEffect: "metallic",
-    color: "#C0C0C0"
+    color: "#C0C0C0",
+    dropRate: 20 // 20% drop rate
   },
 
   // Elemental variants (rare tier - 25%)
@@ -38,42 +41,46 @@ const towerVariants = {
     name: "Fire",
     description: "Infused with fire energy, adds burn damage",
     tier: "rare",
-    bonusMultiplier: 1.1, // 10% bonus
-    burnDamage: 5,
-    burnDuration: 2000,
+    bonusMultiplier: 1.3, // 30% bonus
+    burnDamage: 15,
+    burnDuration: 3000,
     visualEffect: "flames",
-    color: "#FF5722"
+    color: "#FF5722",
+    dropRate: 10 // 10% drop rate
   },
   ice: {
     name: "Ice",
     description: "Infused with ice energy, slows enemies",
     tier: "rare",
-    bonusMultiplier: 1.1, // 10% bonus
-    slowFactor: 0.2,
-    slowDuration: 1500,
+    bonusMultiplier: 1.3, // 30% bonus
+    slowFactor: 0.4,
+    slowDuration: 3000,
     visualEffect: "frost",
-    color: "#00BCD4"
+    color: "#00BCD4",
+    dropRate: 10 // 10% drop rate
   },
   lightning: {
     name: "Lightning",
     description: "Infused with lightning energy, chance to chain to nearby enemies",
     tier: "rare",
-    bonusMultiplier: 1.1, // 10% bonus
-    chainChance: 0.2,
-    chainCount: 2,
-    chainRange: 80,
+    bonusMultiplier: 1.3, // 30% bonus
+    chainChance: 0.4,
+    chainCount: 3,
+    chainRange: 120,
     visualEffect: "electricity",
-    color: "#FFC107"
+    color: "#FFC107",
+    dropRate: 10 // 10% drop rate
   },
   earth: {
     name: "Earth",
     description: "Infused with earth energy, chance to stun enemies",
     tier: "rare",
-    bonusMultiplier: 1.1, // 10% bonus
-    stunChance: 0.15,
-    stunDuration: 500,
+    bonusMultiplier: 1.3, // 30% bonus
+    stunChance: 0.3,
+    stunDuration: 1000,
     visualEffect: "rocks",
-    color: "#795548"
+    color: "#795548",
+    dropRate: 10 // 10% drop rate
   },
 
   // Special variants (epic tier - 10%)
@@ -81,29 +88,32 @@ const towerVariants = {
     name: "Shadow",
     description: "Infused with shadow energy, can target shadow enemies",
     tier: "epic",
-    bonusMultiplier: 1.2, // 20% bonus
+    bonusMultiplier: 1.5, // 50% bonus
     canTargetShadow: true,
     visualEffect: "darkness",
-    color: "#424242"
+    color: "#424242",
+    dropRate: 5 // 5% drop rate
   },
   crystal: {
     name: "Crystal",
     description: "Made of pure crystal, increases critical hit chance",
     tier: "epic",
-    bonusMultiplier: 1.2, // 20% bonus
-    critChance: 0.2,
-    critMultiplier: 2.0,
+    bonusMultiplier: 1.5, // 50% bonus
+    critChance: 0.3,
+    critMultiplier: 2.5,
     visualEffect: "sparkle",
-    color: "#9C27B0"
+    color: "#9C27B0",
+    dropRate: 5 // 5% drop rate
   },
   void: {
     name: "Void",
     description: "Infused with void energy, ignores enemy armor",
     tier: "epic",
-    bonusMultiplier: 1.2, // 20% bonus
-    armorPiercing: 0.5, // 50% armor piercing
+    bonusMultiplier: 1.5, // 50% bonus
+    armorPiercing: 0.7, // 70% armor piercing
     visualEffect: "void",
-    color: "#311B92"
+    color: "#311B92",
+    dropRate: 5 // 5% drop rate
   },
 
   // Ultimate variants (legendary tier - 5%)
@@ -111,10 +121,12 @@ const towerVariants = {
     name: "Gold",
     description: "Pure gold tower with significantly increased stats",
     tier: "legendary",
-    bonusMultiplier: 1.5, // 50% bonus
-    rangeBonus: 30,
+    bonusMultiplier: 2.0, // 100% bonus
+    rangeBonus: 50,
+    fireRateBonus: 0.3, // 30% faster firing
     visualEffect: "golden",
-    color: "#FFD700"
+    color: "#FFD700",
+    dropRate: 2 // 2% drop rate
   },
 
   // Divine tier variants (divine tier - 0.1%)
@@ -122,62 +134,70 @@ const towerVariants = {
     name: "Divine",
     description: "Blessed by celestial light, this tower radiates pure divine energy",
     tier: "divine",
-    bonusMultiplier: 3.0, // 300% bonus
-    rangeBonus: 40,
-    aoeRadius: 40,
-    pierceCount: 2,
-    critChance: 0.2,
-    critMultiplier: 2.5,
+    bonusMultiplier: 5.0, // 500% bonus
+    rangeBonus: 80,
+    fireRateBonus: 0.5, // 50% faster firing
+    aoeRadius: 60,
+    pierceCount: 3,
+    critChance: 0.4,
+    critMultiplier: 3.0,
     visualEffect: "divine",
-    color: "#FFEB3B"
+    color: "#FFEB3B",
+    dropRate: 0.1 // 0.1% drop rate
   },
   rainbow: {
     name: "Rainbow",
     description: "Infused with all elements, applies random effects",
     tier: "legendary",
-    bonusMultiplier: 1.4, // 40% bonus
-    randomEffectChance: 0.3,
+    bonusMultiplier: 2.0, // 100% bonus
+    randomEffectChance: 0.5, // 50% chance for random effect
     visualEffect: "rainbow",
-    color: "#E91E63"
+    color: "#E91E63",
+    dropRate: 1 // 1% drop rate
   },
   cosmic: {
     name: "Cosmic",
     description: "Infused with cosmic energy, devastating power",
     tier: "legendary",
-    bonusMultiplier: 1.6, // 60% bonus
-    pierceCount: 2,
-    aoeRadius: 30,
+    bonusMultiplier: 2.2, // 120% bonus
+    pierceCount: 3,
+    aoeRadius: 50,
     visualEffect: "cosmic",
-    color: "#3F51B5"
+    color: "#3F51B5",
+    dropRate: 1 // 1% drop rate
   },
   holy: {
     name: "Holy",
     description: "Blessed by divine light, this tower radiates pure celestial energy",
     tier: "divine", // New ultra-rare tier
-    bonusMultiplier: 5.0, // 500% bonus
-    rangeBonus: 50,
-    aoeRadius: 60,
-    pierceCount: 3,
-    critChance: 0.3,
-    critMultiplier: 3.0,
+    bonusMultiplier: 10.0, // 1000% bonus
+    rangeBonus: 100,
+    fireRateBonus: 1.0, // 100% faster firing
+    aoeRadius: 80,
+    pierceCount: 5,
+    critChance: 0.5,
+    critMultiplier: 4.0,
     visualEffect: "holy",
     color: "#FFFFFF",
-    specialAnimation: true
+    specialAnimation: true,
+    dropRate: 0.1 // 0.1% drop rate
   },
 
   satanic: {
     name: "Satanic",
     description: "Infused with infernal power, this tower channels the darkness of the abyss",
     tier: "divine", // New ultra-rare tier
-    bonusMultiplier: 5.0, // 500% bonus
-    rangeBonus: 50,
-    aoeRadius: 60,
-    armorPiercing: 0.8, // 80% armor piercing
-    burnDamage: 20,
-    burnDuration: 5000,
+    bonusMultiplier: 10.0, // 1000% bonus
+    rangeBonus: 100,
+    fireRateBonus: 1.0, // 100% faster firing
+    aoeRadius: 80,
+    armorPiercing: 1.0, // 100% armor piercing
+    burnDamage: 50,
+    burnDuration: 8000,
     visualEffect: "satanic",
     color: "#990000",
-    specialAnimation: true
+    specialAnimation: true,
+    dropRate: 0.1 // 0.1% drop rate
   },
 
 
@@ -186,11 +206,12 @@ const towerVariants = {
     name: "Poison Cloud",
     description: "Creates a deadly cloud of poison that damages all enemies in range",
     tier: "epic",
-    bonusMultiplier: 1.3, // 30% bonus
-    poisonDamage: 8,
-    poisonDuration: 4000,
-    aoeRadius: 40,
+    bonusMultiplier: 1.8, // 80% bonus
+    poisonDamage: 20,
+    poisonDuration: 6000,
+    aoeRadius: 60,
     visualEffect: "toxic",
-    color: "#8BC34A"
+    color: "#8BC34A",
+    dropRate: 3 // 3% drop rate
   }
 };

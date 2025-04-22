@@ -1,0 +1,122 @@
+/**
+ * Leaderboard component styles
+ */
+
+/* Leaderboard Modal */
+.leaderboard-content {
+  max-width: 800px;
+}
+
+/* Leaderboard Tabs */
+.leaderboard-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.leaderboard-tab {
+  padding: 10px 20px;
+  background: linear-gradient(45deg, #D2B48C, #CD853F);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.leaderboard-tab:hover {
+  background: linear-gradient(45deg, #DEB887, #D2691E);
+  transform: translateY(-2px);
+}
+
+.leaderboard-tab.active {
+  background: linear-gradient(45deg, #A0522D, #8B4513);
+  box-shadow: 0 0 10px rgba(160, 120, 80, 0.5);
+}
+
+.leaderboard-tab-content {
+  display: none;
+  padding: 20px;
+}
+
+.leaderboard-tab-content.active {
+  display: block;
+}
+
+/* Leaderboard Table */
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(210, 180, 140, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.leaderboard-table th {
+  background: linear-gradient(45deg, #A0522D, #8B4513);
+  color: white;
+  padding: 12px;
+  text-align: left;
+  font-weight: bold;
+}
+
+.leaderboard-table td {
+  padding: 12px;
+  border-bottom: 1px solid rgba(210, 180, 140, 0.3);
+  color: #8B4513;
+}
+
+.leaderboard-table tr:last-child td {
+  border-bottom: none;
+}
+
+.leaderboard-table tr:nth-child(even) {
+  background: rgba(210, 180, 140, 0.05);
+}
+
+.leaderboard-table tr:hover {
+  background: rgba(210, 180, 140, 0.2);
+}
+
+/* Current Player Highlight */
+.leaderboard-table tr.current-player {
+  background: rgba(233, 30, 99, 0.1);
+  font-weight: bold;
+}
+
+.leaderboard-table tr.current-player:hover {
+  background: rgba(233, 30, 99, 0.2);
+}
+
+/* Empty Message */
+.empty-message {
+  text-align: center;
+  padding: 30px;
+  color: #8B4513;
+  font-style: italic;
+  background: rgba(210, 180, 140, 0.1);
+  border-radius: 8px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .leaderboard-tabs {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .leaderboard-tab {
+    width: 100%;
+  }
+  
+  .leaderboard-table {
+    font-size: 14px;
+  }
+  
+  .leaderboard-table th, .leaderboard-table td {
+    padding: 8px;
+  }
+}

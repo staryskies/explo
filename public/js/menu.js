@@ -146,10 +146,27 @@ function updateUI() {
   // Update silver display
   document.getElementById('silver-amount').textContent = playerData.silver;
 
+  // Update gems display
+  const gemsAmount = document.getElementById('gems-amount');
+  if (gemsAmount) {
+    gemsAmount.textContent = playerData.gems;
+  }
+
   // Update gacha silver display if it exists
   const gachaSilverAmount = document.getElementById('gacha-silver-amount');
   if (gachaSilverAmount) {
     gachaSilverAmount.textContent = playerData.silver;
+  }
+
+  // Update market currency displays
+  const marketSilverAmount = document.getElementById('market-silver-amount');
+  if (marketSilverAmount) {
+    marketSilverAmount.textContent = playerData.silver;
+  }
+
+  const marketGemsAmount = document.getElementById('market-gems-amount');
+  if (marketGemsAmount) {
+    marketGemsAmount.textContent = playerData.gems;
   }
 
   // Update towers unlocked
@@ -223,7 +240,7 @@ function setupEventListeners() {
         // Generate inventory content before showing the modal
         generateInventoryContent();
 
-        inventoryModal.classList.add('active');
+        inventoryModal.style.display = 'block';
         // Update silver display when opening the modal
         const inventorySilverAmount = document.getElementById('inventory-silver-amount');
         if (inventorySilverAmount) {
@@ -235,6 +252,36 @@ function setupEventListeners() {
     });
   } else {
     console.error('Inventory button not found');
+  }
+
+  // Market button
+  const marketButton = document.getElementById('market-button');
+  if (marketButton) {
+    marketButton.addEventListener('click', () => {
+      const marketModal = document.getElementById('market-modal');
+      if (marketModal) {
+        marketModal.style.display = 'block';
+      } else {
+        console.error('Market modal not found');
+      }
+    });
+  } else {
+    console.error('Market button not found');
+  }
+
+  // Leaderboard button
+  const leaderboardButton = document.getElementById('leaderboard-button');
+  if (leaderboardButton) {
+    leaderboardButton.addEventListener('click', () => {
+      const leaderboardModal = document.getElementById('leaderboard-modal');
+      if (leaderboardModal) {
+        leaderboardModal.style.display = 'block';
+      } else {
+        console.error('Leaderboard modal not found');
+      }
+    });
+  } else {
+    console.error('Leaderboard button not found');
   }
 
   // Close buttons
@@ -844,6 +891,9 @@ function generateTowersInventory() {
     const towerData = towerStats[towerType];
     if (!towerData) return; // Skip if tower data doesn't exist
 
+    // Get tower count from inventory
+    const towerCount = getTowerCount(towerType) || 0;
+
     // Create inventory item
     const inventoryItem = document.createElement('div');
     inventoryItem.className = `inventory-item ${towerData.tier}`;
@@ -863,6 +913,12 @@ function generateTowersInventory() {
 
     imageContainer.appendChild(towerCanvas);
 
+    // Add count badge
+    const countBadge = document.createElement('div');
+    countBadge.className = 'inventory-count-badge';
+    countBadge.textContent = towerCount;
+    imageContainer.appendChild(countBadge);
+
     // Create tower name
     const towerName = document.createElement('div');
     towerName.className = 'inventory-item-name';
@@ -878,11 +934,36 @@ function generateTowersInventory() {
     towerDesc.className = 'inventory-item-description';
     towerDesc.textContent = towerData.description || '';
 
+    // Create tower actions container
+    const actionsContainer = document.createElement('div');
+    actionsContainer.className = 'inventory-item-actions';
+
+    // Create sell button (only if count > 1 to prevent selling all towers)
+    if (towerCount > 1) {
+      const sellButton = document.createElement('button');
+      sellButton.className = 'sell-button';
+      sellButton.textContent = 'Sell (50 Silver)';
+      sellButton.addEventListener('click', () => {
+        if (removeTowerFromInventory(towerType)) {
+          // Add silver for selling
+          addSilver(50);
+          // Update inventory
+          generateTowersInventory();
+          // Show success message
+          alert(`Sold ${towerData.name} tower for 50 Silver`);
+        } else {
+          alert('Failed to sell tower');
+        }
+      });
+      actionsContainer.appendChild(sellButton);
+    }
+
     // Add elements to inventory item
     inventoryItem.appendChild(imageContainer);
     inventoryItem.appendChild(towerName);
     inventoryItem.appendChild(towerTier);
     inventoryItem.appendChild(towerDesc);
+    inventoryItem.appendChild(actionsContainer);
 
     // Add to inventory grid
     towersInventory.appendChild(inventoryItem);
@@ -919,6 +1000,9 @@ function updateVariantsInventory() {
     const variantData = towerVariants[variantType];
     if (!variantData) return; // Skip if variant data doesn't exist
 
+    // Get variant count from inventory
+    const variantCount = getTowerCount(selectedTower, variantType) || 0;
+
     // Create inventory item
     const inventoryItem = document.createElement('div');
     inventoryItem.className = `inventory-item ${variantData.tier}`;
@@ -938,6 +1022,12 @@ function updateVariantsInventory() {
 
     imageContainer.appendChild(variantCanvas);
 
+    // Add count badge
+    const countBadge = document.createElement('div');
+    countBadge.className = 'inventory-count-badge';
+    countBadge.textContent = variantCount;
+    imageContainer.appendChild(countBadge);
+
     // Create variant name
     const variantName = document.createElement('div');
     variantName.className = 'inventory-item-name';
@@ -953,11 +1043,117 @@ function updateVariantsInventory() {
     variantDesc.className = 'inventory-item-description';
     variantDesc.textContent = variantData.description || '';
 
+    // Add variant stats
+    const variantStats = document.createElement('div');
+    variantStats.className = 'inventory-item-stats';
+
+    // Add damage bonus if applicable
+    if (variantData.bonusMultiplier && variantData.bonusMultiplier > 1) {
+      const damageBonus = document.createElement('div');
+      damageBonus.className = 'stat-bonus';
+      damageBonus.textContent = `Damage: +${Math.round((variantData.bonusMultiplier - 1) * 100)}%`;
+      variantStats.appendChild(damageBonus);
+    }
+
+    // Add range bonus if applicable
+    if (variantData.rangeBonus) {
+      const rangeBonus = document.createElement('div');
+      rangeBonus.className = 'stat-bonus';
+      rangeBonus.textContent = `Range: +${variantData.rangeBonus}`;
+      variantStats.appendChild(rangeBonus);
+    }
+
+    // Add fire rate bonus if applicable
+    if (variantData.fireRateBonus) {
+      const fireRateBonus = document.createElement('div');
+      fireRateBonus.className = 'stat-bonus';
+      fireRateBonus.textContent = `Fire Rate: +${Math.round(variantData.fireRateBonus * 100)}%`;
+      variantStats.appendChild(fireRateBonus);
+    }
+
+    // Create tower actions container
+    const actionsContainer = document.createElement('div');
+    actionsContainer.className = 'inventory-item-actions';
+
+    // Create sell button (only if count > 1 to prevent selling all variants)
+    if (variantCount > 1) {
+      // Calculate sell price based on tier
+      let sellPrice = 50; // Default price
+      if (variantData.tier === 'rare') sellPrice = 100;
+      if (variantData.tier === 'epic') sellPrice = 200;
+      if (variantData.tier === 'legendary') sellPrice = 500;
+      if (variantData.tier === 'divine') sellPrice = 1000;
+
+      const sellButton = document.createElement('button');
+      sellButton.className = 'sell-button';
+      sellButton.textContent = `Sell (${sellPrice} Silver)`;
+      sellButton.addEventListener('click', () => {
+        if (removeTowerFromInventory(selectedTower, variantType)) {
+          // Add silver for selling
+          addSilver(sellPrice);
+          // Update inventory
+          updateVariantsInventory();
+          // Show success message
+          alert(`Sold ${variantData.name} variant for ${sellPrice} Silver`);
+        } else {
+          alert('Failed to sell variant');
+        }
+      });
+      actionsContainer.appendChild(sellButton);
+    }
+
+    // Add market button for rare+ variants
+    if (variantData.tier !== 'common' && variantCount > 1) {
+      // Calculate market price based on tier
+      let marketPrice = 5; // Default price in gems
+      if (variantData.tier === 'epic') marketPrice = 15;
+      if (variantData.tier === 'legendary') marketPrice = 50;
+      if (variantData.tier === 'divine') marketPrice = 200;
+
+      const marketButton = document.createElement('button');
+      marketButton.className = 'market-button';
+      marketButton.textContent = `List (${marketPrice} Gems)`;
+      marketButton.addEventListener('click', () => {
+        // Open market modal
+        const marketModal = document.getElementById('market-modal');
+        if (marketModal) {
+          marketModal.style.display = 'block';
+
+          // Switch to sell tab
+          const sellTab = document.querySelector('.market-tab[data-tab="sell-tab"]');
+          if (sellTab) {
+            sellTab.click();
+          }
+
+          // Pre-select the tower and variant
+          const sellTowerSelect = document.getElementById('sell-tower-select');
+          const sellVariantSelect = document.getElementById('sell-variant-select');
+          const sellPrice = document.getElementById('sell-price');
+
+          if (sellTowerSelect) sellTowerSelect.value = selectedTower;
+          if (sellVariantSelect) {
+            // Need to update variant options first
+            const event = new Event('change');
+            sellTowerSelect.dispatchEvent(event);
+
+            // Then set the variant
+            setTimeout(() => {
+              if (sellVariantSelect) sellVariantSelect.value = variantType;
+              if (sellPrice) sellPrice.value = marketPrice;
+            }, 100);
+          }
+        }
+      });
+      actionsContainer.appendChild(marketButton);
+    }
+
     // Add elements to inventory item
     inventoryItem.appendChild(imageContainer);
     inventoryItem.appendChild(variantName);
     inventoryItem.appendChild(variantTier);
     inventoryItem.appendChild(variantDesc);
+    inventoryItem.appendChild(variantStats);
+    inventoryItem.appendChild(actionsContainer);
 
     // Add to inventory grid
     variantsInventory.appendChild(inventoryItem);

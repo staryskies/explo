@@ -78,6 +78,19 @@ const gachaSystem = {
       single: 200,
       ten: 1800,
       hundred: 16000
+    },
+    // Premium costs (gems)
+    premium: {
+      tower: {
+        single: 15,
+        ten: 135,
+        hundred: 1200
+      },
+      variant: {
+        single: 20,
+        ten: 180,
+        hundred: 1600
+      }
     }
   },
 
@@ -173,7 +186,7 @@ const gachaSystem = {
   },
 
   // Roll a single tower
-  rollTower: function() {
+  rollTower: function(isPremium = false) {
     // Sync pity counters with playerData if available
     if (window.playerData && window.playerData.towerPity) {
       this.pityCounter.tower = { ...window.playerData.towerPity };
@@ -199,7 +212,21 @@ const gachaSystem = {
 
       // Determine tier based on random chance
       const rand = Math.random();
-      const rates = this.dropRates.tower;
+      let rates = { ...this.dropRates.tower };
+
+      // Apply premium bonus (1.5x for rare+ tiers)
+      if (isPremium) {
+        // Increase rates for rare+ tiers
+        rates.rare *= 1.5;
+        rates.epic *= 1.5;
+        rates.legendary *= 1.5;
+        rates.mythic *= 1.5;
+        rates.divine *= 1.5;
+
+        // Adjust common rate to ensure total is still 1.0
+        const totalRarePlus = rates.rare + rates.epic + rates.legendary + rates.mythic + rates.divine;
+        rates.common = Math.max(0, 1.0 - totalRarePlus);
+      }
 
       if (rand < rates.divine) {
         tier = 'divine';
@@ -255,20 +282,18 @@ const gachaSystem = {
   },
 
   // Roll multiple towers
-  rollTowers: function(count) {
+  rollTowers: function(count, isPremium = false) {
     const results = [];
 
     for (let i = 0; i < count; i++) {
-      results.push(this.rollTower());
+      results.push(this.rollTower(isPremium));
     }
-
-
 
     return results;
   },
 
   // Roll a single variant
-  rollVariant: function(towerType) {
+  rollVariant: function(towerType, isPremium = false) {
     // Check if the tower is unlocked
     if (!playerData.unlockedTowers.includes(towerType)) {
       alert(`You need to unlock the ${towerStats[towerType]?.name || towerType} tower first!`);
@@ -299,7 +324,20 @@ const gachaSystem = {
 
       // Determine tier based on random chance
       const rand = Math.random();
-      const rates = this.dropRates.variant;
+      let rates = { ...this.dropRates.variant };
+
+      // Apply premium bonus (1.5x for rare+ tiers)
+      if (isPremium) {
+        // Increase rates for rare+ tiers
+        rates.rare *= 1.5;
+        rates.epic *= 1.5;
+        rates.legendary *= 1.5;
+        rates.divine *= 1.5;
+
+        // Adjust common rate to ensure total is still 1.0
+        const totalRarePlus = rates.rare + rates.epic + rates.legendary + rates.divine;
+        rates.common = Math.max(0, 1.0 - totalRarePlus);
+      }
 
       if (rand < rates.divine) {
         tier = 'divine';
@@ -340,7 +378,7 @@ const gachaSystem = {
   },
 
   // Roll multiple variants
-  rollVariants: function(count, towerType) {
+  rollVariants: function(count, towerType, isPremium = false) {
     // Check if the tower is unlocked
     if (!playerData.unlockedTowers.includes(towerType)) {
       alert(`You need to unlock the ${towerStats[towerType]?.name || towerType} tower first!`);
@@ -350,15 +388,10 @@ const gachaSystem = {
     const results = [];
 
     for (let i = 0; i < count; i++) {
-      const variant = this.rollVariant(towerType);
+      const variant = this.rollVariant(towerType, isPremium);
       if (variant) {
         results.push(variant);
       }
-    }
-
-    if (results.length > 0) {
-      // Show the results
-
     }
 
     return results;
