@@ -295,9 +295,21 @@
               <p>Roll for tower variants to customize your towers!</p>
               <div class="tower-selector">
                 <label for="variant-tower-select">Select Tower:</label>
-                <select id="variant-tower-select">
-                  <!-- Tower options will be generated here -->
-                </select>
+                <div class="tower-selector-buttons">
+                  <select id="variant-tower-select">
+                    <!-- Tower options will be generated here -->
+                  </select>
+                  <button id="show-inventory-btn" class="secondary-btn">Show Inventory</button>
+                </div>
+                <div class="reroll-section" id="reroll-section" style="display: none;">
+                  <h4>Reroll Variant</h4>
+                  <div class="reroll-container">
+                    <select id="reroll-variant-select">
+                      <!-- Variant options will be generated here -->
+                    </select>
+                    <button id="reroll-variant-btn" class="gacha-btn">Reroll (100 Silver)</button>
+                  </div>
+                </div>
               </div>
               <div class="gacha-box">
                 <div id="variant-result" class="gacha-result"></div>
@@ -423,7 +435,6 @@
         <!-- Inventory Tabs -->
         <div class="inventory-tabs">
           <button class="inventory-tab active" data-tab="towers-tab">Towers</button>
-          <button class="inventory-tab" data-tab="variants-tab">Variants</button>
         </div>
 
         <!-- Towers Tab Content -->
@@ -433,18 +444,7 @@
           </div>
         </div>
 
-        <!-- Variants Tab Content -->
-        <div class="inventory-tab-content" id="variants-tab">
-          <div class="tower-selector">
-            <label for="inventory-tower-select">Select Tower:</label>
-            <select id="inventory-tower-select">
-              <!-- Tower options will be generated here -->
-            </select>
-          </div>
-          <div class="inventory-grid" id="variants-inventory">
-            <!-- Variant inventory will be generated here -->
-          </div>
-        </div>
+        <!-- Variants Tab Content Removed -->
 
         <div class="modal-footer">
           <div class="currency-display">

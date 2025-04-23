@@ -419,7 +419,7 @@ const gachaSystem = {
   rollVariant: function(towerType, isPremium = false) {
     // Check if the tower is unlocked
     if (!playerData.unlockedTowers.includes(towerType)) {
-      alert(`You need to unlock the ${towerStats[towerType]?.name || towerType} tower first!`);
+      console.error(`Tower ${towerType} is not unlocked`);
       return null;
     }
 
@@ -497,7 +497,11 @@ const gachaSystem = {
       savePlayerData();
     }
 
-    return selectedVariant;
+    return {
+      towerType: towerType,
+      variant: selectedVariant,
+      tier: tier
+    };
   },
 
   // Roll multiple variants
@@ -1093,6 +1097,43 @@ const gachaSystem = {
         type: currencyType,
         amount: totalCost
       }
+    };
+  },
+
+  // Reroll a variant for a specific tower
+  rerollVariant: function(towerType, currentVariant) {
+    // Check if the tower is unlocked
+    if (!playerData.unlockedTowers.includes(towerType)) {
+      console.error(`Tower ${towerType} is not unlocked`);
+      return null;
+    }
+
+    // Check if the tower has the current variant
+    if (!playerData.towerVariants[towerType].includes(currentVariant)) {
+      console.error(`Tower ${towerType} does not have variant ${currentVariant}`);
+      return null;
+    }
+
+    // Roll a new variant
+    const result = this.rollVariant(towerType, false);
+    if (!result) return null;
+
+    // Remove the old variant if it's not the new one
+    if (result.variant !== currentVariant) {
+      const index = playerData.towerVariants[towerType].indexOf(currentVariant);
+      if (index !== -1) {
+        playerData.towerVariants[towerType].splice(index, 1);
+      }
+    }
+
+    // Save player data
+    savePlayerData();
+
+    return {
+      towerType: towerType,
+      oldVariant: currentVariant,
+      newVariant: result.variant,
+      tier: result.tier
     };
   }
 };

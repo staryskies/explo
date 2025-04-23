@@ -251,6 +251,52 @@ body {
   border: 1px solid rgba(210, 180, 140, 0.3);
 }
 
+/* Tower Selector and Reroll Styles */
+.tower-selector-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.tower-selector-buttons select {
+  flex: 1;
+}
+
+.reroll-section {
+  background: rgba(210, 180, 140, 0.2);
+  padding: 10px;
+  border-radius: 8px;
+  margin-top: 10px;
+  border: 1px solid rgba(210, 180, 140, 0.3);
+}
+
+.reroll-section h4 {
+  margin: 0 0 10px 0;
+  color: #000000;
+  font-size: 16px;
+}
+
+.reroll-container {
+  display: flex;
+  gap: 10px;
+}
+
+.reroll-container select {
+  flex: 1;
+}
+
+.secondary-btn {
+  padding: 8px 15px;
+  background: linear-gradient(45deg, #A0522D, #8B4513);
+  border: none;
+  border-radius: 5px;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(160, 120, 80, 0.3);
+}
+
 .upgrade-header {
   display: flex;
   justify-content: space-between;

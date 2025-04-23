@@ -419,14 +419,32 @@ const market = {
     // Add tower options from inventory
     let hasOptions = false;
 
-    Object.keys(window.playerData.towerInventory || {}).forEach(towerType => {
+    // Get all tower types from the inventory
+    const towerTypes = new Set();
+    Object.keys(window.playerData.towerInventory || {}).forEach(key => {
+      // Parse the key to get tower type
+      const [towerType] = key.split('_');
+      if (towerType) {
+        towerTypes.add(towerType);
+      }
+    });
+
+    // Add each tower type to the select
+    towerTypes.forEach(towerType => {
+      // Count how many of this tower type we have
+      let count = 0;
+      Object.keys(window.playerData.towerInventory || {}).forEach(key => {
+        if (key.startsWith(towerType + '_')) {
+          count += window.playerData.towerInventory[key];
+        }
+      });
+
       // Skip if no inventory
-      if (!window.playerData.towerInventory[towerType] || window.playerData.towerInventory[towerType].count <= 0) {
+      if (count <= 0) {
         return;
       }
 
       const towerData = window.towerStats[towerType] || { name: towerType };
-      const count = window.playerData.towerInventory[towerType].count;
 
       const option = document.createElement('option');
       option.value = towerType;
@@ -465,15 +483,29 @@ const market = {
     // Add variant options from inventory
     let hasOptions = false;
 
-    const variants = window.playerData.towerInventory[selectedTower]?.variants || {};
-    Object.keys(variants).forEach(variantType => {
+    // Get all variants for this tower type
+    const variantTypes = new Set();
+    Object.keys(window.playerData.towerInventory || {}).forEach(key => {
+      if (key.startsWith(selectedTower + '_')) {
+        const [_, variantType] = key.split('_');
+        if (variantType) {
+          variantTypes.add(variantType);
+        }
+      }
+    });
+
+    // Add each variant to the select
+    variantTypes.forEach(variantType => {
+      // Get count for this variant
+      const key = `${selectedTower}_${variantType}`;
+      const count = window.playerData.towerInventory[key] || 0;
+
       // Skip if no inventory
-      if (!variants[variantType] || variants[variantType] <= 0) {
+      if (count <= 0) {
         return;
       }
 
       const variantData = window.towerVariants[variantType] || { name: variantType };
-      const count = variants[variantType];
 
       const option = document.createElement('option');
       option.value = variantType;

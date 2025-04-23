@@ -278,6 +278,92 @@ function setupVariantGachaEvents() {
   // Populate tower select
   populateVariantTowerSelect();
 
+  // Show inventory button
+  const showInventoryBtn = document.getElementById('show-inventory-btn');
+  if (showInventoryBtn) {
+    showInventoryBtn.addEventListener('click', function() {
+      // Get selected tower
+      const towerSelect = document.getElementById('variant-tower-select');
+      if (!towerSelect || !towerSelect.value) {
+        console.error('No tower selected');
+        return;
+      }
+      const selectedTower = towerSelect.value;
+
+      // Show the reroll section
+      const rerollSection = document.getElementById('reroll-section');
+      if (rerollSection) {
+        rerollSection.style.display = 'block';
+      }
+
+      // Populate the variant select
+      populateRerollVariantSelect(selectedTower);
+    });
+  }
+
+  // Reroll variant button
+  const rerollVariantBtn = document.getElementById('reroll-variant-btn');
+  if (rerollVariantBtn) {
+    rerollVariantBtn.addEventListener('click', function() {
+      // Get selected tower and variant
+      const towerSelect = document.getElementById('variant-tower-select');
+      const variantSelect = document.getElementById('reroll-variant-select');
+
+      if (!towerSelect || !towerSelect.value || !variantSelect || !variantSelect.value) {
+        console.error('No tower or variant selected');
+        return;
+      }
+
+      const selectedTower = towerSelect.value;
+      const selectedVariant = variantSelect.value;
+
+      // Check if player has enough silver
+      if (playerData.silver < 100) {
+        console.error('Not enough silver');
+        return;
+      }
+
+      // Spend silver
+      spendSilver(100);
+
+      // Reroll variant
+      const result = gachaSystem.rerollVariant(selectedTower, selectedVariant);
+
+      if (result) {
+        // Show result
+        const oldVariantData = towerVariants[result.oldVariant] || { name: result.oldVariant };
+        const newVariantData = towerVariants[result.newVariant] || { name: result.newVariant };
+
+        // Play animation if it's a rare+ variant
+        if (newVariantData.tier && newVariantData.tier !== 'common') {
+          gachaSystem.playAnimation(newVariantData.tier, null, result.newVariant);
+        }
+
+        // Update the variant select
+        populateRerollVariantSelect(selectedTower);
+
+        // Update currency displays
+        updateGachaCurrencyDisplays();
+      } else {
+        // Refund silver if reroll failed
+        addSilver(100);
+        console.error('Failed to reroll variant');
+      }
+    });
+  }
+
+  // Update variant tower select event
+  const variantTowerSelect = document.getElementById('variant-tower-select');
+  if (variantTowerSelect) {
+    variantTowerSelect.addEventListener('change', function() {
+      // Hide the reroll section when tower changes
+      const rerollSection = document.getElementById('reroll-section');
+      if (rerollSection) {
+        rerollSection.style.display = 'none';
+      }
+    });
+  }
+
   // Variant Gacha - Roll 1
   const rollVariant1 = document.getElementById('roll-variant-1');
   if (rollVariant1) {
@@ -821,12 +907,25 @@ function showTowerResults(towers) {
 }
 
 // Show variant result
-function showVariantResult(variant, towerType) {
+function showVariantResult(result, towerType) {
   const resultElement = document.getElementById('variant-result');
   if (!resultElement) return;
 
   // Clear previous results
   resultElement.innerHTML = '';
+
+  // Handle both old and new result formats
+  let variant;
+  if (typeof result === 'string') {
+    // Old format - just the variant string
+    variant = result;
+  } else if (result && result.variant) {
+    // New format - object with variant property
+    variant = result.variant;
+  } else {
+    console.error('Invalid variant result format');
+    return;
+  }
 
   // Get variant data
   const variantData = towerVariants[variant];
@@ -975,4 +1074,33 @@ function showVariantResults(variants, towerType) {
   summary.appendChild(tierSummary);
   summary.appendChild(typeSummary);
   resultElement.appendChild(summary);
+}
+
+// Populate reroll variant select
+function populateRerollVariantSelect(towerType) {
+  const variantSelect = document.getElementById('reroll-variant-select');
+  if (!variantSelect) return;
+
+  // Clear existing options
+  variantSelect.innerHTML = '';
+
+  // Add default option
+  const defaultOption = document.createElement('option');
+  defaultOption.value = '';
+  defaultOption.textContent = 'Select a Variant';
+  variantSelect.appendChild(defaultOption);
+
+  // Add tower variants
+  if (playerData.towerVariants[towerType]) {
+    playerData.towerVariants[towerType].forEach(variant => {
+      // Skip normal variant as it can't be rerolled
+      if (variant === 'normal') return;
+
+      const option = document.createElement('option');
+      option.value = variant;
+      const variantData = towerVariants[variant] || { name: variant };
+      option.textContent = variantData.name || variant;
+      variantSelect.appendChild(option);
+    });
+  }
 }
