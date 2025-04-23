@@ -303,44 +303,45 @@ const bossTypes = {
 
   voidBoss: {
     name: "Void Entity",
-    baseHealth: 12000,
-    speed: 0.3,
-    reward: 1000,
-    damage: 10,
+    baseHealth: 8000, // Reduced from 12000
+    speed: 0.35, // Increased from 0.3
+    reward: 1500, // Increased from 1000
+    damage: 8, // Reduced from 10
     color: '#9C27B0', // Purple
     size: 60,
     flying: true,
-    armor: 0.7,
+    armor: 0.5, // Reduced from 0.7
     abilities: [
       {
         name: "Reality Warp",
         effect: "Teleports forward on the path",
-        distance: 300,
-        interval: 5
+        distance: 200, // Reduced from 300
+        interval: 8 // Increased from 5
       },
       {
         name: "Void Spawn",
         effect: "Spawns corrupted enemies",
         spawnType: 'armored',
-        spawnCount: 4,
-        interval: 6
+        spawnCount: 2, // Reduced from 4
+        interval: 10 // Increased from 6
       },
       {
         name: "Energy Absorption",
         effect: "Heals itself by disabling towers",
-        radius: 200,
-        disableDuration: 3,
-        healAmount: 100,
-        interval: 8
+        radius: 150, // Reduced from 200
+        disableDuration: 2, // Reduced from 3
+        healAmount: 50, // Reduced from 100
+        interval: 12 // Increased from 8
       },
       {
         name: "Dimensional Shift",
         effect: "Becomes invulnerable briefly",
-        duration: 2,
-        interval: 12
+        duration: 1.5, // Reduced from 2
+        interval: 15 // Increased from 12
       }
     ],
-    specialEffect: 'void'
+    specialEffect: 'void',
+    weaknesses: ['archangel', 'seraphim', 'demonLord'] // These towers deal extra damage to the Void Entity
   },
 
   // Void versions of other bosses (black versions)

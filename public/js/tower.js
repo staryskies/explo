@@ -135,13 +135,42 @@ class Tower {
         this.lastBuffTime = 0;
         this.buffInterval = 1000; // Apply buffs every second
         this.projectileType = 'divine';
-        this.buffRadius = 150; // Radius for buffing nearby towers
-        this.buffDamage = 0.2; // 20% damage buff
-        this.buffRange = 0.1; // 10% range buff
-        this.aoeRadius = 50; // Area damage radius
-        this.pierceCount = 3; // Pierces through multiple enemies
-        this.chainCount = 3; // Can chain to nearby enemies
-        this.chainRange = 150; // Chain range
+        this.buffRadius = 250; // Radius for buffing nearby towers
+        this.buffDamage = 0.4; // 40% damage buff
+        this.buffRange = 0.3; // 30% range buff
+        this.aoeRadius = 100; // Area damage radius
+        this.pierceCount = 6; // Pierces through multiple enemies
+        this.chainCount = 5; // Can chain to nearby enemies
+        this.chainRange = 350; // Chain range
+        this.lastSpecialAbilityTime = 0;
+        this.specialAbilityCooldown = 10000; // 10 seconds cooldown
+        break;
+      case 'seraphim':
+        this.buffedTowers = [];
+        this.lastBuffTime = 0;
+        this.buffInterval = 1000; // Apply buffs every second
+        this.projectileType = 'light';
+        this.buffRadius = 200; // Radius for buffing nearby towers
+        this.buffDamage = 0.3; // 30% damage buff
+        this.aoeRadius = 120; // Area damage radius
+        this.pierceCount = 8; // Pierces through multiple enemies
+        this.burnDamage = 200; // Damage per second
+        this.burnDuration = 5000; // 5 seconds
+        this.lastSpecialAbilityTime = 0;
+        this.specialAbilityCooldown = 15000; // 15 seconds cooldown
+        this.specialAbilityDamage = 300; // Damage to all enemies
+        break;
+      case 'demonLord':
+        this.summonCount = 3; // Summons 3 demon minions
+        this.summonDuration = 10000; // 10 seconds
+        this.summonDamage = 200; // Damage per demon
+        this.fearChance = 0.5; // 50% chance to cause fear
+        this.fearDuration = 3000; // 3 seconds
+        this.lastSpecialAbilityTime = 0;
+        this.specialAbilityCooldown = 20000; // 20 seconds cooldown
+        this.specialAbilityDamage = 500; // Damage to enemies in the pentagram
+        this.specialAbilityDuration = 5000; // 5 seconds duration
+        this.projectileType = 'fire';
         break;
       case 'cannon':
       case 'mortar':
@@ -632,6 +661,145 @@ class Tower {
     return value;
   }
 
+  // Update tower state
+  update(currentTime, enemies, projectiles, effects) {
+    // Update special abilities based on tower type
+    switch (this.type) {
+      case 'archangel':
+        // Update buff effect for nearby towers
+        if (currentTime - this.lastBuffTime >= this.buffInterval) {
+          this.applyBuffToNearbyTowers();
+          this.lastBuffTime = currentTime;
+        }
+
+        // Check if special ability is ready
+        if (this.lastSpecialAbilityTime === 0 || currentTime - this.lastSpecialAbilityTime >= this.specialAbilityCooldown) {
+          // Divine Judgment - Damage all enemies on screen
+          if (enemies && enemies.length > 0) {
+            // Create divine light effect
+            if (effects) {
+              effects.push({
+                type: 'divineJudgment',
+                x: this.x,
+                y: this.y,
+                radius: 0,
+                maxRadius: 1000,
+                duration: 1000,
+                startTime: currentTime,
+                color: '#FFEB3B'
+              });
+            }
+
+            // Apply damage to all enemies
+            enemies.forEach(enemy => {
+              if (enemy.alive) {
+                enemy.takeDamage(this.damage * 0.5); // 50% of normal damage to all enemies
+              }
+            });
+
+            this.lastSpecialAbilityTime = currentTime;
+          }
+        }
+        break;
+
+      case 'seraphim':
+        // Update buff effect for nearby towers
+        if (currentTime - this.lastBuffTime >= this.buffInterval) {
+          this.applyBuffToNearbyTowers();
+          this.lastBuffTime = currentTime;
+        }
+
+        // Check if special ability is ready
+        if (this.lastSpecialAbilityTime === 0 || currentTime - this.lastSpecialAbilityTime >= this.specialAbilityCooldown) {
+          // Divine Radiance - Damage all enemies on screen
+          if (enemies && enemies.length > 0) {
+            // Create divine light effect
+            if (effects) {
+              effects.push({
+                type: 'divineRadiance',
+                x: this.x,
+                y: this.y,
+                radius: 0,
+                maxRadius: 1000,
+                duration: 1500,
+                startTime: currentTime,
+                color: '#FFFFFF'
+              });
+            }
+
+            // Apply damage to all enemies
+            enemies.forEach(enemy => {
+              if (enemy.alive) {
+                enemy.takeDamage(this.specialAbilityDamage);
+
+                // Apply burn effect
+                if (this.burnDamage && this.burnDuration) {
+                  enemy.applyBurn(this.burnDamage, this.burnDuration);
+                }
+              }
+            });
+
+            this.lastSpecialAbilityTime = currentTime;
+          }
+        }
+        break;
+
+      case 'demonLord':
+        // Check if special ability is ready
+        if (this.lastSpecialAbilityTime === 0 || currentTime - this.lastSpecialAbilityTime >= this.specialAbilityCooldown) {
+          // Hellfire - Create a pentagram that damages enemies
+          if (enemies && enemies.length > 0) {
+            // Create pentagram effect
+            if (effects) {
+              effects.push({
+                type: 'hellfire',
+                x: this.x,
+                y: this.y,
+                radius: this.range * 0.8,
+                duration: this.specialAbilityDuration,
+                startTime: currentTime,
+                endTime: currentTime + this.specialAbilityDuration,
+                damage: this.specialAbilityDamage / (this.specialAbilityDuration / 1000), // Damage per second
+                color: '#FF5722'
+              });
+            }
+
+            this.lastSpecialAbilityTime = currentTime;
+          }
+        }
+        break;
+    }
+  }
+
+  // Apply buffs to nearby towers
+  applyBuffToNearbyTowers() {
+    // Get all towers from the game
+    const towers = window.game?.towers || [];
+
+    // Find towers in range
+    towers.forEach(tower => {
+      if (tower !== this) { // Don't buff self
+        const dist = distance(this.x, this.y, tower.x, tower.y);
+        if (dist <= this.buffRadius) {
+          // Apply damage buff
+          if (this.buffDamage) {
+            tower.buffedDamage = tower.damage * (1 + this.buffDamage);
+          }
+
+          // Apply range buff
+          if (this.buffRange) {
+            tower.buffedRange = tower.range * (1 + this.buffRange);
+          }
+
+          // Add to buffed towers list
+          if (!this.buffedTowers.includes(tower)) {
+            this.buffedTowers.push(tower);
+          }
+        }
+      }
+    });
+  }
+
   // Find a target among the enemies
   findTarget(enemies, currentTime) {
     // Check if there are any enemies
@@ -780,6 +948,90 @@ class Tower {
           projectiles.push(divineProjectile);
           break;
 
+        case 'seraphim':
+          // Seraphim shoots light projectiles
+          const lightProjectile = new Projectile(
+            this.x,
+            this.y,
+            this.angle,
+            this.projectileSpeed,
+            this.damage,
+            'light', // Use light projectile type
+            this.target,
+            this.type
+          );
+
+          // Add pierce property
+          if (this.pierceCount) {
+            lightProjectile.pierceCount = this.pierceCount;
+            lightProjectile.pierceRemaining = this.pierceCount;
+          }
+
+          // Add area effect
+          if (this.aoeRadius) {
+            lightProjectile.aoeRadius = this.aoeRadius;
+          }
+
+          // Add burn effect
+          if (this.burnDamage && this.burnDuration) {
+            lightProjectile.burnDamage = this.burnDamage;
+            lightProjectile.burnDuration = this.burnDuration;
+          }
+
+          projectiles.push(lightProjectile);
+          break;
+
+        case 'demonLord':
+          // Demon Lord shoots fire projectiles
+          const fireProjectile = new Projectile(
+            this.x,
+            this.y,
+            this.angle,
+            this.projectileSpeed,
+            this.damage,
+            'fire', // Use fire projectile type
+            this.target,
+            this.type
+          );
+
+          // Add fear effect
+          if (this.fearChance && this.fearDuration) {
+            fireProjectile.fearChance = this.fearChance;
+            fireProjectile.fearDuration = this.fearDuration;
+          }
+
+          // Add area effect
+          if (this.aoeRadius) {
+            fireProjectile.aoeRadius = this.aoeRadius;
+          }
+
+          projectiles.push(fireProjectile);
+
+          // Summon demon minions
+          if (this.summonCount && Math.random() < 0.3) { // 30% chance to summon on hit
+            for (let i = 0; i < this.summonCount; i++) {
+              const angle = Math.random() * Math.PI * 2;
+              const distance = 30 + Math.random() * 20;
+
+              const demonProjectile = new Projectile(
+                this.x + Math.cos(angle) * distance,
+                this.y + Math.sin(angle) * distance,
+                Math.random() * Math.PI * 2, // Random direction
+                this.projectileSpeed * 0.8,
+                this.summonDamage,
+                'demon', // Demon projectile type
+                null, // No specific target, will find closest
+                this.type
+              );
+
+              demonProjectile.lifespan = this.summonDuration;
+              demonProjectile.isSummon = true;
+
+              projectiles.push(demonProjectile);
+            }
+          }
+          break;
+
         case 'archer':
           // Archer shoots multiple arrows based on upgrades
           const arrowCount = 1 + (this.extraShots || 0);
@@ -924,6 +1176,128 @@ class Tower {
 
     // Draw effect based on tower type
     switch (this.type) {
+      case 'archangel':
+        // Divine light burst effect
+        ctx.fillStyle = '#FFEB3B';
+        ctx.globalAlpha = 0.9;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y - 25, 15, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Light rays
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = 0.8;
+
+        for (let i = 0; i < 8; i++) {
+          const angle = Math.PI * 2 * (i / 8) + this.angle;
+          ctx.beginPath();
+          ctx.moveTo(this.x, this.y - 25);
+          ctx.lineTo(
+            this.x + Math.cos(angle) * 30,
+            this.y - 25 + Math.sin(angle) * 30
+          );
+          ctx.stroke();
+        }
+
+        // Add glow effect
+        ctx.fillStyle = '#FFFFFF';
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y - 25, 25, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+
+      case 'seraphim':
+        // Heavenly fire effect
+        ctx.fillStyle = '#FF9800';
+        ctx.globalAlpha = 0.9;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y - 25, 18, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Fire rays
+        const colors = ['#FFEB3B', '#FF9800', '#FF5722'];
+
+        for (let i = 0; i < 12; i++) {
+          const angle = Math.PI * 2 * (i / 12) + this.angle;
+          const length = 25 + Math.random() * 15;
+
+          ctx.strokeStyle = colors[Math.floor(Math.random() * colors.length)];
+          ctx.lineWidth = 2 + Math.random() * 2;
+          ctx.globalAlpha = 0.7 + Math.random() * 0.3;
+
+          ctx.beginPath();
+          ctx.moveTo(this.x, this.y - 25);
+          ctx.lineTo(
+            this.x + Math.cos(angle) * length,
+            this.y - 25 + Math.sin(angle) * length
+          );
+          ctx.stroke();
+        }
+
+        // Add glow effect
+        ctx.fillStyle = '#FFEB3B';
+        ctx.globalAlpha = 0.4;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y - 25, 30, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+
+      case 'demonLord':
+        // Hellfire effect
+        ctx.fillStyle = '#F44336';
+        ctx.globalAlpha = 0.9;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y - 25, 15, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Flame effect
+        for (let i = 0; i < 10; i++) {
+          const angle = Math.PI * 2 * (i / 10) + this.angle;
+          const length = 20 + Math.random() * 15;
+
+          ctx.fillStyle = i % 2 === 0 ? '#FF5722' : '#F44336';
+          ctx.globalAlpha = 0.7 + Math.random() * 0.3;
+
+          ctx.beginPath();
+          ctx.moveTo(this.x, this.y - 25);
+          ctx.lineTo(
+            this.x + Math.cos(angle - 0.2) * length * 0.7,
+            this.y - 25 + Math.sin(angle - 0.2) * length * 0.7
+          );
+          ctx.lineTo(
+            this.x + Math.cos(angle) * length,
+            this.y - 25 + Math.sin(angle) * length
+          );
+          ctx.lineTo(
+            this.x + Math.cos(angle + 0.2) * length * 0.7,
+            this.y - 25 + Math.sin(angle + 0.2) * length * 0.7
+          );
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        // Add smoke effect
+        ctx.fillStyle = '#212121';
+        ctx.globalAlpha = 0.4;
+        for (let i = 0; i < 5; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const distance = 10 + Math.random() * 15;
+          const size = 5 + Math.random() * 5;
+
+          ctx.beginPath();
+          ctx.arc(
+            this.x + Math.cos(angle) * distance,
+            this.y - 25 + Math.sin(angle) * distance,
+            size,
+            0,
+            Math.PI * 2
+          );
+          ctx.fill();
+        }
+        break;
+
       case 'freeze':
         // Enhanced ice burst effect
         // Main burst
@@ -2247,6 +2621,300 @@ class Tower {
             -25 * scaleFactor + Math.sin(angle) * length
           );
           ctx.stroke();
+        }
+        break;
+
+      case 'seraphim':
+        // Seraphim tower with six wings and heavenly fire
+        // Use the existing scaleFactor from the class
+
+        // Base tower body with enhanced design
+        const seraphimGradient = ctx.createLinearGradient(
+          -8 * scaleFactor, -25 * scaleFactor,
+          8 * scaleFactor, 0
+        );
+        seraphimGradient.addColorStop(0, '#FF9800'); // Orange
+        seraphimGradient.addColorStop(1, '#F57C00'); // Dark orange
+
+        ctx.fillStyle = seraphimGradient;
+
+        // Draw seraphim tower base
+        ctx.beginPath();
+        ctx.moveTo(-12 * scaleFactor, -5 * scaleFactor);
+        ctx.lineTo(-10 * scaleFactor, -25 * scaleFactor);
+        ctx.lineTo(10 * scaleFactor, -25 * scaleFactor);
+        ctx.lineTo(12 * scaleFactor, -5 * scaleFactor);
+        ctx.closePath();
+        ctx.fill();
+
+        // Draw six wings (three pairs)
+        ctx.fillStyle = '#FFFFFF';
+
+        // Top wing pair
+        // Left top wing
+        ctx.beginPath();
+        ctx.moveTo(-5 * scaleFactor, -25 * scaleFactor);
+        ctx.quadraticCurveTo(
+          -25 * scaleFactor, -45 * scaleFactor,
+          -30 * scaleFactor, -25 * scaleFactor
+        );
+        ctx.quadraticCurveTo(
+          -20 * scaleFactor, -30 * scaleFactor,
+          -10 * scaleFactor, -25 * scaleFactor
+        );
+        ctx.closePath();
+        ctx.fill();
+
+        // Right top wing
+        ctx.beginPath();
+        ctx.moveTo(5 * scaleFactor, -25 * scaleFactor);
+        ctx.quadraticCurveTo(
+          25 * scaleFactor, -45 * scaleFactor,
+          30 * scaleFactor, -25 * scaleFactor
+        );
+        ctx.quadraticCurveTo(
+          20 * scaleFactor, -30 * scaleFactor,
+          10 * scaleFactor, -25 * scaleFactor
+        );
+        ctx.closePath();
+        ctx.fill();
+
+        // Middle wing pair
+        // Left middle wing
+        ctx.beginPath();
+        ctx.moveTo(-5 * scaleFactor, -20 * scaleFactor);
+        ctx.quadraticCurveTo(
+          -30 * scaleFactor, -30 * scaleFactor,
+          -35 * scaleFactor, -10 * scaleFactor
+        );
+        ctx.quadraticCurveTo(
+          -25 * scaleFactor, -15 * scaleFactor,
+          -15 * scaleFactor, -10 * scaleFactor
+        );
+        ctx.closePath();
+        ctx.fill();
+
+        // Right middle wing
+        ctx.beginPath();
+        ctx.moveTo(5 * scaleFactor, -20 * scaleFactor);
+        ctx.quadraticCurveTo(
+          30 * scaleFactor, -30 * scaleFactor,
+          35 * scaleFactor, -10 * scaleFactor
+        );
+        ctx.quadraticCurveTo(
+          25 * scaleFactor, -15 * scaleFactor,
+          15 * scaleFactor, -10 * scaleFactor
+        );
+        ctx.closePath();
+        ctx.fill();
+
+        // Bottom wing pair
+        // Left bottom wing
+        ctx.beginPath();
+        ctx.moveTo(-5 * scaleFactor, -15 * scaleFactor);
+        ctx.quadraticCurveTo(
+          -25 * scaleFactor, -10 * scaleFactor,
+          -30 * scaleFactor, 5 * scaleFactor
+        );
+        ctx.quadraticCurveTo(
+          -20 * scaleFactor, 0 * scaleFactor,
+          -10 * scaleFactor, 0 * scaleFactor
+        );
+        ctx.closePath();
+        ctx.fill();
+
+        // Right bottom wing
+        ctx.beginPath();
+        ctx.moveTo(5 * scaleFactor, -15 * scaleFactor);
+        ctx.quadraticCurveTo(
+          25 * scaleFactor, -10 * scaleFactor,
+          30 * scaleFactor, 5 * scaleFactor
+        );
+        ctx.quadraticCurveTo(
+          20 * scaleFactor, 0 * scaleFactor,
+          10 * scaleFactor, 0 * scaleFactor
+        );
+        ctx.closePath();
+        ctx.fill();
+
+        // Draw halo
+        ctx.strokeStyle = '#FFD700';
+        ctx.lineWidth = 2 * scaleFactor;
+        ctx.beginPath();
+        ctx.arc(0, -35 * scaleFactor, 10 * scaleFactor, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Add heavenly fire effect
+        const fireColors = ['#FF9800', '#FFEB3B', '#FFFFFF'];
+
+        for (let i = 0; i < 15; i++) {
+          const angle = Math.PI * 2 * (i / 15) + (timeInSec * 0.5) % (Math.PI * 2);
+          const length = (15 + Math.sin(timeInSec * 2 + i) * 5) * scaleFactor;
+          const colorIndex = i % fireColors.length;
+
+          ctx.strokeStyle = fireColors[colorIndex];
+          ctx.lineWidth = (1 + Math.random()) * scaleFactor;
+          ctx.globalAlpha = 0.7 + Math.random() * 0.3;
+
+          ctx.beginPath();
+          ctx.moveTo(0, -25 * scaleFactor);
+
+          // Create flame-like path
+          let x = 0;
+          let y = -25 * scaleFactor;
+          const segments = 3;
+
+          for (let j = 0; j < segments; j++) {
+            const segLength = length / segments;
+            const jitter = 5 - j * 1.5;
+
+            x += Math.cos(angle + j * 0.2) * segLength + (Math.sin(timeInSec * 5 + i) - 0.5) * jitter;
+            y += Math.sin(angle + j * 0.2) * segLength + (Math.cos(timeInSec * 5 + i) - 0.5) * jitter;
+
+            ctx.lineTo(x, y);
+          }
+
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1.0;
+
+        // Add glow effect
+        ctx.fillStyle = '#FF9800';
+        ctx.globalAlpha = 0.3 + Math.sin(timeInSec) * 0.1;
+        ctx.beginPath();
+        ctx.arc(0, -25 * scaleFactor, 20 * scaleFactor, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+        break;
+
+      case 'demonLord':
+        // Demon Lord tower with horns and hellfire
+        // Use the existing scaleFactor from the class
+
+        // Base tower body with enhanced design
+        const demonLordGradient = ctx.createLinearGradient(
+          -8 * scaleFactor, -25 * scaleFactor,
+          8 * scaleFactor, 0
+        );
+        demonLordGradient.addColorStop(0, '#F44336'); // Red
+        demonLordGradient.addColorStop(1, '#D32F2F'); // Dark red
+
+        ctx.fillStyle = demonLordGradient;
+
+        // Draw demon lord tower base
+        ctx.beginPath();
+        ctx.moveTo(-12 * scaleFactor, -5 * scaleFactor);
+        ctx.lineTo(-10 * scaleFactor, -25 * scaleFactor);
+        ctx.lineTo(10 * scaleFactor, -25 * scaleFactor);
+        ctx.lineTo(12 * scaleFactor, -5 * scaleFactor);
+        ctx.closePath();
+        ctx.fill();
+
+        // Draw horns
+        ctx.fillStyle = '#212121'; // Dark gray
+
+        // Left horn
+        ctx.beginPath();
+        ctx.moveTo(-5 * scaleFactor, -25 * scaleFactor);
+        ctx.quadraticCurveTo(
+          -10 * scaleFactor, -40 * scaleFactor,
+          -15 * scaleFactor, -45 * scaleFactor
+        );
+        ctx.quadraticCurveTo(
+          -12 * scaleFactor, -35 * scaleFactor,
+          -8 * scaleFactor, -25 * scaleFactor
+        );
+        ctx.closePath();
+        ctx.fill();
+
+        // Right horn
+        ctx.beginPath();
+        ctx.moveTo(5 * scaleFactor, -25 * scaleFactor);
+        ctx.quadraticCurveTo(
+          10 * scaleFactor, -40 * scaleFactor,
+          15 * scaleFactor, -45 * scaleFactor
+        );
+        ctx.quadraticCurveTo(
+          12 * scaleFactor, -35 * scaleFactor,
+          8 * scaleFactor, -25 * scaleFactor
+        );
+        ctx.closePath();
+        ctx.fill();
+
+        // Draw demonic eyes
+        ctx.fillStyle = '#FF5722'; // Orange
+
+        // Left eye
+        ctx.beginPath();
+        ctx.arc(-5 * scaleFactor, -20 * scaleFactor, 2 * scaleFactor, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Right eye
+        ctx.beginPath();
+        ctx.arc(5 * scaleFactor, -20 * scaleFactor, 2 * scaleFactor, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Add hellfire effect
+        const hellColors = ['#F44336', '#FF5722', '#FF9800'];
+
+        for (let i = 0; i < 12; i++) {
+          const angle = Math.PI * 2 * (i / 12) + (timeInSec * 0.7) % (Math.PI * 2);
+          const length = (12 + Math.sin(timeInSec * 3 + i) * 4) * scaleFactor;
+          const colorIndex = i % hellColors.length;
+
+          ctx.fillStyle = hellColors[colorIndex];
+          ctx.globalAlpha = 0.6 + Math.random() * 0.4;
+
+          // Create flame shape
+          ctx.beginPath();
+          ctx.moveTo(0, -15 * scaleFactor);
+          ctx.lineTo(
+            Math.cos(angle - 0.2) * length * 0.5,
+            -15 * scaleFactor + Math.sin(angle - 0.2) * length * 0.5
+          );
+          ctx.lineTo(
+            Math.cos(angle) * length,
+            -15 * scaleFactor + Math.sin(angle) * length
+          );
+          ctx.lineTo(
+            Math.cos(angle + 0.2) * length * 0.5,
+            -15 * scaleFactor + Math.sin(angle + 0.2) * length * 0.5
+          );
+          ctx.closePath();
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1.0;
+
+        // Add pentagram effect
+        if (this.lastSpecialAbilityTime > 0 && currentTime - this.lastSpecialAbilityTime < 2000) {
+          const progress = (currentTime - this.lastSpecialAbilityTime) / 2000;
+
+          ctx.strokeStyle = '#F44336';
+          ctx.lineWidth = 1 * scaleFactor;
+          ctx.globalAlpha = 1 - progress;
+
+          // Draw pentagram
+          ctx.beginPath();
+          const pentaRadius = (20 + progress * 10) * scaleFactor;
+          for (let i = 0; i < 5; i++) {
+            const angle1 = Math.PI * 2 * (i / 5) - Math.PI / 2;
+            const angle2 = Math.PI * 2 * ((i + 2) % 5 / 5) - Math.PI / 2;
+
+            if (i === 0) {
+              ctx.moveTo(
+                Math.cos(angle1) * pentaRadius,
+                -15 * scaleFactor + Math.sin(angle1) * pentaRadius
+              );
+            }
+
+            ctx.lineTo(
+              Math.cos(angle2) * pentaRadius,
+              -15 * scaleFactor + Math.sin(angle2) * pentaRadius
+            );
+          }
+          ctx.closePath();
+          ctx.stroke();
+          ctx.globalAlpha = 1.0;
         }
 
         // Path A: Divine Wrath - More offensive appearance

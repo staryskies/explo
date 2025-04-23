@@ -44,7 +44,7 @@ const difficultyMaps = {
       }
     ]
   },
-  
+
   // Medium difficulty map - Desert theme
   medium: {
     name: "Desert Dunes",
@@ -82,7 +82,7 @@ const difficultyMaps = {
       }
     ]
   },
-  
+
   // Hard difficulty map - Volcanic theme
   hard: {
     name: "Volcanic Wasteland",
@@ -120,7 +120,7 @@ const difficultyMaps = {
       }
     ]
   },
-  
+
   // Nightmare difficulty map - Dark forest theme (lighter than before)
   nightmare: {
     name: "Haunted Forest",
@@ -164,7 +164,7 @@ const difficultyMaps = {
       intensity: 0.8
     }
   },
-  
+
   // Void difficulty map - Void theme
   void: {
     name: "The Void",
@@ -212,9 +212,9 @@ const difficultyMaps = {
       }
     }
   },
-  
+
   // Hell and Heaven's Trial - Dual path theme
-  trial: {
+  heavenHell: {
     name: "Hell and Heaven's Trial",
     description: "A realm split between divine light and infernal darkness",
     backgroundColor: "#303030", // Dark grey
@@ -293,54 +293,54 @@ function getMapForDifficulty(difficulty) {
 // Apply map template to the current map
 function applyMapTemplate(map, difficulty) {
   const template = getMapForDifficulty(difficulty);
-  
+
   // Apply basic properties
   map.backgroundColor = template.backgroundColor;
   map.pathColor = template.pathColor;
   map.tileColor = template.tileColor;
   map.borderColor = template.borderColor;
   map.gridLines = template.gridLines;
-  
+
   // Apply special effects if the map supports them
   if (map.specialEffects && template.specialEffects) {
     map.specialEffects = { ...template.specialEffects };
   }
-  
+
   // Apply darkness level
   if (map.setDarkness && typeof template.darkness === 'number') {
     map.setDarkness(template.darkness);
   }
-  
+
   // Apply fog of war
   if (map.setFogOfWar && typeof template.fogOfWar === 'boolean') {
     map.setFogOfWar(template.fogOfWar);
   }
-  
+
   // Apply path width
   if (map.setPathWidth && typeof template.pathWidth === 'number') {
     map.setPathWidth(template.pathWidth);
   }
-  
+
   // Apply decorations if the map supports them
   if (map.addDecorations && template.decorations) {
     map.addDecorations(template.decorations);
   }
-  
+
   // Apply light orbs for Nightmare difficulty
   if (difficulty === 'nightmare' && map.addLightOrbs && template.lightOrbs) {
     map.addLightOrbs(template.lightOrbs);
   }
-  
+
   // Apply void effects for Void difficulty
   if (difficulty === 'void' && map.enableVoidEffects && template.voidEffects) {
     map.enableVoidEffects(template.voidEffects);
   }
-  
+
   // Apply dual path for Hell and Heaven's Trial
-  if (difficulty === 'trial' && map.enableDualPath && template.dualPath) {
+  if ((difficulty === 'trial' || difficulty === 'heavenHell') && map.enableDualPath && template.dualPath) {
     map.enableDualPath(template.heavenPath, template.hellPath);
   }
-  
+
   return map;
 }
 

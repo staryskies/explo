@@ -205,16 +205,16 @@ const towerStats = {
     persistentCost: 600,
     ability: "Divine Judgment",
     range: 400, // Increased range even more
-    damage: 2500, // Significantly increased damage
-    fireRate: 4.5, // Faster fire rate
+    damage: 800, // Balanced damage (reduced from 2500)
+    fireRate: 3.5, // Balanced fire rate (reduced from 4.5)
     projectileSpeed: 50, // Faster projectiles
     canTargetFlying: true,
-    pierceCount: 8, // Pierces through more enemies
-    critChance: 0.6, // Higher crit chance
-    critMultiplier: 5.0, // Higher crit multiplier
-    aoeRadius: 120, // Larger area damage
-    chainCount: 8, // Can chain to more enemies
-    chainRange: 400, // Longer chain range
+    pierceCount: 6, // Pierces through enemies (reduced from 8)
+    critChance: 0.5, // High crit chance (reduced from 0.6)
+    critMultiplier: 4.0, // High crit multiplier (reduced from 5.0)
+    aoeRadius: 100, // Area damage (reduced from 120)
+    chainCount: 5, // Can chain to enemies (reduced from 8)
+    chainRange: 350, // Chain range (reduced from 400)
     buffRadius: 250, // Larger buff radius
     buffDamage: 0.4, // 40% damage buff to nearby towers
     buffRange: 0.3, // 30% range buff to nearby towers
@@ -269,19 +269,27 @@ const towerStats = {
     persistentCost: 650,
     ability: "Heavenly Fire",
     range: 450,
-    damage: 3000,
-    fireRate: 5.0,
+    damage: 1000, // Balanced damage (reduced from 3000)
+    fireRate: 4.0, // Balanced fire rate (reduced from 5.0)
     projectileSpeed: 55,
     canTargetFlying: true,
-    pierceCount: 10,
-    critChance: 0.7,
-    critMultiplier: 6.0,
-    aoeRadius: 150,
-    burnDamage: 500, // Damage per second
+    pierceCount: 8, // Reduced from 10
+    critChance: 0.6, // Reduced from 0.7
+    critMultiplier: 5.0, // Reduced from 6.0
+    aoeRadius: 120, // Reduced from 150
+    burnDamage: 200, // Damage per second (reduced from 500)
     burnDuration: 5000, // 5 seconds
     purifyChance: 0.4, // 40% chance to remove special abilities from enemies
+    specialAbility: "Divine Radiance", // New special ability
+    specialAbilityDescription: "Periodically emits a wave of light that damages all enemies on screen",
+    specialAbilityCooldown: 15, // 15 seconds cooldown
+    specialAbilityDamage: 300, // Damage to all enemies
     color: '#FF9800', // Orange
-    tier: 'divine'
+    tier: 'divine',
+    visualEffect: "wings", // Visual effect for the tower
+    projectileType: "light", // Type of projectile
+    projectileColor: "#FFEB3B", // Bright yellow projectiles
+    hitEffect: "holy" // Effect when hitting enemies
   },
 
   demonLord: {
@@ -290,17 +298,26 @@ const towerStats = {
     persistentCost: 650,
     ability: "Legion Command",
     range: 380,
-    damage: 2800,
-    fireRate: 4.0,
+    damage: 900, // Balanced damage (reduced from 2800)
+    fireRate: 3.5, // Balanced fire rate (reduced from 4.0)
     projectileSpeed: 40,
     canTargetFlying: true,
     summonCount: 3, // Summons 3 demon minions
     summonDuration: 10000, // 10 seconds
-    summonDamage: 500, // Damage per demon
+    summonDamage: 200, // Damage per demon (reduced from 500)
     fearChance: 0.5, // 50% chance to cause fear
     fearDuration: 3000, // 3 seconds
+    specialAbility: "Hellfire", // New special ability
+    specialAbilityDescription: "Summons a pentagram that deals massive damage to enemies inside it",
+    specialAbilityCooldown: 20, // 20 seconds cooldown
+    specialAbilityDamage: 500, // Damage to enemies in the pentagram
+    specialAbilityDuration: 5000, // 5 seconds duration
     color: '#F44336', // Red
-    tier: 'divine'
+    tier: 'divine',
+    visualEffect: "horns", // Visual effect for the tower
+    projectileType: "fire", // Type of projectile
+    projectileColor: "#FF5722", // Deep orange projectiles
+    hitEffect: "demonic" // Effect when hitting enemies
   }
 };
 

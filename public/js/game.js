@@ -21,6 +21,11 @@ class Game {
     } else {
       // Default towers if none selected
       this.availableTowers = ['basic', 'cannon', 'archer', 'freeze'];
+
+      // Add divine towers if playing on Heaven and Hell difficulty
+      if (this.difficulty === 'heavenHell') {
+        this.availableTowers.push('archangel', 'seraphim', 'demonLord');
+      }
     }
 
     // Difficulty settings
@@ -37,7 +42,7 @@ class Game {
     this.towers = [];
     this.enemies = [];
     this.projectiles = [];
-    this.effects = [];
+    this.effects = []; // Array for special effects
 
     // Silver earned in this game (permanent currency)
     this.silverEarned = 0;
@@ -386,7 +391,8 @@ class Game {
       hard: [10, 20, 30, 40], // Wave 40: Hard boss (final)
       nightmare: [10, 20, 30, 40, 50], // Wave 50: Nightmare boss (final)
       void: [10, 20, 30, 40, 50], // Wave 50: Void boss (final)
-      trial: [10, 20, 30, 40, 50, 60] // Wave 60: Dual boss (final)
+      trial: [10, 20, 30, 40, 50, 60], // Wave 60: Dual boss (final)
+      heavenHell: [10, 20, 30, 40, 50, 60] // Wave 60: Dual boss (final)
     };
 
     return bossWaves[this.difficulty] || [10, 20];
@@ -590,8 +596,16 @@ class Game {
 
     // Update towers and find targets
     this.towers.forEach(tower => {
-      // Pass the towers array to the update method for tower interactions (like Archangel buffs)
-      tower.update(currentTime, this.enemies, this.projectiles, this.towers);
+      // Call the tower update method for special abilities
+      if (typeof tower.update === 'function') {
+        tower.update(currentTime, this.enemies, this.projectiles, this.effects);
+      }
+
+      // Find targets and shoot
+      const target = tower.findTarget(this.enemies, currentTime);
+      if (target) {
+        tower.shoot(currentTime, this.projectiles);
+      }
     });
 
     // Update projectiles
@@ -625,6 +639,39 @@ class Game {
 
     // Remove inactive projectiles
     this.projectiles = this.projectiles.filter(projectile => projectile.active);
+
+    // Update effects
+    if (this.effects) {
+      this.effects = this.effects.filter(effect => {
+        // Check if effect has expired
+        if (effect.startTime && effect.duration) {
+          return currentTime - effect.startTime < effect.duration;
+        }
+
+        // Check if effect has an end time
+        if (effect.endTime) {
+          return currentTime < effect.endTime;
+        }
+
+        // Default to keeping the effect
+        return true;
+      });
+
+      // Process active effects
+      this.effects.forEach(effect => {
+        // Handle hellfire effect (damage over time)
+        if (effect.type === 'hellfire' && effect.damage) {
+          this.enemies.forEach(enemy => {
+            if (enemy.alive) {
+              const dist = Math.sqrt(Math.pow(enemy.x - effect.x, 2) + Math.pow(enemy.y - effect.y, 2));
+              if (dist <= effect.radius) {
+                enemy.takeDamage(effect.damage * deltaTime);
+              }
+            }
+          });
+        }
+      });
+    }
 
     // Check if wave is complete
     if (this.waveInProgress &&
@@ -793,6 +840,98 @@ class Game {
         projectile.drawExplosion(this.ctx);
       }
     });
+
+    // Draw special effects
+    if (this.effects && this.effects.length > 0) {
+      this.effects.forEach(effect => {
+        // Draw divine judgment effect
+        if (effect.type === 'divineJudgment') {
+          const progress = Math.min((currentTime - effect.startTime) / effect.duration, 1);
+          const radius = effect.maxRadius * progress;
+
+          this.ctx.globalAlpha = 0.5 * (1 - progress);
+          this.ctx.fillStyle = effect.color;
+          this.ctx.beginPath();
+          this.ctx.arc(effect.x, effect.y, radius, 0, Math.PI * 2);
+          this.ctx.fill();
+          this.ctx.globalAlpha = 1.0;
+        }
+
+        // Draw divine radiance effect
+        else if (effect.type === 'divineRadiance') {
+          const progress = Math.min((currentTime - effect.startTime) / effect.duration, 1);
+          const radius = effect.maxRadius * progress;
+
+          this.ctx.globalAlpha = 0.7 * (1 - progress);
+          this.ctx.fillStyle = effect.color;
+          this.ctx.beginPath();
+          this.ctx.arc(effect.x, effect.y, radius, 0, Math.PI * 2);
+          this.ctx.fill();
+
+          // Add rays
+          this.ctx.strokeStyle = effect.color;
+          this.ctx.lineWidth = 3 * (1 - progress);
+
+          for (let i = 0; i < 16; i++) {
+            const angle = Math.PI * 2 * (i / 16);
+            const rayLength = radius * 0.2;
+
+            this.ctx.beginPath();
+            this.ctx.moveTo(effect.x, effect.y);
+            this.ctx.lineTo(
+              effect.x + Math.cos(angle) * rayLength,
+              effect.y + Math.sin(angle) * rayLength
+            );
+            this.ctx.stroke();
+          }
+
+          this.ctx.globalAlpha = 1.0;
+        }
+
+        // Draw hellfire effect
+        else if (effect.type === 'hellfire') {
+          // Calculate progress for animation effects if needed
+          const elapsedTime = currentTime - effect.startTime;
+          const totalDuration = effect.endTime - effect.startTime;
+          const progress = Math.min(elapsedTime / totalDuration, 1);
+          const pulseIntensity = 0.5 + Math.sin(currentTime / 200) * 0.2 * (1 - progress * 0.5);
+
+          // Draw pentagram
+          this.ctx.strokeStyle = effect.color;
+          this.ctx.lineWidth = 3;
+          this.ctx.globalAlpha = 0.8 * pulseIntensity;
+
+          this.ctx.beginPath();
+          for (let i = 0; i < 5; i++) {
+            const angle1 = Math.PI * 2 * (i / 5) - Math.PI / 2;
+            const angle2 = Math.PI * 2 * ((i + 2) % 5 / 5) - Math.PI / 2;
+
+            if (i === 0) {
+              this.ctx.moveTo(
+                effect.x + Math.cos(angle1) * effect.radius,
+                effect.y + Math.sin(angle1) * effect.radius
+              );
+            }
+
+            this.ctx.lineTo(
+              effect.x + Math.cos(angle2) * effect.radius,
+              effect.y + Math.sin(angle2) * effect.radius
+            );
+          }
+          this.ctx.closePath();
+          this.ctx.stroke();
+
+          // Draw fire effect
+          this.ctx.fillStyle = effect.color;
+          this.ctx.globalAlpha = 0.3 * pulseIntensity;
+          this.ctx.beginPath();
+          this.ctx.arc(effect.x, effect.y, effect.radius * 0.8, 0, Math.PI * 2);
+          this.ctx.fill();
+
+          this.ctx.globalAlpha = 1.0;
+        }
+      });
+    }
 
     // Draw tower placement preview
     if (this.selectedTowerType) {
@@ -1227,7 +1366,7 @@ class Game {
     }
 
     // Shadow targeting (only certain tower types)
-    const shadowTargetingTowers = ['tesla', 'laser', 'flame'];
+    const shadowTargetingTowers = ['tesla', 'laser', 'flame', 'archangel', 'seraphim', 'demonLord'];
     if (shadowTargetingTowers.includes(towerType)) {
       document.getElementById('preview-target-shadow').textContent = 'Yes';
       document.getElementById('preview-target-shadow').className = 'target-yes';
@@ -1389,7 +1528,7 @@ class Game {
     }
 
     // Initialize dual path mode for Hell and Heaven's Trial
-    if (this.difficulty === 'trial') {
+    if (this.difficulty === 'trial' || this.difficulty === 'heavenHell') {
       // Enable dual path mode
       this.dualPathMode = true;
       console.log('Dual path mode enabled for Hell and Heaven\'s Trial');
@@ -1472,6 +1611,7 @@ class Game {
       case 'nightmare': return 3;
       case 'void': return 2;
       case 'trial': return 4; // Dual paths need more lives
+      case 'heavenHell': return 4; // Dual paths need more lives
       default: return 10;
     }
   }
@@ -1485,6 +1625,7 @@ class Game {
       case 'nightmare': return 560;
       case 'void': return 800;
       case 'trial': return 1000; // Need more gold for dual paths
+      case 'heavenHell': return 1000; // Need more gold for dual paths
       default: return 100;
     }
   }
@@ -1501,6 +1642,7 @@ class Game {
       case 'nightmare': return Math.floor(baseEnemies * 1.4);
       case 'void': return Math.floor(baseEnemies * 1.5);
       case 'trial': return Math.floor(baseEnemies * 1.6); // 60% more enemies for dual paths
+      case 'heavenHell': return Math.floor(baseEnemies * 1.6); // 60% more enemies for dual paths
       default: return baseEnemies;
     }
   }
@@ -1572,6 +1714,7 @@ class Game {
         };
 
       case 'trial':
+      case 'heavenHell':
         // For Hell and Heaven's Trial, we use the getRandomEnemyType function in dualPathMode.js
         // which modifies these probabilities based on the path (heaven or hell)
         return {
