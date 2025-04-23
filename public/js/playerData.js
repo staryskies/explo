@@ -158,6 +158,21 @@ function loadPlayerData() {
       // Update playerData with saved values
       Object.assign(playerData, parsedData);
       console.log('Player data loaded');
+
+      // Ensure basic tower has normal variant
+      if (!playerData.towerInventory['basic_normal']) {
+        playerData.towerInventory['basic_normal'] = 1;
+        console.log('Added basic_normal tower to inventory');
+      }
+
+      // Ensure there's at least one tower in the loadout
+      if (!playerData.selectedTowersForLoadout || playerData.selectedTowersForLoadout.length === 0) {
+        playerData.selectedTowersForLoadout = ['basic_normal'];
+        console.log('Reset loadout with basic_normal tower');
+      }
+
+      // Save any changes made
+      savePlayerData();
     } catch (error) {
       console.error('Error loading player data:', error);
     }

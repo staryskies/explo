@@ -209,35 +209,49 @@ function setupEventListeners() {
     console.error('Variant gacha button not found');
   }
 
-  // Inventory button
-  const inventoryButton = document.getElementById('inventory-button');
-  if (inventoryButton) {
-    inventoryButton.addEventListener('click', () => {
-      const inventoryModal = document.getElementById('inventory-modal');
-      if (inventoryModal) {
-        // Generate inventory content before showing the modal
-        generateInventoryContent();
+  // Loadout button
+  const loadoutButton = document.getElementById('loadout-button');
+  if (loadoutButton) {
+    loadoutButton.addEventListener('click', () => {
+      const loadoutModal = document.getElementById('loadout-modal');
+      if (loadoutModal) {
+        // Generate loadout content before showing the modal
+        generateLoadoutContent();
 
         // Use classList to show the modal properly
-        inventoryModal.classList.add('active');
+        loadoutModal.classList.add('active');
 
         // Update silver display when opening the modal
-        const inventorySilverAmount = document.getElementById('inventory-silver-amount');
-        if (inventorySilverAmount) {
-          inventorySilverAmount.textContent = playerData.silver;
+        const loadoutSilverAmount = document.getElementById('loadout-silver-amount');
+        if (loadoutSilverAmount) {
+          loadoutSilverAmount.textContent = playerData.silver;
         }
 
         // Update gems display when opening the modal
-        const inventoryGemsAmount = document.getElementById('inventory-gems-amount');
-        if (inventoryGemsAmount) {
-          inventoryGemsAmount.textContent = playerData.gems;
+        const loadoutGemsAmount = document.getElementById('loadout-gems-amount');
+        if (loadoutGemsAmount) {
+          loadoutGemsAmount.textContent = playerData.gems;
         }
       } else {
-        console.error('Inventory modal not found');
+        notificationSystem.error('Loadout modal not found');
       }
     });
   } else {
-    console.error('Inventory button not found');
+    console.error('Loadout button not found');
+  }
+
+  // Tutorial button
+  const tutorialButton = document.getElementById('tutorial-button');
+  if (tutorialButton) {
+    tutorialButton.addEventListener('click', () => {
+      if (window.tutorialSystem) {
+        window.tutorialSystem.showTutorialAgain();
+      } else {
+        notificationSystem.error('Tutorial system not found');
+      }
+    });
+  } else {
+    console.error('Tutorial button not found');
   }
 
   // Market button
@@ -852,10 +866,226 @@ function getTotalTowerCount() {
   return Object.keys(playerData.towerPrices).length;
 }
 
-// Generate inventory content
-function generateInventoryContent() {
-  // Generate combined tower+variant inventory
-  generateTowerVariantInventory();
+// Generate loadout content
+function generateLoadoutContent() {
+  // Generate available towers for loadout
+  generateAvailableTowers();
+
+  // Update selected loadout display
+  updateSelectedLoadout();
+}
+
+// Generate available towers for loadout
+function generateAvailableTowers() {
+  const towersLoadout = document.getElementById('towers-loadout');
+  if (!towersLoadout) return;
+
+  // Clear existing content
+  towersLoadout.innerHTML = '';
+
+  // Get all tower+variant combinations from inventory
+  const towerVariantKeys = Object.keys(playerData.towerInventory);
+
+  // Group by tower type for better organization
+  const towerGroups = {};
+
+  towerVariantKeys.forEach(key => {
+    // Skip if count is 0
+    if (playerData.towerInventory[key] <= 0) return;
+
+    const [towerType, variant] = key.split('_');
+
+    if (!towerGroups[towerType]) {
+      towerGroups[towerType] = [];
+    }
+
+    towerGroups[towerType].push({
+      towerType,
+      variant,
+      count: playerData.towerInventory[key]
+    });
+  });
+
+  // Create a grid for each tower type
+  Object.keys(towerGroups).forEach(towerType => {
+    const towerData = towerStats[towerType] || { name: towerType, description: 'Unknown tower', color: '#888' };
+
+    // Create tower type header
+    const towerHeader = document.createElement('div');
+    towerHeader.className = 'loadout-tower-header';
+    towerHeader.textContent = towerData.name;
+    towersLoadout.appendChild(towerHeader);
+
+    // Create grid for this tower's variants
+    const towerGrid = document.createElement('div');
+    towerGrid.className = 'loadout-tower-grid';
+    towersLoadout.appendChild(towerGrid);
+
+    // Add each variant
+    towerGroups[towerType].forEach(item => {
+      const variantData = towerVariants[item.variant] || { name: item.variant, tier: 'common' };
+
+      // Create loadout item
+      const loadoutItem = document.createElement('div');
+      loadoutItem.className = `loadout-item ${variantData.tier}`;
+      loadoutItem.dataset.towerType = item.towerType;
+      loadoutItem.dataset.variant = item.variant;
+
+      // Create tower image container
+      const imageContainer = document.createElement('div');
+      imageContainer.className = `loadout-item-image ${variantData.tier}`;
+
+      // Create canvas for tower image
+      const towerCanvas = document.createElement('canvas');
+      towerCanvas.width = 60;
+      towerCanvas.height = 60;
+      const ctx = towerCanvas.getContext('2d');
+
+      // Draw tower with variant
+      drawTowerWithVariant(ctx, item.towerType, towerData, item.variant, variantData);
+      imageContainer.appendChild(towerCanvas);
+
+      // Create tower name
+      const towerName = document.createElement('div');
+      towerName.className = 'loadout-item-name';
+      towerName.textContent = towerData.name;
+
+      // Create variant tier
+      const variantTier = document.createElement('div');
+      variantTier.className = `loadout-item-tier ${variantData.tier}`;
+      variantTier.textContent = `${variantData.name} (${item.count})`;
+
+      // Create tower description
+      const towerDesc = document.createElement('div');
+      towerDesc.className = 'loadout-item-desc';
+      towerDesc.textContent = towerData.description;
+
+      // Create actions container
+      const actionsContainer = document.createElement('div');
+      actionsContainer.className = 'loadout-item-actions';
+
+      // Create add to loadout button
+      const addButton = document.createElement('button');
+      addButton.className = 'add-to-loadout-button';
+      addButton.textContent = 'Add to Loadout';
+      addButton.addEventListener('click', () => {
+        addToLoadout(item.towerType, item.variant);
+      });
+      actionsContainer.appendChild(addButton);
+
+      // Add elements to loadout item
+      loadoutItem.appendChild(imageContainer);
+      loadoutItem.appendChild(towerName);
+      loadoutItem.appendChild(variantTier);
+      loadoutItem.appendChild(towerDesc);
+      loadoutItem.appendChild(actionsContainer);
+
+      // Add to tower grid
+      towerGrid.appendChild(loadoutItem);
+    });
+  });
+}
+
+// Update selected loadout display
+function updateSelectedLoadout() {
+  const selectedLoadout = document.getElementById('selected-loadout');
+  if (!selectedLoadout) return;
+
+  // Clear existing content
+  const slots = selectedLoadout.querySelectorAll('.loadout-slot');
+  slots.forEach(slot => {
+    // Keep the slot but clear its content
+    slot.innerHTML = '';
+    slot.className = 'loadout-slot empty';
+    slot.dataset.towerType = '';
+    slot.dataset.variant = '';
+  });
+
+  // Get selected towers from player data
+  const selectedTowers = playerData.selectedTowersForLoadout || [];
+
+  // Fill slots with selected towers
+  selectedTowers.forEach((towerVariant, index) => {
+    if (index >= slots.length) return; // Skip if we have more towers than slots
+
+    const [towerType, variant] = towerVariant.split('_');
+    const towerData = towerStats[towerType] || { name: towerType, color: '#888' };
+    const variantData = towerVariants[variant] || { name: variant, tier: 'common' };
+
+    const slot = slots[index];
+    slot.className = `loadout-slot ${variantData.tier}`;
+    slot.dataset.towerType = towerType;
+    slot.dataset.variant = variant;
+
+    // Create canvas for tower image
+    const towerCanvas = document.createElement('canvas');
+    towerCanvas.width = 60;
+    towerCanvas.height = 60;
+    const ctx = towerCanvas.getContext('2d');
+
+    // Draw tower with variant
+    drawTowerWithVariant(ctx, towerType, towerData, variant, variantData);
+    slot.appendChild(towerCanvas);
+
+    // Create remove button
+    const removeButton = document.createElement('button');
+    removeButton.className = 'remove-from-loadout';
+    removeButton.textContent = 'X';
+    removeButton.addEventListener('click', (e) => {
+      e.stopPropagation(); // Prevent slot click
+      removeFromLoadout(index);
+    });
+    slot.appendChild(removeButton);
+  });
+}
+
+// Add tower to loadout
+function addToLoadout(towerType, variant) {
+  // Check if we already have 4 towers
+  if (!playerData.selectedTowersForLoadout) {
+    playerData.selectedTowersForLoadout = [];
+  }
+
+  if (playerData.selectedTowersForLoadout.length >= 4) {
+    notificationSystem.warning('Loadout is full! Remove a tower first.');
+    return false;
+  }
+
+  // Check if this tower is already in the loadout
+  const combinedKey = `${towerType}_${variant}`;
+  if (playerData.selectedTowersForLoadout.includes(combinedKey)) {
+    notificationSystem.info('This tower is already in your loadout.');
+    return false;
+  }
+
+  // Add to loadout
+  playerData.selectedTowersForLoadout.push(combinedKey);
+  savePlayerData();
+
+  // Update display
+  updateSelectedLoadout();
+
+  notificationSystem.success(`Added ${towerStats[towerType]?.name || towerType} to loadout!`);
+  return true;
+}
+
+// Remove tower from loadout
+function removeFromLoadout(index) {
+  if (!playerData.selectedTowersForLoadout) return false;
+
+  if (index >= 0 && index < playerData.selectedTowersForLoadout.length) {
+    const removed = playerData.selectedTowersForLoadout.splice(index, 1)[0];
+    savePlayerData();
+
+    // Update display
+    updateSelectedLoadout();
+
+    const [towerType] = removed.split('_');
+    notificationSystem.info(`Removed ${towerStats[towerType]?.name || towerType} from loadout.`);
+    return true;
+  }
+
+  return false;
 }
 
 // Generate combined tower+variant inventory
@@ -1430,13 +1660,13 @@ function setupGachaEventListeners() {
     });
   }
 
-  // Close inventory button
-  const closeInventory = document.getElementById('close-inventory');
-  if (closeInventory) {
-    closeInventory.addEventListener('click', () => {
-      const inventoryModal = document.getElementById('inventory-modal');
-      if (inventoryModal) {
-        inventoryModal.classList.remove('active');
+  // Close loadout button
+  const closeLoadout = document.getElementById('close-loadout');
+  if (closeLoadout) {
+    closeLoadout.addEventListener('click', () => {
+      const loadoutModal = document.getElementById('loadout-modal');
+      if (loadoutModal) {
+        loadoutModal.classList.remove('active');
       }
     });
   }

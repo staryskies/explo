@@ -10,7 +10,26 @@
   <link rel="stylesheet" href="css/market.css">
   <link rel="stylesheet" href="css/leaderboard.css">
   <link rel="stylesheet" href="css/rollUntil.css">
+  <link rel="stylesheet" href="css/gacha.css">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* Tutorial button styles */
+    #tutorial-button {
+      margin-top: 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s;
+    }
+
+    #tutorial-button:hover {
+      background-color: #388E3C;
+    }
+  </style>
 </head>
 <body>
   <div id="main-menu-container">
@@ -20,9 +39,10 @@
         <button id="play-button" class="menu-btn">Play Game</button>
         <button id="tower-gacha-button" class="menu-btn">Tower Gacha</button>
         <button id="variant-gacha-button" class="menu-btn">Variant Gacha</button>
-        <button id="inventory-button" class="menu-btn">Inventory</button>
+        <button id="loadout-button" class="menu-btn">Loadout</button>
         <button id="market-button" class="menu-btn">Market</button>
         <button id="leaderboard-button" class="menu-btn">Leaderboard</button>
+        <button id="tutorial-button" class="menu-btn">Tutorial</button>
       </div>
 
       <div class="player-stats">
@@ -424,35 +444,44 @@
       </div>
     </div>
 
-    <!-- Inventory Modal -->
-    <div id="inventory-modal" class="modal">
-      <div class="modal-content inventory-content">
+    <!-- Loadout Modal -->
+    <div id="loadout-modal" class="modal">
+      <div class="modal-content loadout-content">
         <div class="modal-header">
-          <h2>Tower Inventory</h2>
-          <span class="close-btn" id="close-inventory">&times;</span>
+          <h2>Tower Loadout</h2>
+          <span class="close-btn" id="close-loadout">&times;</span>
         </div>
 
-        <!-- Inventory Tabs -->
-        <div class="inventory-tabs">
-          <button class="inventory-tab active" data-tab="towers-tab">Towers</button>
+        <!-- Selected Loadout Section -->
+        <div class="selected-loadout-section">
+          <h3>Current Loadout (4 Max)</h3>
+          <div class="selected-loadout" id="selected-loadout">
+            <div class="loadout-slot empty" data-slot="0"></div>
+            <div class="loadout-slot empty" data-slot="1"></div>
+            <div class="loadout-slot empty" data-slot="2"></div>
+            <div class="loadout-slot empty" data-slot="3"></div>
+          </div>
+        </div>
+
+        <!-- Loadout Tabs -->
+        <div class="loadout-tabs">
+          <button class="loadout-tab active" data-tab="towers-tab">Available Towers</button>
         </div>
 
         <!-- Towers Tab Content -->
-        <div class="inventory-tab-content active" id="towers-tab">
-          <div class="inventory-grid" id="towers-inventory">
+        <div class="loadout-tab-content active" id="towers-tab">
+          <div class="loadout-grid" id="towers-loadout">
             <!-- Tower inventory will be generated here -->
           </div>
         </div>
 
-        <!-- Variants Tab Content Removed -->
-
         <div class="modal-footer">
           <div class="currency-display">
             <span>Silver: </span>
-            <span id="inventory-silver-amount">0</span>
+            <span id="loadout-silver-amount">0</span>
             <span class="currency-separator">|</span>
             <span>Gems: </span>
-            <span id="inventory-gems-amount">0</span>
+            <span id="loadout-gems-amount">0</span>
           </div>
         </div>
       </div>
@@ -717,6 +746,7 @@
 
   <!-- Load game scripts in the correct order -->
   <script src="js/services/mockAuthService.js"></script>
+  <script src="js/notification.js"></script>
   <script src="js/playerData.js"></script>
   <script src="js/towerData.js"></script>
   <script src="js/towerVariants.js"></script>
@@ -730,6 +760,7 @@
   <script src="js/auth.js"></script>
   <script src="js/leaderboard.js"></script>
   <script src="js/market.js"></script>
+  <script src="js/tutorial.js"></script>
   <script src="js/menu.js"></script>
 
   <!-- Initialize components after DOM is loaded -->

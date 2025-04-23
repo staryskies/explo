@@ -13,19 +13,27 @@ class Game {
     this.speedMultiplier = 1;
     this.maxSpeedMultiplier = 2.3; // Changed from 5 to 2.3 as requested
 
-    // Get the selected towers from session storage
-    const selectedTowers = sessionStorage.getItem('selectedTowers');
-    if (selectedTowers) {
-      this.availableTowers = JSON.parse(selectedTowers);
+    // Get the selected towers from player data
+    if (window.playerData && window.playerData.selectedTowersForLoadout) {
+      // Convert combined keys to tower types
+      this.availableTowers = window.playerData.selectedTowersForLoadout.map(item => {
+        const [towerType] = item.split('_');
+        return towerType;
+      });
       console.log('Loadout towers:', this.availableTowers);
     } else {
       // Default towers if none selected
       this.availableTowers = ['basic', 'cannon', 'archer', 'freeze'];
+    }
 
-      // Add divine towers if playing on Heaven and Hell difficulty
-      if (this.difficulty === 'heavenHell') {
-        this.availableTowers.push('archangel', 'seraphim', 'demonLord');
-      }
+    // Add divine towers if playing on Heaven and Hell difficulty
+    if (this.difficulty === 'heavenHell') {
+      // Add divine towers if not already in loadout
+      ['archangel', 'seraphim', 'demonLord'].forEach(divineTower => {
+        if (!this.availableTowers.includes(divineTower)) {
+          this.availableTowers.push(divineTower);
+        }
+      });
     }
 
     // Difficulty settings
@@ -148,13 +156,13 @@ class Game {
             // Convert grid coordinates to pixel coordinates (center of tile)
             const pixelPos = this.map.gridToPixel(gridPos.x, gridPos.y);
 
-            // Get the selected tower option to check for variant
-            const towerOption = document.querySelector(`.tower-option[data-type="${this.selectedTowerType}"]`);
-            const variant = towerOption?.dataset.variant;
+            // Use the stored variant from selectTowerType
+            const variant = this.selectedTowerVariant || 'normal';
 
-            // Create the tower with grid coordinates and variant if available
+            // Create the tower with grid coordinates and variant
             try {
-              const tower = new Tower(pixelPos.x, pixelPos.y, this.selectedTowerType, gridPos.x, gridPos.y, variant);
+              // Use the Tower constructor from the global scope
+              const tower = new window.Tower(pixelPos.x, pixelPos.y, this.selectedTowerType, gridPos.x, gridPos.y, variant);
               this.towers.push(tower);
 
               // Mark the tile as occupied
@@ -281,7 +289,11 @@ class Game {
     const towerCost = this.getTowerCost(type);
     if (this.gold < towerCost) {
       // Not enough gold, show notification
-      this.showNotification(`Not enough gold! Need ${towerCost}, have ${this.gold}`);
+      if (window.notificationSystem) {
+        window.notificationSystem.error(`Not enough gold! Need ${towerCost}, have ${this.gold}`);
+      } else {
+        this.showNotification(`Not enough gold! Need ${towerCost}, have ${this.gold}`);
+      }
       console.log(`Not enough gold for ${type} tower. Need ${towerCost}, have ${this.gold}`);
       return;
     }
@@ -293,6 +305,10 @@ class Game {
     const towerOption = document.querySelector(`.tower-option[data-type="${type}"]`);
     if (towerOption) {
       towerOption.classList.add('selected');
+
+      // Store the variant for later use when placing the tower
+      this.selectedTowerVariant = towerOption.dataset.variant || 'normal';
+      console.log(`Selected tower: ${type} with variant: ${this.selectedTowerVariant}`);
     } else {
       console.error(`Tower option for type ${type} not found`);
     }
@@ -463,8 +479,8 @@ class Game {
       }
     }
 
-    // Create the enemy
-    const enemy = new Enemy(this.map.pathCoordinates, enemyType);
+    // Create the enemy using the global Enemy constructor
+    const enemy = new window.Enemy(this.map.pathCoordinates, enemyType);
     this.enemies.push(enemy);
 
     this.enemiesSpawned++;
@@ -1301,17 +1317,54 @@ class Game {
       const towerData = towerStats[towerType];
       if (!towerData) return;
 
+      // Find the variant for this tower from player data
+      let variant = 'normal'; // Default to normal variant
+      if (window.playerData && window.playerData.selectedTowersForLoadout) {
+        const towerEntry = window.playerData.selectedTowersForLoadout.find(item => {
+          return item.split('_')[0] === towerType;
+        });
+
+        if (towerEntry) {
+          variant = towerEntry.split('_')[1] || 'normal';
+        }
+      }
+
+      // Get variant data
+      const variantData = window.towerVariants[variant] || { name: 'Normal', tier: 'common' };
+
       const towerOption = document.createElement('div');
-      towerOption.className = 'tower-option';
+      towerOption.className = `tower-option ${variantData.tier}`;
       towerOption.dataset.type = towerType;
+      towerOption.dataset.variant = variant;
 
       const towerIcon = document.createElement('div');
       towerIcon.className = 'tower-icon';
       towerIcon.style.backgroundColor = towerData.color || '#4CAF50';
 
+      // Add variant styling
+      if (variant !== 'normal') {
+        // Add variant-specific styling
+        if (variantData.color) {
+          towerIcon.style.border = `2px solid ${variantData.color}`;
+        }
+
+        // Add glow effect for rare+ variants
+        if (variantData.tier !== 'common') {
+          towerIcon.style.boxShadow = `0 0 10px ${variantData.color || '#FFF'}`;
+        }
+      }
+
       const towerName = document.createElement('div');
       towerName.className = 'tower-name';
       towerName.textContent = towerData.name || towerType;
+
+      // Add variant name if not normal
+      if (variant !== 'normal') {
+        const variantBadge = document.createElement('div');
+        variantBadge.className = `variant-badge ${variantData.tier}`;
+        variantBadge.textContent = variantData.name;
+        towerOption.appendChild(variantBadge);
+      }
 
       const towerCost = document.createElement('div');
       towerCost.className = 'tower-cost';

@@ -98,7 +98,11 @@ function setupTowerGachaEvents() {
     rollTower1.addEventListener('click', function() {
       // Check if player has enough silver
       if (playerData.silver < gachaSystem.costs.tower.single) {
-        alert(`Not enough silver! You need ${gachaSystem.costs.tower.single} silver.`);
+        if (window.notificationSystem) {
+          window.notificationSystem.error(`Not enough silver! You need ${gachaSystem.costs.tower.single} silver.`);
+        } else {
+          alert(`Not enough silver! You need ${gachaSystem.costs.tower.single} silver.`);
+        }
         return;
       }
 
@@ -128,7 +132,11 @@ function setupTowerGachaEvents() {
     rollTower10.addEventListener('click', function() {
       // Check if player has enough silver
       if (playerData.silver < gachaSystem.costs.tower.ten) {
-        alert(`Not enough silver! You need ${gachaSystem.costs.tower.ten} silver.`);
+        if (window.notificationSystem) {
+          window.notificationSystem.error(`Not enough silver! You need ${gachaSystem.costs.tower.ten} silver.`);
+        } else {
+          alert(`Not enough silver! You need ${gachaSystem.costs.tower.ten} silver.`);
+        }
         return;
       }
 
@@ -709,7 +717,11 @@ function performRollUntil(type, targetTier, isPremium, maxRolls = 500) {
   if (type === 'variant') {
     const towerSelect = document.getElementById('variant-tower-select');
     if (!towerSelect || !towerSelect.value) {
-      alert('Please select a tower first!');
+      if (window.notificationSystem) {
+        window.notificationSystem.error('Please select a tower first!');
+      } else {
+        alert('Please select a tower first!');
+      }
       return;
     }
     selectedTower = towerSelect.value;
@@ -721,43 +733,77 @@ function performRollUntil(type, targetTier, isPremium, maxRolls = 500) {
     gachaSystem.costs.premium[type].single :
     gachaSystem.costs[type].single;
 
-  // Confirm with user
+  // Create confirmation message
   let confirmMessage = '';
   if (type === 'tower') {
-    confirmMessage = `This will roll towers until you get a ${targetTier} tier tower or reach ${maxRolls} rolls. It could cost up to ${maxRolls * costPerRoll} ${currencyType}. Continue?`;
+    confirmMessage = `This will roll towers until you get a ${targetTier} tier tower or reach ${maxRolls} rolls. It could cost up to ${maxRolls * costPerRoll} ${currencyType}.`;
   } else {
-    confirmMessage = `This will roll variants for ${towerStats[selectedTower]?.name || selectedTower} until you get a ${targetTier} tier variant or reach ${maxRolls} rolls. It could cost up to ${maxRolls * costPerRoll} ${currencyType}. Continue?`;
+    confirmMessage = `This will roll variants for ${towerStats[selectedTower]?.name || selectedTower} until you get a ${targetTier} tier variant or reach ${maxRolls} rolls. It could cost up to ${maxRolls * costPerRoll} ${currencyType}.`;
   }
 
-  if (!confirm(confirmMessage)) {
-    return;
-  }
+  // Create a confirmation dialog
+  const confirmDialog = document.createElement('div');
+  confirmDialog.className = 'confirm-dialog';
+  confirmDialog.innerHTML = `
+    <div class="confirm-dialog-content">
+      <h3>Confirm Roll Until</h3>
+      <p>${confirmMessage}</p>
+      <div class="confirm-dialog-buttons">
+        <button id="confirm-roll-until-cancel">Cancel</button>
+        <button id="confirm-roll-until-confirm">Confirm</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(confirmDialog);
 
-  // Perform roll until
-  const result = gachaSystem.rollUntil(type, targetTier, null, isPremium, maxRolls);
+  // Return a promise that resolves when the user confirms or rejects
+  return new Promise((resolve) => {
+    // Add event listeners
+    document.getElementById('confirm-roll-until-cancel').addEventListener('click', () => {
+      document.body.removeChild(confirmDialog);
+      resolve(false);
+    });
 
-  // Show result
-  if (result.success) {
-    alert(`Success! Found a ${targetTier} tier ${type} after ${result.rolls} rolls, costing ${result.cost.amount} ${result.cost.type}.`);
+    document.getElementById('confirm-roll-until-confirm').addEventListener('click', () => {
+      document.body.removeChild(confirmDialog);
+      resolve(true);
+    });
+  }).then(confirmed => {
+    if (!confirmed) {
+      return false;
+    }
 
-    // Show the result
-    if (type === 'tower') {
-      showTowerResult(result.result.towerType);
+    // Perform roll until
+    const result = gachaSystem.rollUntil(type, targetTier, selectedTower, isPremium, maxRolls);
+
+    // Show result
+    if (result.success) {
+      // Show the result
+      if (type === 'tower') {
+        showTowerResult(result.result.towerType);
+      } else {
+        showVariantResult(result.result.variant, selectedTower);
+      }
+
+      // Play animation if it's rare+
+      if (targetTier !== 'common') {
+        gachaSystem.playAnimation(targetTier, null, result.result.variant);
+      }
     } else {
-      showVariantResult(result.result.variant, selectedTower);
+      // Show failure message
+      if (window.notificationSystem) {
+        window.notificationSystem.error(`Failed to get ${targetTier} tier after ${result.rolls} rolls.`);
+      }
     }
 
-    // Play animation if it's rare+
-    if (targetTier !== 'common') {
-      gachaSystem.playAnimation(targetTier, null, result.result.variant);
-    }
-  } else {
-    alert(`Failed to find a ${targetTier} tier ${type}. ${result.reason}. Used ${result.rolls} rolls and spent ${result.cost.amount} ${result.cost.type}.`);
-  }
+    // Update displays
+    updatePityProgressBars();
+    updateGachaCurrencyDisplays();
 
-  // Update displays
-  updatePityProgressBars();
-  updateGachaCurrencyDisplays();
+    return true;
+  });
+
+
 }
 
 // Show tower result
@@ -821,6 +867,12 @@ function showTowerResult(tower) {
 
   // Add tower to inventory
   addTowerToInventory(tower);
+
+  // Show notification
+  if (window.notificationSystem) {
+    const tierName = towerData.tier.charAt(0).toUpperCase() + towerData.tier.slice(1);
+    window.notificationSystem.roll(`Obtained ${towerData.name || tower} (${tierName})`, towerData.tier);
+  }
 }
 
 // Show tower results
@@ -986,6 +1038,12 @@ function showVariantResult(result, towerType) {
 
   // Add result card to result element
   resultElement.appendChild(resultCard);
+
+  // Show notification
+  if (window.notificationSystem) {
+    const tierName = variantData.tier.charAt(0).toUpperCase() + variantData.tier.slice(1);
+    window.notificationSystem.roll(`Obtained ${variantData.name || variant} Variant (${tierName})`, variantData.tier);
+  }
 }
 
 // Show variant results
