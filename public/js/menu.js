@@ -45,6 +45,69 @@ function isVariantUnlocked(towerType, variant) {
   return playerData.towerVariants[towerType]?.includes(variant);
 }
 
+// Handle tutorial navigation
+function handleTutorialNavigation(direction) {
+  // Get all tutorial steps
+  const tutorialSteps = document.querySelectorAll('.tutorial-step');
+  if (!tutorialSteps.length) return;
+
+  // Find the current active step
+  const activeStep = document.querySelector('.tutorial-step.active');
+  if (!activeStep) return;
+
+  // Get current step number
+  const currentStep = parseInt(activeStep.dataset.step);
+  if (isNaN(currentStep)) return;
+
+  // Calculate next step
+  let nextStep;
+  if (direction === 'next') {
+    nextStep = currentStep + 1;
+    if (nextStep > tutorialSteps.length) {
+      // End of tutorial
+      const tutorialOverlay = document.getElementById('tutorial-overlay');
+      if (tutorialOverlay) {
+        tutorialOverlay.style.display = 'none';
+      }
+      return;
+    }
+  } else if (direction === 'prev') {
+    nextStep = currentStep - 1;
+    if (nextStep < 1) return; // Already at first step
+  } else {
+    return;
+  }
+
+  // Hide all steps
+  tutorialSteps.forEach(step => step.classList.remove('active'));
+
+  // Show next step
+  const nextStepEl = document.querySelector(`.tutorial-step[data-step="${nextStep}"]`);
+  if (nextStepEl) nextStepEl.classList.add('active');
+
+  // Update progress dots
+  const dots = document.querySelectorAll('.tutorial-dot');
+  dots.forEach(dot => {
+    dot.classList.remove('active');
+    if (parseInt(dot.dataset.step) === nextStep) {
+      dot.classList.add('active');
+    }
+  });
+
+  // Update button states
+  const prevButton = document.getElementById('tutorial-prev');
+  if (prevButton) prevButton.disabled = nextStep === 1;
+
+  const nextButton = document.getElementById('tutorial-next');
+  if (nextButton) {
+    if (nextStep === tutorialSteps.length) {
+      nextButton.textContent = 'Finish';
+    } else {
+      nextButton.textContent = 'Next';
+    }
+  }
+}
+
 // Check for unlocked difficulties
 function checkUnlockedDifficulties() {
   // All difficulties are now automatically unlocked
@@ -244,10 +307,43 @@ function setupEventListeners() {
   const tutorialButton = document.getElementById('tutorial-button');
   if (tutorialButton) {
     tutorialButton.addEventListener('click', () => {
-      if (window.tutorialSystem) {
+      const tutorialOverlay = document.getElementById('tutorial-overlay');
+      if (tutorialOverlay) {
+        // Show the tutorial overlay directly
+        tutorialOverlay.style.display = 'flex';
+
+        // Show the first step
+        const tutorialSteps = document.querySelectorAll('.tutorial-step');
+        tutorialSteps.forEach(step => step.classList.remove('active'));
+        const firstStep = document.querySelector('.tutorial-step[data-step="1"]');
+        if (firstStep) firstStep.classList.add('active');
+
+        // Reset buttons
+        const prevButton = document.getElementById('tutorial-prev');
+        if (prevButton) prevButton.disabled = true;
+
+        const nextButton = document.getElementById('tutorial-next');
+        if (nextButton) nextButton.textContent = 'Next';
+
+        // Initialize progress dots if needed
+        const progressContainer = document.getElementById('tutorial-progress');
+        if (progressContainer && !progressContainer.children.length) {
+          for (let i = 1; i <= 12; i++) {
+            const dot = document.createElement('div');
+            dot.classList.add('tutorial-dot');
+            if (i === 1) dot.classList.add('active');
+            dot.dataset.step = i;
+            progressContainer.appendChild(dot);
+          }
+        }
+      } else if (window.tutorialSystem) {
         window.tutorialSystem.showTutorialAgain();
       } else {
-        notificationSystem.error('Tutorial system not found');
+        if (window.notificationSystem) {
+          window.notificationSystem.error('Tutorial system not found');
+        } else {
+          console.error('Tutorial system not found');
+        }
       }
     });
   } else {
@@ -308,6 +404,36 @@ function setupEventListeners() {
       }
     });
   });
+
+  // Tutorial navigation buttons
+  const tutorialNext = document.getElementById('tutorial-next');
+  const tutorialPrev = document.getElementById('tutorial-prev');
+  const tutorialSkip = document.getElementById('tutorial-skip');
+  const tutorialClose = document.getElementById('tutorial-close');
+
+  if (tutorialNext) {
+    tutorialNext.addEventListener('click', () => {
+      handleTutorialNavigation('next');
+    });
+  }
+
+  if (tutorialPrev) {
+    tutorialPrev.addEventListener('click', () => {
+      handleTutorialNavigation('prev');
+    });
+  }
+
+  if (tutorialSkip || tutorialClose) {
+    const skipHandler = () => {
+      const tutorialOverlay = document.getElementById('tutorial-overlay');
+      if (tutorialOverlay) {
+        tutorialOverlay.style.display = 'none';
+      }
+    };
+
+    if (tutorialSkip) tutorialSkip.addEventListener('click', skipHandler);
+    if (tutorialClose) tutorialClose.addEventListener('click', skipHandler);
+  }
 
   // Select difficulty button (after map selection)
   document.getElementById('select-difficulty-btn').addEventListener('click', () => {

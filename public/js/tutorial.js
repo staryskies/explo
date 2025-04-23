@@ -6,6 +6,13 @@ class TutorialSystem {
     this.currentStep = 1;
     this.totalSteps = 12; // Updated with new steps for loadout, gacha, etc.
     this.tutorialOverlay = document.getElementById('tutorial-overlay');
+
+    // Check if tutorial overlay exists
+    if (!this.tutorialOverlay) {
+      console.error('Tutorial overlay not found');
+      return;
+    }
+
     this.tutorialSteps = document.querySelectorAll('.tutorial-step');
     this.progressContainer = document.getElementById('tutorial-progress');
 
@@ -21,13 +28,19 @@ class TutorialSystem {
 
   // Initialize progress dots
   initProgressDots() {
+    // Check if progress container exists
+    if (!this.progressContainer) {
+      console.error('Tutorial progress container not found');
+      return;
+    }
+
     // Clear existing dots
     this.progressContainer.innerHTML = '';
 
     // Create dots for each step
     for (let i = 1; i <= this.totalSteps; i++) {
       const dot = document.createElement('div');
-      dot.classList.add('progress-dot');
+      dot.classList.add('tutorial-dot');
       if (i === this.currentStep) {
         dot.classList.add('active');
       }
@@ -40,28 +53,48 @@ class TutorialSystem {
   // Initialize event listeners
   initEventListeners() {
     // Next button
-    document.getElementById('tutorial-next').addEventListener('click', () => {
-      this.nextStep();
-    });
+    const nextButton = document.getElementById('tutorial-next');
+    if (nextButton) {
+      nextButton.addEventListener('click', () => {
+        this.nextStep();
+      });
+    } else {
+      console.error('Tutorial next button not found');
+    }
 
     // Previous button
-    document.getElementById('tutorial-prev').addEventListener('click', () => {
-      this.prevStep();
-    });
+    const prevButton = document.getElementById('tutorial-prev');
+    if (prevButton) {
+      prevButton.addEventListener('click', () => {
+        this.prevStep();
+      });
+    } else {
+      console.error('Tutorial prev button not found');
+    }
 
     // Skip button
-    document.getElementById('tutorial-skip').addEventListener('click', () => {
-      this.completeTutorial();
-    });
+    const skipButton = document.getElementById('tutorial-skip');
+    if (skipButton) {
+      skipButton.addEventListener('click', () => {
+        this.completeTutorial();
+      });
+    } else {
+      console.error('Tutorial skip button not found');
+    }
 
     // Close button
-    document.getElementById('tutorial-close').addEventListener('click', () => {
-      this.completeTutorial();
-    });
+    const closeButton = document.getElementById('tutorial-close');
+    if (closeButton) {
+      closeButton.addEventListener('click', () => {
+        this.completeTutorial();
+      });
+    } else {
+      console.error('Tutorial close button not found');
+    }
 
     // Keyboard navigation
     document.addEventListener('keydown', (e) => {
-      if (!this.tutorialOverlay.classList.contains('active')) return;
+      if (!this.tutorialOverlay || !this.tutorialOverlay.classList.contains('active')) return;
 
       if (e.key === 'ArrowRight' || e.key === 'Enter') {
         this.nextStep();
@@ -85,7 +118,13 @@ class TutorialSystem {
 
   // Show tutorial
   showTutorial() {
-    this.tutorialOverlay.classList.add('active');
+    if (!this.tutorialOverlay) {
+      console.error('Tutorial overlay not found');
+      return;
+    }
+
+    // Show the tutorial overlay
+    this.tutorialOverlay.style.display = 'flex';
     this.goToStep(1);
 
     // Pause the game if it's running
@@ -96,7 +135,13 @@ class TutorialSystem {
 
   // Hide tutorial
   hideTutorial() {
-    this.tutorialOverlay.classList.remove('active');
+    if (!this.tutorialOverlay) {
+      console.error('Tutorial overlay not found');
+      return;
+    }
+
+    // Hide the tutorial overlay
+    this.tutorialOverlay.style.display = 'none';
 
     // Resume the game if it was paused
     if (window.game && window.game.paused) {
@@ -109,24 +154,30 @@ class TutorialSystem {
     if (step < 1 || step > this.totalSteps) return;
 
     // Hide all steps
-    this.tutorialSteps.forEach(stepEl => {
-      stepEl.classList.remove('active');
-    });
+    if (this.tutorialSteps && this.tutorialSteps.length > 0) {
+      this.tutorialSteps.forEach(stepEl => {
+        stepEl.classList.remove('active');
+      });
+    }
 
     // Show current step
     const currentStepEl = document.querySelector(`.tutorial-step[data-step="${step}"]`);
     if (currentStepEl) {
       currentStepEl.classList.add('active');
+    } else {
+      console.error(`Tutorial step ${step} not found`);
     }
 
     // Update progress dots
-    const dots = this.progressContainer.querySelectorAll('.progress-dot');
-    dots.forEach(dot => {
-      dot.classList.remove('active');
-      if (parseInt(dot.dataset.step) === step) {
-        dot.classList.add('active');
-      }
-    });
+    if (this.progressContainer) {
+      const dots = this.progressContainer.querySelectorAll('.tutorial-dot');
+      dots.forEach(dot => {
+        dot.classList.remove('active');
+        if (parseInt(dot.dataset.step) === step) {
+          dot.classList.add('active');
+        }
+      });
+    }
 
     // Update current step
     this.currentStep = step;
@@ -155,6 +206,12 @@ class TutorialSystem {
   updateButtonStates() {
     const prevBtn = document.getElementById('tutorial-prev');
     const nextBtn = document.getElementById('tutorial-next');
+
+    // Check if buttons exist
+    if (!prevBtn || !nextBtn) {
+      console.error('Tutorial buttons not found');
+      return;
+    }
 
     // Disable previous button on first step
     prevBtn.disabled = this.currentStep === 1;

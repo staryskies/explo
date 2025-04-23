@@ -185,6 +185,21 @@ const gachaSystem = {
     }
   },
 
+  // Tower pools by rarity
+  towerPool: {
+    common: ['basic', 'cannon', 'archer'],
+    rare: ['freeze', 'sniper', 'bomb'],
+    epic: ['tesla', 'laser', 'flame'],
+    legendary: ['rocket', 'poison', 'ice'],
+    mythic: [],  // Will be populated by mythicTowers.js
+    divine: []   // Will be populated by mythicTowers.js
+  },
+
+  // Get tower pool
+  getTowerPool: function() {
+    return this.towerPool;
+  },
+
   // Roll a single tower with variant (combined format)
   rollTowerWithVariant: function(isPremium = false) {
     // Sync pity counters with playerData if available

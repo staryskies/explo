@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="css/leaderboard.css">
   <link rel="stylesheet" href="css/rollUntil.css">
   <link rel="stylesheet" href="css/gacha.css">
+  <link rel="stylesheet" href="css/tutorial.css">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     /* Tutorial button styles */
@@ -823,6 +824,99 @@
 
     <div class="roll-until-controls">
       <button id="stop-roll-until" class="roll-until-btn stop-roll-until">Stop Rolling</button>
+    </div>
+  </div>
+
+  <!-- Tutorial Overlay -->
+  <div id="tutorial-overlay" class="tutorial-overlay">
+    <div class="tutorial-container">
+      <div class="tutorial-header">
+        <h2>Tutorial</h2>
+        <button id="tutorial-close" class="tutorial-close-btn">&times;</button>
+      </div>
+
+      <div class="tutorial-content">
+        <!-- Step 1: Welcome -->
+        <div class="tutorial-step" data-step="1">
+          <h3>Welcome to Tower Defense!</h3>
+          <p>This tutorial will guide you through the basics of the game. Click 'Next' to continue or 'Skip' to exit the tutorial.</p>
+        </div>
+
+        <!-- Step 2: Game Objective -->
+        <div class="tutorial-step" data-step="2">
+          <h3>Game Objective</h3>
+          <p>Your goal is to defend your base from waves of enemies by strategically placing towers along their path. If too many enemies reach the end, you lose!</p>
+        </div>
+
+        <!-- Step 3: Tower Loadout -->
+        <div class="tutorial-step" data-step="3">
+          <h3>Tower Loadout</h3>
+          <p>Before starting a game, you can select up to 4 towers from your inventory to use in battle. Click the 'Loadout' button in the main menu to manage your towers.</p>
+        </div>
+
+        <!-- Step 4: Tower Gacha -->
+        <div class="tutorial-step" data-step="4">
+          <h3>Tower Gacha</h3>
+          <p>You can obtain new towers by using the Tower Gacha. Spend silver to roll for different tower types with varying rarities.</p>
+        </div>
+
+        <!-- Step 5: Variant Gacha -->
+        <div class="tutorial-step" data-step="5">
+          <h3>Variant Gacha</h3>
+          <p>Tower variants give special bonuses to your towers. Use the Variant Gacha to roll for different variants with varying rarities.</p>
+        </div>
+
+        <!-- Step 6: Placing Towers -->
+        <div class="tutorial-step" data-step="6">
+          <h3>Placing Towers</h3>
+          <p>During the game, click on a tower in the selection bar at the bottom, then click on an empty tile to place it. Towers cannot be placed on the enemy path.</p>
+        </div>
+
+        <!-- Step 7: Tower Types -->
+        <div class="tutorial-step" data-step="7">
+          <h3>Tower Types</h3>
+          <p>Different towers have different strengths and weaknesses. Some can target flying enemies, others can target shadow enemies. Hover over a tower to see its stats.</p>
+        </div>
+
+        <!-- Step 8: Upgrading Towers -->
+        <div class="tutorial-step" data-step="8">
+          <h3>Upgrading Towers</h3>
+          <p>Click on a placed tower to upgrade it. Upgrades increase damage, range, or fire rate, but cost gold.</p>
+        </div>
+
+        <!-- Step 9: Waves -->
+        <div class="tutorial-step" data-step="9">
+          <h3>Waves</h3>
+          <p>Click 'Start Wave' to begin sending enemies. Each wave gets progressively harder with more and stronger enemies.</p>
+        </div>
+
+        <!-- Step 10: Difficulty Levels -->
+        <div class="tutorial-step" data-step="10">
+          <h3>Difficulty Levels</h3>
+          <p>The game has several difficulty levels: Easy, Medium, Hard, Nightmare, Void, and special modes like Heaven and Hell. Higher difficulties give better rewards!</p>
+        </div>
+
+        <!-- Step 11: Currency -->
+        <div class="tutorial-step" data-step="11">
+          <h3>Currency</h3>
+          <p>Silver is used for gacha rolls. Gems are premium currency for special rolls. Gold is in-game currency for placing and upgrading towers.</p>
+        </div>
+
+        <!-- Step 12: Ready to Play -->
+        <div class="tutorial-step" data-step="12">
+          <h3>Ready to Play?</h3>
+          <p>You're now ready to defend your base! Good luck!</p>
+        </div>
+      </div>
+
+      <div class="tutorial-footer">
+        <div id="tutorial-progress" class="tutorial-progress"></div>
+        <div class="tutorial-buttons">
+          <button id="tutorial-skip" class="tutorial-btn">Skip Tutorial</button>
+          <button id="tutorial-prev" class="tutorial-btn" disabled>Previous</button>
+          <button id="tutorial-next" class="tutorial-btn">Next</button>
+        </div>
+      </div>
     </div>
   </div>
 </body>

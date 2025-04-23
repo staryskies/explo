@@ -27,14 +27,6 @@ class Game {
     }
 
     // Add divine towers if playing on Heaven and Hell difficulty
-    if (this.difficulty === 'heavenHell') {
-      // Add divine towers if not already in loadout
-      ['archangel', 'seraphim', 'demonLord'].forEach(divineTower => {
-        if (!this.availableTowers.includes(divineTower)) {
-          this.availableTowers.push(divineTower);
-        }
-      });
-    }
 
     // Difficulty settings
     this.difficulty = sessionStorage.getItem('selectedDifficulty') || 'easy';
