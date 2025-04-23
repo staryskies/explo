@@ -39,7 +39,7 @@ if (typeof GameMap === 'undefined') {
 
 // Extend the Game class to support dual path mode
 Game.prototype.initializeDualPathMode = function() {
-  this.dualPathMode = false;
+  this.dualPathMode = true;
   this.heavenPath = [];
   this.hellPath = [];
   this.heavenPathCoordinates = [];
@@ -473,44 +473,5 @@ Enemy.prototype.draw = function(ctx) {
   }
 };
 
-// Add the Hell and Heaven's Trial difficulty to the difficulty selection
-function addHellAndHeavenTrial() {
-  // Get the difficulty selection container
-  const difficultyGrid = document.getElementById('difficulty-selection-options');
-  if (!difficultyGrid) return;
-
-  // Create the new difficulty option
-  const trialOption = document.createElement('div');
-  trialOption.className = 'difficulty-option trial';
-  trialOption.dataset.difficulty = 'trial';
-
-  // Add content
-  trialOption.innerHTML = `
-    <div class="difficulty-icon">⚖️</div>
-    <h3>Hell and Heaven's Trial</h3>
-    <p>The ultimate challenge with dual paths of light and darkness. Defeat both heavenly and hellish enemies.</p>
-    <div class="waves">60 Waves</div>
-    <div class="reward">Silver Reward: x5</div>
-    <div class="reward">Gems Reward: 150</div>
-  `;
-
-  // Add to the grid
-  difficultyGrid.appendChild(trialOption);
-
-  // Add event listener
-  trialOption.addEventListener('click', () => {
-    // Remove selected class from all options
-    document.querySelectorAll('.difficulty-option').forEach(opt => {
-      opt.classList.remove('selected');
-    });
-
-    // Add selected class to this option
-    trialOption.classList.add('selected');
-  });
-}
-
-// Initialize dual path mode when the DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-  // Add the Hell and Heaven's Trial difficulty to the difficulty selection
-  addHellAndHeavenTrial();
-});
+// Note: The Hell and Heaven's Trial difficulty option is already in the HTML
+// No need to add it dynamically or add event listeners - they're handled in menu.js

@@ -1218,7 +1218,7 @@ class Tower {
     // Draw range indicator if requested
     if (showRange) {
       // Scale the range based on the tile size
-      const scaledRange = this.range * scaleFactor;
+      const scaledRange = this.range * this.scaleFactor;
 
       ctx.beginPath();
       ctx.arc(this.x, this.y, scaledRange, 0, Math.PI * 2);
@@ -1229,7 +1229,7 @@ class Tower {
     }
 
     // Draw 2D futuristic tower base (flat hexagonal)
-    const baseSize = 20 * scaleFactor;
+    const baseSize = 20 * this.scaleFactor;
     const hexPoints = [];
 
     // Create hexagon points
@@ -1280,30 +1280,30 @@ class Tower {
     // Add flat colored center instead of glow for more 2D look
     ctx.fillStyle = this.color;
     ctx.beginPath();
-    ctx.arc(this.x, this.y, 6 * scaleFactor, 0, Math.PI * 2);
+    ctx.arc(this.x, this.y, 6 * this.scaleFactor, 0, Math.PI * 2);
     ctx.fill();
 
     // Add tech circuit pattern
     ctx.strokeStyle = '#3498db'; // Blue accent
-    ctx.lineWidth = 1 * scaleFactor;
+    ctx.lineWidth = 1 * this.scaleFactor;
     ctx.beginPath();
-    ctx.moveTo(this.x - 10 * scaleFactor, this.y);
-    ctx.lineTo(this.x - 5 * scaleFactor, this.y);
+    ctx.moveTo(this.x - 10 * this.scaleFactor, this.y);
+    ctx.lineTo(this.x - 5 * this.scaleFactor, this.y);
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.moveTo(this.x + 5 * scaleFactor, this.y);
-    ctx.lineTo(this.x + 10 * scaleFactor, this.y);
+    ctx.moveTo(this.x + 5 * this.scaleFactor, this.y);
+    ctx.lineTo(this.x + 10 * this.scaleFactor, this.y);
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.moveTo(this.x, this.y - 10 * scaleFactor);
-    ctx.lineTo(this.x, this.y - 5 * scaleFactor);
+    ctx.moveTo(this.x, this.y - 10 * this.scaleFactor);
+    ctx.lineTo(this.x, this.y - 5 * this.scaleFactor);
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.moveTo(this.x, this.y + 5 * scaleFactor);
-    ctx.lineTo(this.x, this.y + 10 * scaleFactor);
+    ctx.moveTo(this.x, this.y + 5 * this.scaleFactor);
+    ctx.lineTo(this.x, this.y + 10 * this.scaleFactor);
     ctx.stroke();
 
     // Draw tower body based on type and upgrades - more 2D and futuristic style

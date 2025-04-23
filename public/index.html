@@ -516,213 +516,6 @@
 
     <!-- Market Modal -->
     <div id="market-modal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Tower Market</h2>
-          <span class="close-btn" id="close-market">&times;</span>
-        </div>
-        <div class="modal-body">
-          <div class="market-tabs">
-            <button class="market-tab active" data-tab="buy-tab">Buy Towers</button>
-            <button class="market-tab" data-tab="sell-tab">Sell Towers</button>
-            <button class="market-tab" data-tab="listings-tab">Your Listings</button>
-          </div>
-
-          <!-- Buy Tab Content -->
-          <div class="market-tab-content active" id="buy-tab">
-            <div class="market-filters">
-              <select id="market-tower-filter">
-                <option value="all">All Towers</option>
-                <!-- Tower options will be generated here -->
-              </select>
-              <select id="market-variant-filter">
-                <option value="all">All Variants</option>
-                <!-- Variant options will be generated here -->
-              </select>
-              <select id="market-sort">
-                <option value="price-asc">Price: Low to High</option>
-                <option value="price-desc">Price: High to Low</option>
-                <option value="newest">Newest First</option>
-              </select>
-            </div>
-            <div class="market-listings" id="market-buy-listings">
-              <!-- Market listings will be generated here -->
-            </div>
-          </div>
-
-          <!-- Sell Tab Content -->
-          <div class="market-tab-content" id="sell-tab">
-            <div class="sell-form">
-              <h3>List a Tower for Sale</h3>
-              <div class="form-group">
-                <label for="sell-tower-select">Select Tower:</label>
-                <select id="sell-tower-select">
-                  <!-- Tower options will be generated here -->
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="sell-variant-select">Select Variant:</label>
-                <select id="sell-variant-select">
-                  <!-- Variant options will be generated here -->
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="sell-price">Price (Gems):</label>
-                <input type="number" id="sell-price" min="1" max="10000" value="10">
-              </div>
-              <button id="create-listing-btn" class="primary-btn">Create Listing</button>
-            </div>
-          </div>
-
-          <!-- Your Listings Tab Content -->
-          <div class="market-tab-content" id="listings-tab">
-            <div class="your-listings" id="your-listings">
-              <!-- Your listings will be generated here -->
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <div class="currency-display">
-            <span>Silver: </span>
-            <span id="market-silver-amount">0</span>
-            <span class="currency-separator">|</span>
-            <span>Gems: </span>
-            <span id="market-gems-amount">0</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Leaderboard Modal -->
-    <div id="leaderboard-modal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Leaderboard</h2>
-          <span class="close-btn" id="close-leaderboard">&times;</span>
-        </div>
-        <div class="modal-body">
-          <div class="leaderboard-tabs">
-            <button class="leaderboard-tab active" data-tab="highscore-tab">High Scores</button>
-            <button class="leaderboard-tab" data-tab="waves-tab">Max Wave</button>
-            <button class="leaderboard-tab" data-tab="towers-tab">Tower Collection</button>
-          </div>
-
-          <!-- High Score Tab Content -->
-          <div class="leaderboard-tab-content active" id="highscore-tab">
-            <div class="leaderboard-list" id="highscore-leaderboard">
-              <!-- High score leaderboard will be generated here -->
-            </div>
-          </div>
-
-          <!-- Max Wave Tab Content -->
-          <div class="leaderboard-tab-content" id="waves-tab">
-            <div class="leaderboard-list" id="waves-leaderboard">
-              <!-- Max wave leaderboard will be generated here -->
-            </div>
-          </div>
-
-          <!-- Tower Collection Tab Content -->
-          <div class="leaderboard-tab-content" id="towers-tab">
-            <div class="leaderboard-list" id="towers-leaderboard">
-              <!-- Tower collection leaderboard will be generated here -->
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Load services -->
-  <script src="js/services/authService.js"></script>
-  <script src="js/services/playerDataService.js"></script>
-  <script src="js/services/marketService.js"></script>
-  <script src="js/services/leaderboardService.js"></script>
-
-  <!-- Load components -->
-  <script src="js/components/market.js"></script>
-  <script src="js/components/leaderboard.js"></script>
-
-  <!-- Load game scripts in the correct order -->
-  <script src="js/services/mockAuthService.js"></script>
-  <script src="js/playerData.js"></script>
-  <script src="js/towerData.js"></script>
-  <script src="js/towerVariants.js"></script>
-  <script src="js/towerHelper.js"></script>
-  <script src="js/gacha.js"></script>
-  <script src="js/gachaEvents.js"></script>
-  <script src="js/rollUntil.js"></script>
-  <script src="js/difficultyMaps.js"></script>
-  <script src="js/dualPathMode.js"></script>
-  <script src="js/mythicTowers.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/leaderboard.js"></script>
-  <script src="js/market.js"></script>
-  <script src="js/menu.js"></script>
-
-  <!-- Initialize components after DOM is loaded -->
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      console.log('DOM fully loaded, initializing components');
-
-      // Initialize components with retry mechanism
-      function initializeComponents(attempt = 1) {
-        console.log(`Initializing components (attempt ${attempt})`);
-
-        let initialized = true;
-
-        // Try to initialize global chat
-        if (window.globalChat) {
-          try {
-            console.log('Ensuring GlobalChat is initialized');
-            window.globalChat.initialize();
-          } catch (error) {
-            console.error('Error initializing GlobalChat:', error);
-            initialized = false;
-          }
-        }
-
-        // Squad functionality has been removed
-
-        // Retry if not all components initialized successfully
-        if (!initialized && attempt < 5) {
-          console.log(`Some components failed to initialize, retrying in ${attempt * 500}ms...`);
-          setTimeout(() => initializeComponents(attempt + 1), attempt * 500);
-        }
-      }
-
-      // Start initialization after a delay to ensure services are ready
-      setTimeout(() => initializeComponents(), 1000);
-    });
-  </script>
-
-  <!-- Roll Until Container -->
-  <div id="roll-until-container" class="roll-until-container" style="display: none;">
-    <div class="roll-until-header">
-      <h2>Rolling Until...</h2>
-      <div id="roll-until-target" class="roll-until-target">Rare Tower</div>
-    </div>
-
-    <div class="roll-until-stats">
-      <div class="roll-until-stat">
-        <div class="roll-until-stat-label">Rolls:</div>
-        <div id="roll-until-count" class="roll-until-stat-value">0</div>
-      </div>
-      <div class="roll-until-stat">
-        <div class="roll-until-stat-label">Spent:</div>
-        <div id="roll-until-spent" class="roll-until-stat-value">0 Silver</div>
-      </div>
-    </div>
-
-    <div id="roll-until-current" class="roll-until-animation"></div>
-
-    <div id="roll-until-success" class="roll-until-success" style="display: none;"></div>
-
-    <div class="roll-until-controls">
-      <button id="stop-roll-until" class="roll-until-btn stop-roll-until">Stop Rolling</button>
-    </div>
-
-    <!-- Market Modal -->
-    <div id="market-modal" class="modal">
       <div class="modal-content market-content">
         <div class="modal-header">
           <h2>Market</h2>
@@ -832,6 +625,9 @@
           <div class="currency-display">
             <span>Silver: </span>
             <span id="market-silver-amount">0</span>
+            <span class="currency-separator">|</span>
+            <span>Gems: </span>
+            <span id="market-gems-amount">0</span>
           </div>
         </div>
       </div>
@@ -906,6 +702,96 @@
           </table>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Load services -->
+  <script src="js/services/authService.js"></script>
+  <script src="js/services/playerDataService.js"></script>
+  <script src="js/services/marketService.js"></script>
+  <script src="js/services/leaderboardService.js"></script>
+
+  <!-- Load components -->
+  <script src="js/components/market.js"></script>
+  <script src="js/components/leaderboard.js"></script>
+
+  <!-- Load game scripts in the correct order -->
+  <script src="js/services/mockAuthService.js"></script>
+  <script src="js/playerData.js"></script>
+  <script src="js/towerData.js"></script>
+  <script src="js/towerVariants.js"></script>
+  <script src="js/towerHelper.js"></script>
+  <script src="js/gacha.js"></script>
+  <script src="js/gachaEvents.js"></script>
+  <script src="js/rollUntil.js"></script>
+  <script src="js/difficultyMaps.js"></script>
+  <script src="js/dualPathMode.js"></script>
+  <script src="js/mythicTowers.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/leaderboard.js"></script>
+  <script src="js/market.js"></script>
+  <script src="js/menu.js"></script>
+
+  <!-- Initialize components after DOM is loaded -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM fully loaded, initializing components');
+
+      // Initialize components with retry mechanism
+      function initializeComponents(attempt = 1) {
+        console.log(`Initializing components (attempt ${attempt})`);
+
+        let initialized = true;
+
+        // Try to initialize global chat
+        if (window.globalChat) {
+          try {
+            console.log('Ensuring GlobalChat is initialized');
+            window.globalChat.initialize();
+          } catch (error) {
+            console.error('Error initializing GlobalChat:', error);
+            initialized = false;
+          }
+        }
+
+        // Squad functionality has been removed
+
+        // Retry if not all components initialized successfully
+        if (!initialized && attempt < 5) {
+          console.log(`Some components failed to initialize, retrying in ${attempt * 500}ms...`);
+          setTimeout(() => initializeComponents(attempt + 1), attempt * 500);
+        }
+      }
+
+      // Start initialization after a delay to ensure services are ready
+      setTimeout(() => initializeComponents(), 1000);
+    });
+  </script>
+
+  <!-- Roll Until Container -->
+  <div id="roll-until-container" class="roll-until-container" style="display: none;">
+    <div class="roll-until-header">
+      <h2>Rolling Until...</h2>
+      <div id="roll-until-target" class="roll-until-target">Rare Tower</div>
+    </div>
+
+    <div class="roll-until-stats">
+      <div class="roll-until-stat">
+        <div class="roll-until-stat-label">Rolls:</div>
+        <div id="roll-until-count" class="roll-until-stat-value">0</div>
+      </div>
+      <div class="roll-until-stat">
+        <div class="roll-until-stat-label">Spent:</div>
+        <div id="roll-until-spent" class="roll-until-stat-value">0 Silver</div>
+      </div>
+    </div>
+
+    <div id="roll-until-current" class="roll-until-animation"></div>
+
+    <div id="roll-until-success" class="roll-until-success" style="display: none;"></div>
+
+    <div class="roll-until-controls">
+      <button id="stop-roll-until" class="roll-until-btn stop-roll-until">Stop Rolling</button>
     </div>
   </div>
 </body>

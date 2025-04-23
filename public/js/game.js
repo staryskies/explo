@@ -1367,9 +1367,21 @@ class Game {
     }
 
     // Initialize dual path mode for Hell and Heaven's Trial
-    if (this.difficulty === 'trial' && this.initializeDualPathMode) {
+    if (this.difficulty === 'trial') {
+      // Enable dual path mode
       this.dualPathMode = true;
       console.log('Dual path mode enabled for Hell and Heaven\'s Trial');
+
+      // Initialize dual path mode if the function exists
+      if (typeof this.initializeDualPathMode === 'function') {
+        this.initializeDualPathMode();
+      }
+
+      // Generate dual paths if the map has the function
+      if (this.map && typeof this.map.generateDualPaths === 'function') {
+        this.map.generateDualPaths();
+        console.log('Generated dual paths for Heaven and Hell');
+      }
     }
   }
 

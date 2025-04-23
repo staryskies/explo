@@ -20,89 +20,89 @@ const leaderboard = {
     this.closeLeaderboard = document.getElementById('close-leaderboard');
     this.leaderboardTabs = document.querySelectorAll('.leaderboard-tab');
     this.leaderboardTabContents = document.querySelectorAll('.leaderboard-tab-content');
-    
+
     // High scores table
     this.highScoresTable = document.getElementById('high-scores-table');
     this.highScoresTableBody = this.highScoresTable?.querySelector('tbody');
-    
+
     // Wave records table
     this.waveRecordsTable = document.getElementById('wave-records-table');
     this.waveRecordsTableBody = this.waveRecordsTable?.querySelector('tbody');
-    
+
     // Tower collections table
     this.towerCollectionsTable = document.getElementById('tower-collections-table');
     this.towerCollectionsTableBody = this.towerCollectionsTable?.querySelector('tbody');
-    
+
     // Initialize event listeners
     this.initEventListeners();
-    
+
     console.log('Leaderboard initialized');
   },
-  
+
   // Initialize event listeners
   initEventListeners() {
     // Close leaderboard modal
     if (this.closeLeaderboard) {
       this.closeLeaderboard.addEventListener('click', () => {
-        this.leaderboardModal.style.display = 'none';
+        this.leaderboardModal.classList.remove('active');
       });
     }
-    
+
     // Close modal when clicking outside
     window.addEventListener('click', (event) => {
       if (event.target === this.leaderboardModal) {
-        this.leaderboardModal.style.display = 'none';
+        this.leaderboardModal.classList.remove('active');
       }
     });
-    
+
     // Tab switching
     this.leaderboardTabs.forEach(tab => {
       tab.addEventListener('click', () => {
         // Remove active class from all tabs
         this.leaderboardTabs.forEach(t => t.classList.remove('active'));
-        
+
         // Add active class to clicked tab
         tab.classList.add('active');
-        
+
         // Hide all tab contents
         this.leaderboardTabContents.forEach(content => {
           content.classList.remove('active');
         });
-        
+
         // Show selected tab content
         const tabId = tab.getAttribute('data-tab');
         document.getElementById(tabId).classList.add('active');
       });
     });
   },
-  
+
   // Open leaderboard modal
   openLeaderboard() {
     // Load leaderboard data
     this.loadLeaderboardData();
-    
+
     // Show modal
-    this.leaderboardModal.style.display = 'block';
+    this.leaderboardModal.classList.add('active');
   },
-  
+
   // Load leaderboard data
   async loadLeaderboardData() {
     try {
       // Show loading state
       this.showLoadingState();
-      
+
       // Load data from server or local storage
       await this.loadHighScores();
       await this.loadWaveRecords();
       await this.loadTowerCollections();
-      
+
       console.log('Leaderboard data loaded');
     } catch (error) {
       console.error('Error loading leaderboard data:', error);
       this.showErrorState('Failed to load leaderboard data. Please try again later.');
     }
   },
-  
+
   // Show loading state
   showLoadingState() {
     const loadingHtml = `
@@ -113,20 +113,20 @@ const leaderboard = {
         </td>
       </tr>
     `;
-    
+
     if (this.highScoresTableBody) {
       this.highScoresTableBody.innerHTML = loadingHtml;
     }
-    
+
     if (this.waveRecordsTableBody) {
       this.waveRecordsTableBody.innerHTML = loadingHtml;
     }
-    
+
     if (this.towerCollectionsTableBody) {
       this.towerCollectionsTableBody.innerHTML = loadingHtml;
     }
   },
-  
+
   // Show error state
   showErrorState(message) {
     const errorHtml = `
@@ -137,20 +137,20 @@ const leaderboard = {
         </td>
       </tr>
     `;
-    
+
     if (this.highScoresTableBody) {
       this.highScoresTableBody.innerHTML = errorHtml;
     }
-    
+
     if (this.waveRecordsTableBody) {
       this.waveRecordsTableBody.innerHTML = errorHtml;
     }
-    
+
     if (this.towerCollectionsTableBody) {
       this.towerCollectionsTableBody.innerHTML = errorHtml;
     }
   },
-  
+
   // Load high scores
   async loadHighScores() {
     try {
@@ -167,14 +167,14 @@ const leaderboard = {
         { username: 'Player9', score: 6000, difficulty: 'medium', date: '2023-06-07' },
         { username: 'Player10', score: 5500, difficulty: 'easy', date: '2023-06-06' }
       ];
-      
+
       // Update data
       this.data.highScores = mockHighScores;
-      
+
       // Update table
       if (this.highScoresTableBody) {
         this.highScoresTableBody.innerHTML = '';
-        
+
         mockHighScores.forEach((score, index) => {
           const row = document.createElement('tr');
           row.innerHTML = `
@@ -192,7 +192,7 @@ const leaderboard = {
       throw error;
     }
   },
-  
+
   // Load wave records
   async loadWaveRecords() {
     try {
@@ -209,14 +209,14 @@ const leaderboard = {
         { username: 'Player9', wave: 10, difficulty: 'medium', date: '2023-06-07' },
         { username: 'Player10', wave: 5, difficulty: 'easy', date: '2023-06-06' }
       ];
-      
+
       // Update data
       this.data.waveRecords = mockWaveRecords;
-      
+
       // Update table
       if (this.waveRecordsTableBody) {
         this.waveRecordsTableBody.innerHTML = '';
-        
+
         mockWaveRecords.forEach((record, index) => {
           const row = document.createElement('tr');
           row.innerHTML = `
@@ -234,7 +234,7 @@ const leaderboard = {
       throw error;
     }
   },
-  
+
   // Load tower collections
   async loadTowerCollections() {
     try {
@@ -251,14 +251,14 @@ const leaderboard = {
         { username: 'Player9', towers: 3, variants: 6, rareTowers: 0, date: '2023-06-07' },
         { username: 'Player10', towers: 2, variants: 4, rareTowers: 0, date: '2023-06-06' }
       ];
-      
+
       // Update data
       this.data.towerCollections = mockTowerCollections;
-      
+
       // Update table
       if (this.towerCollectionsTableBody) {
         this.towerCollectionsTableBody.innerHTML = '';
-        
+
         mockTowerCollections.forEach((collection, index) => {
           const row = document.createElement('tr');
           row.innerHTML = `
@@ -286,7 +286,7 @@ function formatNumber(num) {
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
   leaderboard.initialize();
-  
+
   // Add event listener to leaderboard button
   const leaderboardButton = document.getElementById('leaderboard-button');
   if (leaderboardButton) {

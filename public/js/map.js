@@ -143,6 +143,12 @@ class GameMap {
     // Clear any existing path
     this.path = [];
 
+    // Check if we're in dual path mode for Heaven and Hell's Trial
+    if (window.game && window.game.difficulty === 'trial' && window.game.dualPathMode) {
+      this.generateDualPaths();
+      return;
+    }
+
     // Generate path based on map template type
     switch (this.mapTemplate.id) {
       case 'spiral':
@@ -168,6 +174,165 @@ class GameMap {
       x: point.x * this.tileSize + this.tileSize / 2,
       y: point.y * this.tileSize + this.tileSize / 2
     }));
+  }
+
+  // Generate dual paths for Heaven and Hell's Trial
+  generateDualPaths() {
+    // Clear existing paths
+    this.path = [];
+    this.heavenPath = [];
+    this.hellPath = [];
+
+    // Generate Heaven path (top half of the map)
+    this.generateHeavenPath();
+
+    // Generate Hell path (bottom half of the map)
+    this.generateHellPath();
+
+    // Store both paths for the game
+    if (window.game) {
+      window.game.heavenPath = this.heavenPath;
+      window.game.hellPath = this.hellPath;
+    }
+
+    // Convert grid coordinates to pixel coordinates for both paths
+    this.heavenPathCoordinates = this.heavenPath.map(point => ({
+      x: point.x * this.tileSize + this.tileSize / 2,
+      y: point.y * this.tileSize + this.tileSize / 2
+    }));
+
+    this.hellPathCoordinates = this.hellPath.map(point => ({
+      x: point.x * this.tileSize + this.tileSize / 2,
+      y: point.y * this.tileSize + this.tileSize / 2
+    }));
+
+    // Store path coordinates for the game
+    if (window.game) {
+      window.game.heavenPathCoordinates = this.heavenPathCoordinates;
+      window.game.hellPathCoordinates = this.hellPathCoordinates;
+    }
+
+    // Set the main path to the combined paths for compatibility
+    this.path = [...this.heavenPath, ...this.hellPath];
+    this.pathCoordinates = [...this.heavenPathCoordinates, ...this.hellPathCoordinates];
+
+    console.log('Generated dual paths for Heaven and Hell');
+  }
+
+  // Generate Heaven path (top half of the map)
+  generateHeavenPath() {
+    // Start from the left side, top quarter
+    let x = 0;
+    let y = Math.floor(this.gridHeight * 0.25);
+
+    // Add starting point
+    this.heavenPath.push({x, y});
+    this.grid[y][x] = this.TILE_TYPES.PATH;
+
+    // Generate path until we reach the right edge
+    while (x < this.gridWidth - 1) {
+      // Possible directions: right, up, down (within top half)
+      const directions = [
+        {dx: 1, dy: 0, weight: 3}, // Prefer right
+        {dx: 0, dy: -1, weight: 1}, // Up
+        {dx: 0, dy: 1, weight: 1}  // Down
+      ];
+
+      // Create a weighted random selection
+      let totalWeight = directions.reduce((sum, dir) => sum + dir.weight, 0);
+      let random = Math.random() * totalWeight;
+      let selectedDir = directions[0];
+
+      for (const dir of directions) {
+        if (random < dir.weight) {
+          selectedDir = dir;
+          break;
+        }
+        random -= dir.weight;
+      }
+
+      // Move in that direction
+      x += selectedDir.dx;
+      y += selectedDir.dy;
+
+      // Check if we're within bounds (top half only)
+      if (x < 0 || x >= this.gridWidth || y < 0 || y >= Math.floor(this.gridHeight * 0.5)) {
+        // Try a different direction
+        x -= selectedDir.dx;
+        y -= selectedDir.dy;
+        continue;
+      }
+
+      // Check if this tile is already part of a path
+      if (this.grid[y][x] === this.TILE_TYPES.PATH) {
+        // Try a different direction
+        x -= selectedDir.dx;
+        y -= selectedDir.dy;
+        continue;
+      }
+
+      // Add this point to the path
+      this.heavenPath.push({x, y});
+      this.grid[y][x] = this.TILE_TYPES.PATH;
+    }
+  }
+
+  // Generate Hell path (bottom half of the map)
+  generateHellPath() {
+    // Start from the left side, bottom quarter
+    let x = 0;
+    let y = Math.floor(this.gridHeight * 0.75);
+
+    // Add starting point
+    this.hellPath.push({x, y});
+    this.grid[y][x] = this.TILE_TYPES.PATH;
+
+    // Generate path until we reach the right edge
+    while (x < this.gridWidth - 1) {
+      // Possible directions: right, up, down (within bottom half)
+      const directions = [
+        {dx: 1, dy: 0, weight: 3}, // Prefer right
+        {dx: 0, dy: -1, weight: 1}, // Up
+        {dx: 0, dy: 1, weight: 1}  // Down
+      ];
+
+      // Create a weighted random selection
+      let totalWeight = directions.reduce((sum, dir) => sum + dir.weight, 0);
+      let random = Math.random() * totalWeight;
+      let selectedDir = directions[0];
+
+      for (const dir of directions) {
+        if (random < dir.weight) {
+          selectedDir = dir;
+          break;
+        }
+        random -= dir.weight;
+      }
+
+      // Move in that direction
+      x += selectedDir.dx;
+      y += selectedDir.dy;
+
+      // Check if we're within bounds (bottom half only)
+      if (x < 0 || x >= this.gridWidth || y < Math.floor(this.gridHeight * 0.5) || y >= this.gridHeight) {
+        // Try a different direction
+        x -= selectedDir.dx;
+        y -= selectedDir.dy;
+        continue;
+      }
+
+      // Check if this tile is already part of a path
+      if (this.grid[y][x] === this.TILE_TYPES.PATH) {
+        // Try a different direction
+        x -= selectedDir.dx;
+        y -= selectedDir.dy;
+        continue;
+      }
+
+      // Add this point to the path
+      this.hellPath.push({x, y});
+      this.grid[y][x] = this.TILE_TYPES.PATH;
+    }
   }
 
   // Generate a classic path from left to right with some randomness
@@ -729,7 +894,7 @@ class GameMap {
       }
 
       // Draw path highlights or special effects based on map type
-      this.drawPathEffects();
+      this.drawPathEffects(currentTime);
 
       // Apply blackout effect for harder difficulties
       if (this.useBlackoutEffect) {
@@ -1455,8 +1620,15 @@ class GameMap {
   }
 
   // Draw special effects on the path based on map type
-  drawPathEffects() {
-    // Disabled path effects to remove particles
+  drawPathEffects(currentTime = performance.now()) {
+    // Check if we're in dual path mode for Heaven and Hell's Trial
+    if (window.game && window.game.difficulty === 'trial' && window.game.dualPathMode) {
+      this.drawHeavenPathEffects(currentTime);
+      this.drawHellPathEffects(currentTime);
+      return;
+    }
+
+    // Disabled path effects to remove particles for other map types
     // Uncomment the code below to re-enable path effects if desired
     /*
     const mapType = this.mapTemplate.id;
@@ -1519,6 +1691,94 @@ class GameMap {
       }
     }
     */
+  }
+
+  // Draw special effects for Heaven path
+  drawHeavenPathEffects(currentTime) {
+    // Skip if no heaven path
+    if (!this.heavenPathCoordinates || this.heavenPathCoordinates.length === 0) return;
+
+    // Draw light aura along the heaven path
+    this.ctx.save();
+
+    // Create gradient for heaven path
+    const gradient = this.ctx.createLinearGradient(0, 0, this.canvas.width, 0);
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+    gradient.addColorStop(0.5, 'rgba(173, 216, 230, 0.3)');
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0.2)');
+
+    // Draw light particles along the heaven path
+    for (let i = 0; i < this.heavenPathCoordinates.length; i++) {
+      const point = this.heavenPathCoordinates[i];
+
+      // Draw light aura
+      this.ctx.globalAlpha = 0.1 + 0.05 * Math.sin(currentTime / 1000 + i * 0.1);
+      this.ctx.fillStyle = gradient;
+      this.ctx.beginPath();
+      this.ctx.arc(point.x, point.y, this.tileSize * 0.6, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Draw light particles
+      if (Math.random() < 0.05) {
+        this.ctx.globalAlpha = 0.7;
+        this.ctx.fillStyle = 'white';
+        this.ctx.beginPath();
+        this.ctx.arc(
+          point.x + (Math.random() - 0.5) * this.tileSize,
+          point.y + (Math.random() - 0.5) * this.tileSize,
+          this.tileSize * 0.1,
+          0,
+          Math.PI * 2
+        );
+        this.ctx.fill();
+      }
+    }
+
+    this.ctx.restore();
+  }
+
+  // Draw special effects for Hell path
+  drawHellPathEffects(currentTime) {
+    // Skip if no hell path
+    if (!this.hellPathCoordinates || this.hellPathCoordinates.length === 0) return;
+
+    // Draw fire effects along the hell path
+    this.ctx.save();
+
+    // Create gradient for hell path
+    const gradient = this.ctx.createLinearGradient(0, 0, this.canvas.width, 0);
+    gradient.addColorStop(0, 'rgba(255, 0, 0, 0.2)');
+    gradient.addColorStop(0.5, 'rgba(255, 165, 0, 0.3)');
+    gradient.addColorStop(1, 'rgba(255, 0, 0, 0.2)');
+
+    // Draw fire particles along the hell path
+    for (let i = 0; i < this.hellPathCoordinates.length; i++) {
+      const point = this.hellPathCoordinates[i];
+
+      // Draw fire aura
+      this.ctx.globalAlpha = 0.1 + 0.05 * Math.sin(currentTime / 800 + i * 0.1);
+      this.ctx.fillStyle = gradient;
+      this.ctx.beginPath();
+      this.ctx.arc(point.x, point.y, this.tileSize * 0.6, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      // Draw fire particles
+      if (Math.random() < 0.05) {
+        this.ctx.globalAlpha = 0.7;
+        this.ctx.fillStyle = Math.random() < 0.5 ? '#FF4500' : '#FF8C00';
+        this.ctx.beginPath();
+        this.ctx.arc(
+          point.x + (Math.random() - 0.5) * this.tileSize,
+          point.y + (Math.random() - 0.5) * this.tileSize,
+          this.tileSize * 0.1,
+          0,
+          Math.PI * 2
+        );
+        this.ctx.fill();
+      }
+    }
+
+    this.ctx.restore();
   }
 
   // Resize the map when the canvas size changes

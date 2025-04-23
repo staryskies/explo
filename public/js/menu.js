@@ -218,11 +218,19 @@ function setupEventListeners() {
         // Generate inventory content before showing the modal
         generateInventoryContent();
 
-        inventoryModal.style.display = 'block';
+        // Use classList to show the modal properly
+        inventoryModal.classList.add('active');
+
         // Update silver display when opening the modal
         const inventorySilverAmount = document.getElementById('inventory-silver-amount');
         if (inventorySilverAmount) {
           inventorySilverAmount.textContent = playerData.silver;
+        }
+
+        // Update gems display when opening the modal
+        const inventoryGemsAmount = document.getElementById('inventory-gems-amount');
+        if (inventoryGemsAmount) {
+          inventoryGemsAmount.textContent = playerData.gems;
         }
       } else {
         console.error('Inventory modal not found');
@@ -238,7 +246,20 @@ function setupEventListeners() {
     marketButton.addEventListener('click', () => {
       const marketModal = document.getElementById('market-modal');
       if (marketModal) {
-        marketModal.style.display = 'block';
+        // Use classList to show the modal properly
+        marketModal.classList.add('active');
+
+        // Update silver display when opening the modal
+        const marketSilverAmount = document.getElementById('market-silver-amount');
+        if (marketSilverAmount) {
+          marketSilverAmount.textContent = playerData.silver;
+        }
+
+        // Update gems display when opening the modal
+        const marketGemsAmount = document.getElementById('market-gems-amount');
+        if (marketGemsAmount) {
+          marketGemsAmount.textContent = playerData.gems;
+        }
       } else {
         console.error('Market modal not found');
       }
@@ -253,7 +274,8 @@ function setupEventListeners() {
     leaderboardButton.addEventListener('click', () => {
       const leaderboardModal = document.getElementById('leaderboard-modal');
       if (leaderboardModal) {
-        leaderboardModal.style.display = 'block';
+        // Use classList to show the modal properly
+        leaderboardModal.classList.add('active');
       } else {
         console.error('Leaderboard modal not found');
       }
