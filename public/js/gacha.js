@@ -185,8 +185,8 @@ const gachaSystem = {
     }
   },
 
-  // Roll a single tower
-  rollTower: function(isPremium = false) {
+  // Roll a single tower with variant (combined format)
+  rollTowerWithVariant: function(isPremium = false) {
     // Sync pity counters with playerData if available
     if (window.playerData && window.playerData.towerPity) {
       this.pityCounter.tower = { ...window.playerData.towerPity };
@@ -252,7 +252,7 @@ const gachaSystem = {
     // If no towers of this tier exist (shouldn't happen), fallback to common
     if (towersOfTier.length === 0) {
       console.error(`No towers found for tier: ${tier}, falling back to common`);
-      return this.rollTower(); // Try again
+      return this.rollTowerWithVariant(); // Try again
     }
 
     // Special case for divine tier - select a random divine tower
@@ -267,15 +267,33 @@ const gachaSystem = {
 
         // Randomly select one
         const randomIndex = Math.floor(Math.random() * divineTowers.length);
-        const divineTower = divineTowers[randomIndex];
+        const selectedTower = divineTowers[randomIndex];
+
+        // Now roll a variant for this tower
+        const variantTier = this.rollVariantTier(isPremium);
+        const selectedVariant = this.selectVariantOfTier(variantTier);
+
+        // Create the combined key
+        const combinedKey = `${selectedTower}_${selectedVariant}`;
+
+        // Add to inventory
+        if (window.addTowerToInventory) {
+          window.addTowerToInventory(selectedTower, selectedVariant);
+        }
 
         // Unlock the tower if not already unlocked
-        if (!playerData.unlockedTowers.includes(divineTower)) {
-          playerData.unlockedTowers.push(divineTower);
+        if (!playerData.unlockedTowers.includes(selectedTower)) {
+          playerData.unlockedTowers.push(selectedTower);
           savePlayerData();
         }
 
-        return divineTower;
+        return {
+          towerType: selectedTower,
+          variant: selectedVariant,
+          combinedKey: combinedKey,
+          towerTier: tier,
+          variantTier: variantTier
+        };
       }
     }
 
@@ -283,21 +301,115 @@ const gachaSystem = {
     const randomIndex = Math.floor(Math.random() * towersOfTier.length);
     const selectedTower = towersOfTier[randomIndex];
 
+    // Now roll a variant for this tower
+    const variantTier = this.rollVariantTier(isPremium);
+    const selectedVariant = this.selectVariantOfTier(variantTier);
+
+    // Create the combined key
+    const combinedKey = `${selectedTower}_${selectedVariant}`;
+
+    // Add to inventory
+    if (window.addTowerToInventory) {
+      window.addTowerToInventory(selectedTower, selectedVariant);
+    }
+
     // Unlock the tower if not already unlocked
     if (!playerData.unlockedTowers.includes(selectedTower)) {
       playerData.unlockedTowers.push(selectedTower);
       savePlayerData();
     }
 
-    return selectedTower;
+    return {
+      towerType: selectedTower,
+      variant: selectedVariant,
+      combinedKey: combinedKey,
+      towerTier: tier,
+      variantTier: variantTier
+    };
   },
 
-  // Roll multiple towers
+  // Roll a variant tier
+  rollVariantTier: function(isPremium = false) {
+    // Sync pity counters with playerData if available
+    if (window.playerData && window.playerData.variantPity) {
+      this.pityCounter.variant = { ...window.playerData.variantPity };
+    }
+
+    // Check pity system first
+    let tier = this.checkPity('variant');
+
+    // If no pity tier was determined, use random chance
+    if (!tier) {
+      // Increment all pity counters
+      this.pityCounter.variant.rare++;
+      this.pityCounter.variant.epic++;
+      this.pityCounter.variant.legendary++;
+      this.pityCounter.variant.divine++;
+
+      // Update playerData pity counters
+      if (window.playerData && window.playerData.variantPity) {
+        window.playerData.variantPity = { ...this.pityCounter.variant };
+        if (window.savePlayerData) window.savePlayerData();
+      }
+
+      // Determine tier based on random chance
+      const rand = Math.random();
+      let rates = { ...this.dropRates.variant };
+
+      // Apply premium bonus (1.5x for rare+ tiers and add divine chance)
+      if (isPremium) {
+        // Increase rates for rare+ tiers
+        rates.rare *= 1.5;
+        rates.epic *= 1.5;
+        rates.legendary *= 1.5;
+        rates.divine = 0.005; // 0.5% chance for divine tier (only available in premium rolls)
+
+        // Adjust common rate to ensure total is still 1.0
+        const totalRarePlus = rates.rare + rates.epic + rates.legendary + rates.divine;
+        rates.common = Math.max(0, 1.0 - totalRarePlus);
+      }
+
+      if (rand < rates.divine) {
+        tier = 'divine';
+      } else if (rand < rates.divine + rates.legendary) {
+        tier = 'legendary';
+      } else if (rand < rates.divine + rates.legendary + rates.epic) {
+        tier = 'epic';
+      } else if (rand < rates.divine + rates.legendary + rates.epic + rates.rare) {
+        tier = 'rare';
+      } else {
+        tier = 'common';
+      }
+    }
+
+    // Reset pity counters based on the tier obtained
+    this.resetPityCounters('variant', tier);
+
+    return tier;
+  },
+
+  // Select a variant of a specific tier
+  selectVariantOfTier: function(tier) {
+    // Get all variants of this tier
+    const variantsOfTier = Object.keys(towerVariants).filter(variant => towerVariants[variant].tier === tier);
+
+    // If no variants of this tier exist, fallback to normal
+    if (variantsOfTier.length === 0) {
+      console.error(`No variants found for tier: ${tier}, falling back to normal`);
+      return 'normal';
+    }
+
+    // Randomly select one variant from the tier
+    const randomIndex = Math.floor(Math.random() * variantsOfTier.length);
+    return variantsOfTier[randomIndex];
+  },
+
+  // Roll multiple towers with variants
   rollTowers: function(count, isPremium = false) {
     const results = [];
 
     for (let i = 0; i < count; i++) {
-      results.push(this.rollTower(isPremium));
+      results.push(this.rollTowerWithVariant(isPremium));
     }
 
     return results;
@@ -563,10 +675,11 @@ const gachaSystem = {
     // Only play animation for rare and above
     if (tier === 'common') return;
 
-    // Check if this is a divine variant (holy or satanic)
+    // Check if this is a divine variant (holy, satanic, or hell)
     const isDivineHoly = tier === 'divine' && variant === 'holy';
-    const isDisvineSatanic = tier === 'divine' && variant === 'satanic';
-    const isDivine = isDivineHoly || isDisvineSatanic;
+    const isDivineSatanic = tier === 'divine' && variant === 'satanic';
+    const isDivineHell = tier === 'divine' && variant === 'hell';
+    const isDivine = isDivineHoly || isDivineSatanic || isDivineHell;
 
     // Create animation container
     const animationContainer = document.createElement('div');
@@ -575,7 +688,15 @@ const gachaSystem = {
     // For divine variants, create a special cutscene first
     if (isDivine) {
       // Create the divine cutscene
-      const divineType = isDivineHoly ? 'holy' : 'satanic';
+      let divineType;
+      if (isDivineHoly) {
+        divineType = 'holy';
+      } else if (isDivineSatanic) {
+        divineType = 'satanic';
+      } else if (isDivineHell) {
+        divineType = 'hell';
+      }
+
       this.createDivineCutscene(divineType);
 
       // Delay the regular animation
@@ -602,10 +723,17 @@ const gachaSystem = {
     const wordsCircle = document.createElement('div');
     wordsCircle.className = `divine-words-circle ${divineType}`;
 
-    // Add words around the circle
-    const words = divineType === 'holy' ?
-      ['Serene', 'Purity', 'Divine', 'Blessed', 'Sacred', 'Radiant', 'Celestial', 'Eternal', 'Heavenly', 'Glorious', 'Righteous', 'Virtuous'] :
-      ['Infernal', 'Darkness', 'Abyss', 'Torment', 'Wicked', 'Unholy', 'Demonic', 'Cursed', 'Malevolent', 'Sinister', 'Corrupt', 'Fallen'];
+    // Add words around the circle based on divine type
+    let words;
+    if (divineType === 'holy') {
+      words = ['Serene', 'Purity', 'Divine', 'Blessed', 'Sacred', 'Radiant', 'Celestial', 'Eternal', 'Heavenly', 'Glorious', 'Righteous', 'Virtuous'];
+    } else if (divineType === 'satanic') {
+      words = ['Infernal', 'Darkness', 'Abyss', 'Torment', 'Wicked', 'Unholy', 'Demonic', 'Cursed', 'Malevolent', 'Sinister', 'Corrupt', 'Fallen'];
+    } else if (divineType === 'hell') {
+      words = ['Inferno', 'Hellfire', 'Brimstone', 'Damnation', 'Suffering', 'Agony', 'Punishment', 'Flames', 'Burning', 'Chaos', 'Destruction', 'Doom'];
+    } else {
+      words = ['Divine', 'Powerful', 'Mystical', 'Ancient', 'Eternal', 'Magical', 'Legendary', 'Mythical', 'Enchanted', 'Arcane', 'Mystic', 'Supernatural'];
+    }
 
     words.forEach((word, index) => {
       const wordElement = document.createElement('div');
@@ -628,17 +756,31 @@ const gachaSystem = {
     // Create center icon
     const centerIcon = document.createElement('div');
     centerIcon.className = `divine-center-icon ${divineType}`;
-    centerIcon.innerHTML = divineType === 'holy' ? '✝' : '⛧';
 
-    // Create light/fire effect
+    // Set icon based on divine type
+    if (divineType === 'holy') {
+      centerIcon.innerHTML = '✝';
+    } else if (divineType === 'satanic') {
+      centerIcon.innerHTML = '⛧';
+    } else if (divineType === 'hell') {
+      centerIcon.innerHTML = '🔥';
+    } else {
+      centerIcon.innerHTML = '✨';
+    }
+
+    // Create light/fire effect based on divine type
     if (divineType === 'holy') {
       const light = document.createElement('div');
       light.className = 'divine-light holy';
       cutscene.appendChild(light);
-    } else {
+    } else if (divineType === 'satanic') {
       const fire = document.createElement('div');
       fire.className = 'divine-fire';
       cutscene.appendChild(fire);
+    } else if (divineType === 'hell') {
+      const hellfire = document.createElement('div');
+      hellfire.className = 'divine-hellfire';
+      cutscene.appendChild(hellfire);
     }
 
     // Add elements to cutscene
@@ -668,7 +810,7 @@ const gachaSystem = {
     bg.className = `gacha-animation-bg ${tier}`;
 
     // Add variant class if it's a divine variant
-    if (tier === 'divine' && (variant === 'holy' || variant === 'satanic')) {
+    if (tier === 'divine' && (variant === 'holy' || variant === 'satanic' || variant === 'hell')) {
       bg.classList.add(variant);
     }
 
@@ -680,7 +822,7 @@ const gachaSystem = {
       ring.className = `gacha-animation-ring ${tier}`;
 
       // Add variant class if it's a divine variant
-      if (tier === 'divine' && (variant === 'holy' || variant === 'satanic')) {
+      if (tier === 'divine' && (variant === 'holy' || variant === 'satanic' || variant === 'hell')) {
         ring.classList.add(variant);
       }
 
@@ -697,7 +839,7 @@ const gachaSystem = {
         sparkle.className = `gacha-animation-sparkle ${tier} s${i % 8 + 1}`;
 
         // Add variant class if it's a divine variant
-        if (tier === 'divine' && (variant === 'holy' || variant === 'satanic')) {
+        if (tier === 'divine' && (variant === 'holy' || variant === 'satanic' || variant === 'hell')) {
           sparkle.classList.add(variant);
         }
 
@@ -724,6 +866,234 @@ const gachaSystem = {
         document.body.removeChild(animationContainer);
       }
     }, this.animationDurations[tier]);
+  },
+  // Reroll variant for a tower
+  rerollVariant: function(towerType, currentVariant, isPremium = false) {
+    // Check if the tower is unlocked
+    if (!playerData.unlockedTowers.includes(towerType)) {
+      alert(`You need to unlock the ${towerStats[towerType]?.name || towerType} tower first!`);
+      return null;
+    }
+
+    // Check if player has the tower+variant in inventory
+    const combinedKey = `${towerType}_${currentVariant}`;
+    if (!playerData.towerInventory[combinedKey] || playerData.towerInventory[combinedKey] <= 0) {
+      alert(`You don't have a ${towerType} tower with ${currentVariant} variant in your inventory!`);
+      return null;
+    }
+
+    // Roll a new variant tier
+    const newVariantTier = this.rollVariantTier(isPremium);
+
+    // Select a variant of this tier
+    const newVariant = this.selectVariantOfTier(newVariantTier);
+
+    // Make sure we don't get the same variant
+    if (newVariant === currentVariant) {
+      // Try again up to 3 times
+      for (let i = 0; i < 3; i++) {
+        const alternativeVariant = this.selectVariantOfTier(newVariantTier);
+        if (alternativeVariant !== currentVariant) {
+          return this.completeVariantReroll(towerType, currentVariant, alternativeVariant, newVariantTier);
+        }
+      }
+
+      // If we still got the same variant after 3 tries, try a different tier
+      const tiers = ['common', 'rare', 'epic', 'legendary', 'divine'];
+      const currentTierIndex = tiers.indexOf(newVariantTier);
+
+      // Try a higher tier if possible
+      if (currentTierIndex < tiers.length - 1) {
+        const higherTier = tiers[currentTierIndex + 1];
+        const higherVariant = this.selectVariantOfTier(higherTier);
+        return this.completeVariantReroll(towerType, currentVariant, higherVariant, higherTier);
+      }
+
+      // Try a lower tier if possible
+      if (currentTierIndex > 0) {
+        const lowerTier = tiers[currentTierIndex - 1];
+        const lowerVariant = this.selectVariantOfTier(lowerTier);
+        return this.completeVariantReroll(towerType, currentVariant, lowerVariant, lowerTier);
+      }
+    }
+
+    return this.completeVariantReroll(towerType, currentVariant, newVariant, newVariantTier);
+  },
+
+  // Complete the variant reroll process
+  completeVariantReroll: function(towerType, oldVariant, newVariant, newVariantTier) {
+    // Remove the old tower+variant from inventory
+    const oldCombinedKey = `${towerType}_${oldVariant}`;
+    playerData.towerInventory[oldCombinedKey]--;
+
+    // Add the new tower+variant to inventory
+    const newCombinedKey = `${towerType}_${newVariant}`;
+    playerData.towerInventory[newCombinedKey] = (playerData.towerInventory[newCombinedKey] || 0) + 1;
+
+    // Save player data
+    if (window.savePlayerData) {
+      window.savePlayerData();
+    }
+
+    return {
+      towerType: towerType,
+      oldVariant: oldVariant,
+      newVariant: newVariant,
+      variantTier: newVariantTier,
+      combinedKey: newCombinedKey
+    };
+  },
+
+  // Roll until a specific tier or variant is obtained
+  rollUntil: function(type, targetTier, targetVariant = null, isPremium = false, maxRolls = 1000) {
+    // Validate parameters
+    if (!type || (type !== 'tower' && type !== 'variant')) {
+      console.error('Invalid roll type. Must be "tower" or "variant"');
+      return { success: false, reason: 'Invalid roll type', rolls: 0, result: null };
+    }
+
+    if (!targetTier && !targetVariant) {
+      console.error('Must specify either targetTier or targetVariant');
+      return { success: false, reason: 'No target specified', rolls: 0, result: null };
+    }
+
+    // For variant rolls, we need a tower type
+    let towerType = null;
+    if (type === 'variant') {
+      towerType = document.getElementById('variant-tower-select')?.value;
+      if (!towerType) {
+        console.error('No tower selected for variant roll');
+        return { success: false, reason: 'No tower selected', rolls: 0, result: null };
+      }
+
+      // Check if tower is unlocked
+      if (!playerData.unlockedTowers.includes(towerType)) {
+        console.error(`Tower ${towerType} is not unlocked`);
+        return { success: false, reason: 'Tower not unlocked', rolls: 0, result: null };
+      }
+    }
+
+    // Calculate cost per roll
+    const costPerRoll = isPremium ?
+      this.costs.premium[type].single :
+      this.costs[type].single;
+
+    // Check if player has enough currency
+    const requiredCurrency = costPerRoll * maxRolls;
+    const currencyType = isPremium ? 'gems' : 'silver';
+
+    if (playerData[currencyType] < costPerRoll) {
+      console.error(`Not enough ${currencyType} for even one roll`);
+      return {
+        success: false,
+        reason: `Not enough ${currencyType}`,
+        rolls: 0,
+        result: null,
+        cost: {
+          type: currencyType,
+          amount: 0
+        }
+      };
+    }
+
+    // Start rolling
+    let result = null;
+    let rolls = 0;
+    let totalCost = 0;
+
+    while (rolls < maxRolls) {
+      // Check if we have enough currency for another roll
+      if (playerData[currencyType] < costPerRoll) {
+        console.log(`Ran out of ${currencyType} after ${rolls} rolls`);
+        return {
+          success: false,
+          reason: `Ran out of ${currencyType}`,
+          rolls: rolls,
+          result: null,
+          cost: {
+            type: currencyType,
+            amount: totalCost
+          }
+        };
+      }
+
+      // Spend currency
+      if (isPremium) {
+        spendGems(costPerRoll);
+      } else {
+        spendSilver(costPerRoll);
+      }
+
+      totalCost += costPerRoll;
+      rolls++;
+
+      // Perform the roll
+      let rollResult;
+      if (type === 'tower') {
+        rollResult = this.rollTowerWithVariant(isPremium);
+      } else { // variant
+        const variantResult = this.rollVariant(towerType, isPremium);
+        if (!variantResult) continue; // Skip if roll failed
+
+        rollResult = {
+          variant: variantResult,
+          variantTier: towerVariants[variantResult]?.tier || 'common'
+        };
+      }
+
+      // Check if we got what we wanted
+      let success = false;
+
+      if (targetTier) {
+        // Check tier
+        const resultTier = type === 'tower' ?
+          rollResult.towerTier :
+          rollResult.variantTier;
+
+        if (resultTier === targetTier) {
+          success = true;
+          result = rollResult;
+        }
+      }
+
+      if (targetVariant && !success) {
+        // Check variant
+        const resultVariant = type === 'tower' ?
+          rollResult.variant :
+          rollResult.variant;
+
+        if (resultVariant === targetVariant) {
+          success = true;
+          result = rollResult;
+        }
+      }
+
+      if (success) {
+        console.log(`Found target after ${rolls} rolls`);
+        return {
+          success: true,
+          rolls: rolls,
+          result: result,
+          cost: {
+            type: currencyType,
+            amount: totalCost
+          }
+        };
+      }
+    }
+
+    // If we get here, we hit the max rolls limit
+    console.log(`Hit max rolls limit (${maxRolls}) without finding target`);
+    return {
+      success: false,
+      reason: 'Max rolls reached',
+      rolls: rolls,
+      result: null,
+      cost: {
+        type: currencyType,
+        amount: totalCost
+      }
+    };
   }
 };
 

@@ -200,6 +200,25 @@ const towerVariants = {
     dropRate: 0.1 // 0.1% drop rate
   },
 
+  hell: {
+    name: "Hell",
+    description: "Forged in the depths of Hell, this tower unleashes devastating infernal power",
+    tier: "divine", // Divine tier
+    bonusMultiplier: 12.0, // 1200% bonus
+    rangeBonus: 120,
+    fireRateBonus: 1.2, // 120% faster firing
+    aoeRadius: 100,
+    armorPiercing: 1.0, // 100% armor piercing
+    burnDamage: 80,
+    burnDuration: 10000,
+    chainCount: 5,
+    chainRange: 200,
+    visualEffect: "hell",
+    color: "#FF3300",
+    specialAnimation: true,
+    dropRate: 0.05 // 0.05% drop rate - even rarer than other divine variants
+  },
+
 
   // Special tower-specific variants
   poisonCloud: {

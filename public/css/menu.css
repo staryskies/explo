@@ -1061,6 +1061,12 @@ h1 {
   animation: pulse 1.5s infinite;
 }
 
+.gacha-animation-bg.divine.hell {
+  background: radial-gradient(circle, #FF9800 0%, #FF3300 40%, #990000 70%, transparent 100%);
+  box-shadow: 0 0 80px #FF3300, 0 0 160px #FF3300, 0 0 240px #FF3300;
+  animation: pulse 1.2s infinite;
+}
+
 .gacha-animation-bg.mythic {
   background: radial-gradient(circle, #E1BEE7 0%, #9C27B0 50%, transparent 100%);
   box-shadow: 0 0 50px #9C27B0, 0 0 100px #9C27B0, 0 0 150px #9C27B0;
@@ -1108,6 +1114,15 @@ h1 {
   border-width: 5px;
   box-shadow: 0 0 25px #D50000;
   animation: rotate 5s linear infinite reverse;
+}
+
+.gacha-animation-ring.divine.hell {
+  width: 340px;
+  height: 340px;
+  border-color: #FF3300;
+  border-width: 6px;
+  box-shadow: 0 0 30px #FF3300;
+  animation: rotate 4s linear infinite alternate;
 }
 
 .gacha-animation-ring.mythic {
@@ -1226,6 +1241,11 @@ h1 {
   box-shadow: 0 0 30px #D50000, 0 0 60px #D50000;
 }
 
+.gacha-animation-sparkle.divine.hell {
+  background: #FF9800;
+  box-shadow: 0 0 40px #FF3300, 0 0 80px #FF3300;
+}
+
 .gacha-animation-sparkle.mythic {
   background: #E040FB;
   box-shadow: 0 0 20px #9C27B0, 0 0 40px #9C27B0;
@@ -1267,6 +1287,10 @@ h1 {
 
 .divine-cutscene.satanic {
   background-color: rgba(0, 0, 0, 0.95);
+}
+
+.divine-cutscene.hell {
+  background-color: rgba(50, 0, 0, 0.95);
 }
 
 .divine-words-circle {
@@ -1315,6 +1339,13 @@ h1 {
   animation: satanicWords 4s infinite;
 }
 
+.divine-word.hell {
+  color: #FF3300;
+  text-shadow: 0 0 15px #FF3300;
+  animation: hellWords 3s infinite;
+  font-family: 'Creepster', cursive;
+}
+
 .divine-center-icon {
   position: absolute;
   width: 150px;
@@ -1334,6 +1365,11 @@ h1 {
 .divine-center-icon.satanic {
   color: #D50000;
   text-shadow: 0 0 20px #000000;
+}
+
+.divine-center-icon.hell {
+  color: #FF3300;
+  text-shadow: 0 0 30px #FF3300;
 }
 
 .divine-light {
@@ -1357,6 +1393,15 @@ h1 {
   animation: satanicFire 4s infinite;
 }
 
+.divine-hellfire {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 60%;
+  background: linear-gradient(to top, #FF3300, #FF9800, transparent);
+  animation: hellFire 3s infinite;
+}
+
 /* Divine animation keyframes */
 @keyframes holyWords {
   0% { opacity: 0.5; text-shadow: 0 0 5px #FFFFFF; }
@@ -1370,6 +1415,14 @@ h1 {
   100% { opacity: 0.5; text-shadow: 0 0 5px #000000; }
 }
 
+@keyframes hellWords {
+  0% { opacity: 0.5; transform: scale(0.9) rotate(-3deg); text-shadow: 0 0 10px #FF3300; }
+  25% { opacity: 0.8; transform: scale(1.1) rotate(2deg); text-shadow: 0 0 20px #FF3300, 0 0 30px #FF9800; }
+  50% { opacity: 1; transform: scale(1.2) rotate(-2deg); text-shadow: 0 0 30px #FF3300, 0 0 50px #FF9800; }
+  75% { opacity: 0.8; transform: scale(1.1) rotate(3deg); text-shadow: 0 0 20px #FF3300, 0 0 30px #FF9800; }
+  100% { opacity: 0.5; transform: scale(0.9) rotate(-3deg); text-shadow: 0 0 10px #FF3300; }
+}
+
 @keyframes holyLight {
   0% { opacity: 0.5; }
   50% { opacity: 0.8; }
@@ -1380,6 +1433,14 @@ h1 {
   0% { height: 30%; opacity: 0.7; }
   50% { height: 50%; opacity: 0.9; }
   100% { height: 30%; opacity: 0.7; }
+}
+
+@keyframes hellFire {
+  0% { height: 40%; opacity: 0.7; transform: scale(1, 0.9); }
+  25% { height: 50%; opacity: 0.8; transform: scale(1.05, 1); }
+  50% { height: 60%; opacity: 0.9; transform: scale(1.1, 1.1); }
+  75% { height: 50%; opacity: 0.8; transform: scale(1.05, 1); }
+  100% { height: 40%; opacity: 0.7; transform: scale(1, 0.9); }
 }
 
 /* Gacha Button Styles */

@@ -854,119 +854,205 @@ function getTotalTowerCount() {
 
 // Generate inventory content
 function generateInventoryContent() {
-  // Generate towers inventory
-  generateTowersInventory();
-
-  // Populate tower select dropdown for variants inventory
-  const inventoryTowerSelect = document.getElementById('inventory-tower-select');
-  if (inventoryTowerSelect) {
-    inventoryTowerSelect.innerHTML = '';
-
-    // Only show unlocked towers
-    playerData.unlockedTowers.forEach(towerType => {
-      const option = document.createElement('option');
-      option.value = towerType;
-      option.textContent = towerStats[towerType]?.name || towerType;
-      inventoryTowerSelect.appendChild(option);
-    });
-
-    // Add change event listener
-    inventoryTowerSelect.addEventListener('change', updateVariantsInventory);
-
-    // Generate variants for the first tower
-    updateVariantsInventory();
-  }
+  // Generate combined tower+variant inventory
+  generateTowerVariantInventory();
 }
 
-// Generate towers inventory
-function generateTowersInventory() {
+// Generate combined tower+variant inventory
+function generateTowerVariantInventory() {
   const towersInventory = document.getElementById('towers-inventory');
   if (!towersInventory) return;
 
   // Clear existing content
   towersInventory.innerHTML = '';
 
-  // Add only unlocked towers
-  playerData.unlockedTowers.forEach(towerType => {
+  // Get all tower+variant combinations from inventory
+  const towerVariantKeys = Object.keys(playerData.towerInventory);
+
+  // Group by tower type for better organization
+  const towerGroups = {};
+
+  towerVariantKeys.forEach(key => {
+    // Skip if count is 0
+    if (playerData.towerInventory[key] <= 0) return;
+
+    // Parse the key
+    const [towerType, variant] = key.split('_');
+
+    // Initialize group if it doesn't exist
+    if (!towerGroups[towerType]) {
+      towerGroups[towerType] = [];
+    }
+
+    // Add to group
+    towerGroups[towerType].push({
+      key: key,
+      towerType: towerType,
+      variant: variant,
+      count: playerData.towerInventory[key]
+    });
+  });
+
+  // Create a section for each tower type
+  Object.keys(towerGroups).forEach(towerType => {
     const towerData = towerStats[towerType];
     if (!towerData) return; // Skip if tower data doesn't exist
 
-    // Get tower count from inventory
-    const towerCount = getTowerCount(towerType) || 0;
+    // Create section header
+    const sectionHeader = document.createElement('div');
+    sectionHeader.className = 'inventory-section-header';
+    sectionHeader.textContent = towerData.name || towerType;
+    towersInventory.appendChild(sectionHeader);
 
-    // Create inventory item
-    const inventoryItem = document.createElement('div');
-    inventoryItem.className = `inventory-item ${towerData.tier}`;
+    // Create grid for this tower type
+    const towerGrid = document.createElement('div');
+    towerGrid.className = 'inventory-grid';
+    towersInventory.appendChild(towerGrid);
 
-    // Create tower image container
-    const imageContainer = document.createElement('div');
-    imageContainer.className = `inventory-item-image ${towerData.tier}`;
+    // Add each variant
+    towerGroups[towerType].forEach(item => {
+      const variantData = towerVariants[item.variant] || { name: item.variant, tier: 'common' };
 
-    // Create canvas for tower image
-    const towerCanvas = document.createElement('canvas');
-    towerCanvas.width = 60;
-    towerCanvas.height = 60;
-    const ctx = towerCanvas.getContext('2d');
+      // Create inventory item
+      const inventoryItem = document.createElement('div');
+      inventoryItem.className = `inventory-item ${variantData.tier}`;
 
-    // Draw tower
-    drawTower(ctx, towerType, towerData);
+      // Create tower image container
+      const imageContainer = document.createElement('div');
+      imageContainer.className = `inventory-item-image ${variantData.tier}`;
 
-    imageContainer.appendChild(towerCanvas);
+      // Create canvas for tower image
+      const towerCanvas = document.createElement('canvas');
+      towerCanvas.width = 60;
+      towerCanvas.height = 60;
+      const ctx = towerCanvas.getContext('2d');
 
-    // Add count badge
-    const countBadge = document.createElement('div');
-    countBadge.className = 'inventory-count-badge';
-    countBadge.textContent = towerCount;
-    imageContainer.appendChild(countBadge);
+      // Draw tower with variant
+      drawTowerWithVariant(ctx, item.towerType, towerData, item.variant, variantData);
 
-    // Create tower name
-    const towerName = document.createElement('div');
-    towerName.className = 'inventory-item-name';
-    towerName.textContent = towerData.name || towerType;
+      imageContainer.appendChild(towerCanvas);
 
-    // Create tower tier
-    const towerTier = document.createElement('div');
-    towerTier.className = `inventory-item-tier ${towerData.tier}`;
-    towerTier.textContent = capitalizeFirstLetter(towerData.tier);
+      // Add count badge
+      const countBadge = document.createElement('div');
+      countBadge.className = 'inventory-count-badge';
+      countBadge.textContent = item.count;
+      imageContainer.appendChild(countBadge);
 
-    // Create tower description
-    const towerDesc = document.createElement('div');
-    towerDesc.className = 'inventory-item-description';
-    towerDesc.textContent = towerData.description || '';
+      // Create combined name
+      const towerName = document.createElement('div');
+      towerName.className = 'inventory-item-name';
+      towerName.textContent = `${variantData.name} ${towerData.name}`;
 
-    // Create tower actions container
-    const actionsContainer = document.createElement('div');
-    actionsContainer.className = 'inventory-item-actions';
+      // Create variant tier
+      const variantTier = document.createElement('div');
+      variantTier.className = `inventory-item-tier ${variantData.tier}`;
+      variantTier.textContent = capitalizeFirstLetter(variantData.tier);
 
-    // Create sell button (only if count > 1 to prevent selling all towers)
-    if (towerCount > 1) {
-      const sellButton = document.createElement('button');
-      sellButton.className = 'sell-button';
-      sellButton.textContent = 'Sell (50 Silver)';
-      sellButton.addEventListener('click', () => {
-        if (removeTowerFromInventory(towerType)) {
-          // Add silver for selling
-          addSilver(50);
-          // Update inventory
-          generateTowersInventory();
-          // Show success message
-          alert(`Sold ${towerData.name} tower for 50 Silver`);
+      // Create tower description
+      const towerDesc = document.createElement('div');
+      towerDesc.className = 'inventory-item-description';
+      towerDesc.textContent = variantData.description || towerData.description || '';
+
+      // Create tower actions container
+      const actionsContainer = document.createElement('div');
+      actionsContainer.className = 'inventory-item-actions';
+
+      // Create sell button (only if count > 0)
+      if (item.count > 0) {
+        const sellButton = document.createElement('button');
+        sellButton.className = 'sell-button';
+        sellButton.textContent = 'Sell (50 Silver)';
+        sellButton.addEventListener('click', () => {
+          if (removeTowerFromInventory(item.towerType, item.variant)) {
+            // Add silver for selling
+            addSilver(50);
+            // Update inventory
+            generateTowerVariantInventory();
+            // Show success message
+            alert(`Sold ${variantData.name} ${towerData.name} for 50 Silver`);
+          } else {
+            alert('Failed to sell tower');
+          }
+        });
+        actionsContainer.appendChild(sellButton);
+      }
+
+      // Create select for loadout button
+      const selectButton = document.createElement('button');
+      selectButton.className = 'select-button';
+      selectButton.textContent = 'Add to Loadout';
+      selectButton.addEventListener('click', () => {
+        if (window.selectTowerVariantForLoadout) {
+          if (window.selectTowerVariantForLoadout(item.towerType, item.variant)) {
+            alert(`Added ${variantData.name} ${towerData.name} to loadout`);
+          } else {
+            alert('Failed to add to loadout');
+          }
         } else {
-          alert('Failed to sell tower');
+          alert('Loadout functionality not available');
         }
       });
-      actionsContainer.appendChild(sellButton);
-    }
+      actionsContainer.appendChild(selectButton);
 
-    // Add elements to inventory item
-    inventoryItem.appendChild(imageContainer);
-    inventoryItem.appendChild(towerName);
-    inventoryItem.appendChild(towerTier);
-    inventoryItem.appendChild(towerDesc);
-    inventoryItem.appendChild(actionsContainer);
+      // Create reroll variant button
+      if (item.variant !== 'normal') { // Only allow rerolling non-normal variants
+        const rerollButton = document.createElement('button');
+        rerollButton.className = 'reroll-button';
+        rerollButton.textContent = 'Reroll Variant (100 Silver)';
+        rerollButton.addEventListener('click', () => {
+          // Check if player has enough silver
+          if (playerData.silver < 100) {
+            alert('Not enough silver! You need 100 silver to reroll a variant.');
+            return;
+          }
 
-    // Add to inventory grid
-    towersInventory.appendChild(inventoryItem);
+          // Confirm reroll
+          if (!confirm(`Are you sure you want to reroll the ${variantData.name} variant on your ${towerData.name} tower? This will cost 100 silver.`)) {
+            return;
+          }
+
+          // Deduct silver
+          addSilver(-100);
+
+          // Perform reroll
+          if (window.gachaSystem && window.gachaSystem.rerollVariant) {
+            const result = window.gachaSystem.rerollVariant(item.towerType, item.variant);
+            if (result) {
+              // Show result
+              const newVariantData = window.towerVariants[result.newVariant] || { name: result.newVariant };
+              alert(`Rerolled ${variantData.name} to ${newVariantData.name}!`);
+
+              // Play animation if it's a rare+ variant
+              if (newVariantData.tier && newVariantData.tier !== 'common') {
+                window.gachaSystem.playAnimation(newVariantData.tier, null, result.newVariant);
+              }
+
+              // Update inventory display
+              generateTowerVariantInventory();
+            } else {
+              // Refund silver if reroll failed
+              addSilver(100);
+              alert('Failed to reroll variant.');
+            }
+          } else {
+            // Refund silver if reroll function not available
+            addSilver(100);
+            alert('Reroll functionality not available.');
+          }
+        });
+        actionsContainer.appendChild(rerollButton);
+      }
+
+      // Add elements to inventory item
+      inventoryItem.appendChild(imageContainer);
+      inventoryItem.appendChild(towerName);
+      inventoryItem.appendChild(variantTier);
+      inventoryItem.appendChild(towerDesc);
+      inventoryItem.appendChild(actionsContainer);
+
+      // Add to inventory grid
+      towerGrid.appendChild(inventoryItem);
+    });
   });
 }
 

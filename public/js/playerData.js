@@ -42,26 +42,9 @@ const playerData = {
   // Unlocked towers (basic is always unlocked)
   unlockedTowers: ['basic'],
 
-  // Tower inventory with counts
+  // Tower inventory with combined tower+variant format
   towerInventory: {
-    basic: { count: 1, variants: { normal: 1 } }
-  },
-
-  // Tower variants for each tower
-  towerVariants: {
-    basic: ['normal'],
-    archer: [],
-    cannon: [],
-    sniper: [],
-    freeze: [],
-    mortar: [],
-    laser: [],
-    tesla: [],
-    flame: [],
-    missile: [],
-    poison: [],
-    vortex: [],
-    archangel: []
+    "basic_normal": 1 // Format: "towerType_variantType": count
   },
 
   // Towers that require completing specific difficulties
@@ -154,22 +137,10 @@ const playerData = {
     }
   },
 
-  // Selected tower variants
-  selectedVariants: {
-    basic: 'normal',
-    archer: null,
-    cannon: null,
-    sniper: null,
-    freeze: null,
-    mortar: null,
-    laser: null,
-    tesla: null,
-    flame: null,
-    missile: null,
-    poison: null,
-    vortex: null,
-    archangel: null
-  }
+  // Selected towers for loadout (combined tower+variant format)
+  selectedTowersForLoadout: [
+    "basic_normal" // Format: "towerType_variantType"
+  ]
 };
 
 // Save player data to local storage
@@ -238,9 +209,13 @@ function isTowerUnlocked(towerType) {
 function unlockTower(towerType) {
   if (!isTowerUnlocked(towerType)) {
     playerData.unlockedTowers.push(towerType);
-    // Unlock the normal variant
-    playerData.towerVariants[towerType].push('normal');
-    playerData.selectedVariants[towerType] = 'normal';
+    // Unlock the normal variant and add to inventory
+    const combinedKey = `${towerType}_normal`;
+    playerData.towerInventory[combinedKey] = 1;
+    // Add to loadout if there's space
+    if (playerData.selectedTowersForLoadout.length < 4) {
+      playerData.selectedTowersForLoadout.push(combinedKey);
+    }
     savePlayerData();
     return true;
   }
@@ -248,24 +223,39 @@ function unlockTower(towerType) {
 }
 
 // Check if a tower variant is unlocked
-function isVariantUnlocked(towerType, variant) {
-  return playerData.towerVariants[towerType]?.includes(variant);
+function isTowerVariantUnlocked(towerType, variant) {
+  const combinedKey = `${towerType}_${variant}`;
+  return (playerData.towerInventory[combinedKey] || 0) > 0;
 }
 
-// Unlock a tower variant
-function unlockVariant(towerType, variant) {
-  if (!isVariantUnlocked(towerType, variant)) {
-    playerData.towerVariants[towerType].push(variant);
+// Unlock a tower variant (adds it to inventory)
+function unlockTowerVariant(towerType, variant) {
+  const combinedKey = `${towerType}_${variant}`;
+  if (!isTowerVariantUnlocked(towerType, variant)) {
+    playerData.towerInventory[combinedKey] = 1;
     savePlayerData();
     return true;
   }
   return false;
 }
 
-// Select a tower variant
-function selectVariant(towerType, variant) {
-  if (isVariantUnlocked(towerType, variant)) {
-    playerData.selectedVariants[towerType] = variant;
+// Select a tower variant for loadout
+function selectTowerVariantForLoadout(towerType, variant) {
+  const combinedKey = `${towerType}_${variant}`;
+  if (isTowerVariantUnlocked(towerType, variant)) {
+    // Check if this tower type is already in the loadout
+    const existingIndex = playerData.selectedTowersForLoadout.findIndex(item =>
+      item.split('_')[0] === towerType
+    );
+
+    if (existingIndex >= 0) {
+      // Replace existing entry
+      playerData.selectedTowersForLoadout[existingIndex] = combinedKey;
+    } else {
+      // Add new entry
+      playerData.selectedTowersForLoadout.push(combinedKey);
+    }
+
     savePlayerData();
     return true;
   }
@@ -374,54 +364,31 @@ function spendGems(amount) {
 
 // Add tower to inventory
 function addTowerToInventory(towerType, variant = 'normal') {
-  // Initialize tower in inventory if it doesn't exist
-  if (!playerData.towerInventory[towerType]) {
-    playerData.towerInventory[towerType] = {
-      count: 0,
-      variants: {}
-    };
-  }
+  const combinedKey = `${towerType}_${variant}`;
 
-  // Increment tower count
-  playerData.towerInventory[towerType].count++;
-
-  // Initialize variant count if it doesn't exist
-  if (!playerData.towerInventory[towerType].variants[variant]) {
-    playerData.towerInventory[towerType].variants[variant] = 0;
-  }
-
-  // Increment variant count
-  playerData.towerInventory[towerType].variants[variant]++;
+  // Initialize or increment count
+  playerData.towerInventory[combinedKey] = (playerData.towerInventory[combinedKey] || 0) + 1;
 
   // Make sure the tower is in unlockedTowers
   if (!playerData.unlockedTowers.includes(towerType)) {
     playerData.unlockedTowers.push(towerType);
   }
 
-  // Make sure the variant is in towerVariants
-  if (!playerData.towerVariants[towerType].includes(variant)) {
-    playerData.towerVariants[towerType].push(variant);
-  }
-
   savePlayerData();
-  return playerData.towerInventory[towerType];
+  return playerData.towerInventory[combinedKey];
 }
 
 // Remove tower from inventory
 function removeTowerFromInventory(towerType, variant = 'normal') {
+  const combinedKey = `${towerType}_${variant}`;
+
   // Check if tower exists in inventory
-  if (!playerData.towerInventory[towerType] ||
-      playerData.towerInventory[towerType].count <= 0 ||
-      !playerData.towerInventory[towerType].variants[variant] ||
-      playerData.towerInventory[towerType].variants[variant] <= 0) {
+  if (!playerData.towerInventory[combinedKey] || playerData.towerInventory[combinedKey] <= 0) {
     return false;
   }
 
-  // Decrement tower count
-  playerData.towerInventory[towerType].count--;
-
-  // Decrement variant count
-  playerData.towerInventory[towerType].variants[variant]--;
+  // Decrement count
+  playerData.towerInventory[combinedKey]--;
 
   savePlayerData();
   return true;
@@ -429,21 +396,28 @@ function removeTowerFromInventory(towerType, variant = 'normal') {
 
 // Get tower count from inventory
 function getTowerCount(towerType, variant = null) {
-  if (!playerData.towerInventory[towerType]) {
-    return 0;
-  }
-
   if (variant) {
-    return playerData.towerInventory[towerType].variants[variant] || 0;
+    const combinedKey = `${towerType}_${variant}`;
+    return playerData.towerInventory[combinedKey] || 0;
+  } else {
+    // Count all variants of this tower type
+    let count = 0;
+    Object.keys(playerData.towerInventory).forEach(key => {
+      if (key.startsWith(`${towerType}_`)) {
+        count += playerData.towerInventory[key];
+      }
+    });
+    return count;
   }
-
-  return playerData.towerInventory[towerType].count;
 }
 
 // Create a market listing
-function createMarketListing(towerType, variant, price) {
+function createMarketListing(combinedTowerKey, price) {
+  // Parse the combined key
+  const [towerType, variant] = combinedTowerKey.split('_');
+
   // Check if player has the tower in inventory
-  if (!getTowerCount(towerType, variant)) {
+  if (!playerData.towerInventory[combinedTowerKey] || playerData.towerInventory[combinedTowerKey] <= 0) {
     return false;
   }
 
@@ -455,6 +429,7 @@ function createMarketListing(towerType, variant, price) {
   // Create the listing
   const listing = {
     id: Date.now().toString(36) + Math.random().toString(36).substring(2, 7),
+    combinedKey: combinedTowerKey,
     towerType,
     variant,
     price,
@@ -482,7 +457,13 @@ function cancelMarketListing(listingId) {
   const listing = playerData.marketListings[listingIndex];
 
   // Add the tower back to inventory
-  addTowerToInventory(listing.towerType, listing.variant);
+  if (listing.combinedKey) {
+    // New format
+    playerData.towerInventory[listing.combinedKey] = (playerData.towerInventory[listing.combinedKey] || 0) + 1;
+  } else {
+    // Old format for backward compatibility
+    addTowerToInventory(listing.towerType, listing.variant);
+  }
 
   // Remove the listing
   playerData.marketListings.splice(listingIndex, 1);

@@ -5,13 +5,18 @@
 console.log('Tower class loaded');
 
 class Tower {
-  constructor(x, y, type = 'basic', gridX, gridY, variant = null) {
+  constructor(x, y, towerKey = 'basic_normal', gridX, gridY) {
     this.x = x;
     this.y = y;
     this.gridX = gridX; // Store grid coordinates for tower removal
     this.gridY = gridY;
+
+    // Parse the combined tower key (format: "towerType_variantType")
+    const [type, variant] = towerKey.split('_');
     this.type = type;
-    this.variant = variant; // Store the tower skin variant
+    this.variant = variant || 'normal'; // Default to normal if no variant
+    this.towerKey = towerKey; // Store the combined key
+
     this.level = 1;
     this.target = null;
     this.angle = 0;
@@ -1158,6 +1163,9 @@ class Tower {
     // Calculate scale factor based on tile size (40 is the reference size)
     this.scaleFactor = this.tileSize / 40;
 
+    // Define a global scaleFactor for use throughout the method
+    const scaleFactor = this.scaleFactor;
+
     // Draw variant indicator above tower if it has a variant
     if (this.variant && this.variant !== 'normal') {
       // Get variant data
@@ -1315,6 +1323,7 @@ class Tower {
     let recoilOffset = 0;
     if (this.recoilAnimation > 0) {
       // Calculate recoil offset based on remaining animation frames
+      const scaleFactor = this.tileSize / 40; // Calculate scale factor based on tile size
       recoilOffset = Math.sin(Math.PI * (this.recoilAnimation / 5)) * 5 * scaleFactor;
       this.recoilAnimation--;
     }
@@ -1332,6 +1341,7 @@ class Tower {
       const pulseIntensity = 0.4 + Math.sin(timeInSec * 3) * 0.2;
       ctx.fillStyle = hasPathAUpgrades ? '#FFA000' : '#9C27B0';
       ctx.globalAlpha = pulseIntensity;
+      const scaleFactor = this.tileSize / 40; // Calculate scale factor based on tile size
       ctx.beginPath();
       ctx.arc(0, -15 * scaleFactor, 12 * scaleFactor, 0, Math.PI * 2);
       ctx.fill();

@@ -19,6 +19,9 @@ document.addEventListener('DOMContentLoaded', function() {
   // Variant Gacha Event Handlers
   setupVariantGachaEvents();
 
+  // Roll Until Event Handlers
+  setupRollUntilEvents();
+
   // Update currency displays
   updateGachaCurrencyDisplays();
 });
@@ -73,13 +76,13 @@ function updateGachaCurrencyDisplays() {
   if (variantGachaSilverAmount) {
     variantGachaSilverAmount.textContent = playerData.silver;
   }
-  
+
   // Update tower gacha gems display
   const towerGachaGemsAmount = document.getElementById('tower-gacha-gems-amount');
   if (towerGachaGemsAmount) {
     towerGachaGemsAmount.textContent = playerData.gems;
   }
-  
+
   // Update variant gacha gems display
   const variantGachaGemsAmount = document.getElementById('variant-gacha-gems-amount');
   if (variantGachaGemsAmount) {
@@ -113,7 +116,7 @@ function setupTowerGachaEvents() {
 
       // Update pity progress bars
       updatePityProgressBars();
-      
+
       // Update currency displays
       updateGachaCurrencyDisplays();
     });
@@ -143,7 +146,7 @@ function setupTowerGachaEvents() {
 
       // Update pity progress bars
       updatePityProgressBars();
-      
+
       // Update currency displays
       updateGachaCurrencyDisplays();
     });
@@ -173,12 +176,12 @@ function setupTowerGachaEvents() {
 
       // Update pity progress bars
       updatePityProgressBars();
-      
+
       // Update currency displays
       updateGachaCurrencyDisplays();
     });
   }
-  
+
   // Tower Gacha - Premium Roll 1
   const rollTowerPremium1 = document.getElementById('roll-tower-premium-1');
   if (rollTowerPremium1) {
@@ -203,7 +206,7 @@ function setupTowerGachaEvents() {
 
       // Update pity progress bars
       updatePityProgressBars();
-      
+
       // Update currency displays
       updateGachaCurrencyDisplays();
     });
@@ -233,7 +236,7 @@ function setupTowerGachaEvents() {
 
       // Update pity progress bars
       updatePityProgressBars();
-      
+
       // Update currency displays
       updateGachaCurrencyDisplays();
     });
@@ -263,7 +266,7 @@ function setupTowerGachaEvents() {
 
       // Update pity progress bars
       updatePityProgressBars();
-      
+
       // Update currency displays
       updateGachaCurrencyDisplays();
     });
@@ -309,7 +312,7 @@ function setupVariantGachaEvents() {
 
       // Update pity progress bars
       updatePityProgressBars();
-      
+
       // Update currency displays
       updateGachaCurrencyDisplays();
     });
@@ -349,7 +352,7 @@ function setupVariantGachaEvents() {
 
       // Update pity progress bars
       updatePityProgressBars();
-      
+
       // Update currency displays
       updateGachaCurrencyDisplays();
     });
@@ -389,12 +392,12 @@ function setupVariantGachaEvents() {
 
       // Update pity progress bars
       updatePityProgressBars();
-      
+
       // Update currency displays
       updateGachaCurrencyDisplays();
     });
   }
-  
+
   // Variant Gacha - Premium Roll 1
   const rollVariantPremium1 = document.getElementById('roll-variant-premium-1');
   if (rollVariantPremium1) {
@@ -429,7 +432,7 @@ function setupVariantGachaEvents() {
 
       // Update pity progress bars
       updatePityProgressBars();
-      
+
       // Update currency displays
       updateGachaCurrencyDisplays();
     });
@@ -469,7 +472,7 @@ function setupVariantGachaEvents() {
 
       // Update pity progress bars
       updatePityProgressBars();
-      
+
       // Update currency displays
       updateGachaCurrencyDisplays();
     });
@@ -509,7 +512,7 @@ function setupVariantGachaEvents() {
 
       // Update pity progress bars
       updatePityProgressBars();
-      
+
       // Update currency displays
       updateGachaCurrencyDisplays();
     });
@@ -534,6 +537,141 @@ function populateVariantTowerSelect() {
     option.textContent = towerData.name || towerType;
     towerSelect.appendChild(option);
   });
+}
+
+// Setup roll until event handlers
+function setupRollUntilEvents() {
+  // Tower Roll Until buttons
+  setupTowerRollUntilButtons();
+
+  // Variant Roll Until buttons
+  setupVariantRollUntilButtons();
+}
+
+// Setup Tower Roll Until buttons
+function setupTowerRollUntilButtons() {
+  // Regular (Silver) Roll Until buttons
+  const towerTiers = ['rare', 'epic', 'legendary', 'mythic'];
+
+  towerTiers.forEach(tier => {
+    const button = document.getElementById(`roll-until-tower-${tier}`);
+    if (button) {
+      button.addEventListener('click', function() {
+        performRollUntil('tower', tier, false, 500);
+      });
+    }
+  });
+
+  // Premium (Gems) Roll Until buttons
+  const premiumTowerTiers = ['rare', 'epic', 'legendary', 'mythic', 'divine'];
+
+  premiumTowerTiers.forEach(tier => {
+    const button = document.getElementById(`roll-until-tower-premium-${tier}`);
+    if (button) {
+      button.addEventListener('click', function() {
+        performRollUntil('tower', tier, true, 500);
+      });
+    }
+  });
+}
+
+// Setup Variant Roll Until buttons
+function setupVariantRollUntilButtons() {
+  // Regular (Silver) Roll Until buttons
+  const variantTiers = ['rare', 'epic', 'legendary'];
+
+  variantTiers.forEach(tier => {
+    const button = document.getElementById(`roll-until-variant-${tier}`);
+    if (button) {
+      button.addEventListener('click', function() {
+        // Check if tower is selected
+        const towerSelect = document.getElementById('variant-tower-select');
+        if (!towerSelect || !towerSelect.value) {
+          alert('Please select a tower first!');
+          return;
+        }
+
+        performRollUntil('variant', tier, false, 500);
+      });
+    }
+  });
+
+  // Premium (Gems) Roll Until buttons
+  const premiumVariantTiers = ['rare', 'epic', 'legendary', 'divine'];
+
+  premiumVariantTiers.forEach(tier => {
+    const button = document.getElementById(`roll-until-variant-premium-${tier}`);
+    if (button) {
+      button.addEventListener('click', function() {
+        // Check if tower is selected
+        const towerSelect = document.getElementById('variant-tower-select');
+        if (!towerSelect || !towerSelect.value) {
+          alert('Please select a tower first!');
+          return;
+        }
+
+        performRollUntil('variant', tier, true, 500);
+      });
+    }
+  });
+}
+
+// Perform Roll Until operation
+function performRollUntil(type, targetTier, isPremium, maxRolls = 500) {
+  // Get tower type for variant rolls
+  let selectedTower = null;
+  if (type === 'variant') {
+    const towerSelect = document.getElementById('variant-tower-select');
+    if (!towerSelect || !towerSelect.value) {
+      alert('Please select a tower first!');
+      return;
+    }
+    selectedTower = towerSelect.value;
+  }
+
+  // Calculate cost per roll
+  const currencyType = isPremium ? 'gems' : 'silver';
+  const costPerRoll = isPremium ?
+    gachaSystem.costs.premium[type].single :
+    gachaSystem.costs[type].single;
+
+  // Confirm with user
+  let confirmMessage = '';
+  if (type === 'tower') {
+    confirmMessage = `This will roll towers until you get a ${targetTier} tier tower or reach ${maxRolls} rolls. It could cost up to ${maxRolls * costPerRoll} ${currencyType}. Continue?`;
+  } else {
+    confirmMessage = `This will roll variants for ${towerStats[selectedTower]?.name || selectedTower} until you get a ${targetTier} tier variant or reach ${maxRolls} rolls. It could cost up to ${maxRolls * costPerRoll} ${currencyType}. Continue?`;
+  }
+
+  if (!confirm(confirmMessage)) {
+    return;
+  }
+
+  // Perform roll until
+  const result = gachaSystem.rollUntil(type, targetTier, null, isPremium, maxRolls);
+
+  // Show result
+  if (result.success) {
+    alert(`Success! Found a ${targetTier} tier ${type} after ${result.rolls} rolls, costing ${result.cost.amount} ${result.cost.type}.`);
+
+    // Show the result
+    if (type === 'tower') {
+      showTowerResult(result.result.towerType);
+    } else {
+      showVariantResult(result.result.variant, selectedTower);
+    }
+
+    // Play animation if it's rare+
+    if (targetTier !== 'common') {
+      gachaSystem.playAnimation(targetTier, null, result.result.variant);
+    }
+  } else {
+    alert(`Failed to find a ${targetTier} tier ${type}. ${result.reason}. Used ${result.rolls} rolls and spent ${result.cost.amount} ${result.cost.type}.`);
+  }
+
+  // Update displays
+  updatePityProgressBars();
+  updateGachaCurrencyDisplays();
 }
 
 // Show tower result
