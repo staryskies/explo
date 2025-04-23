@@ -531,15 +531,24 @@ class Game {
           gemsEarned = Math.max(1, gemsEarned);
 
           // Update player data if available
-          if (typeof addSilver === 'function' && typeof addGems === 'function') {
+          if (typeof addSilver === 'function') {
             addSilver(this.silverEarned);
-            addGems(gemsEarned);
-            updateHighScore(this.score);
-            updateHighestWave(this.wave);
-
-            // Show gems earned notification
-            this.showGemsReward(gemsEarned);
           }
+
+          if (typeof addGems === 'function') {
+            addGems(gemsEarned);
+          }
+
+          if (typeof updateHighScore === 'function') {
+            updateHighScore(this.score);
+          }
+
+          if (typeof updateHighestWave === 'function') {
+            updateHighestWave(this.wave);
+          }
+
+          // Show gems earned notification
+          this.showGemsReward(gemsEarned);
 
           // Show game over screen
           document.getElementById('game-over').classList.add('active');
@@ -644,18 +653,29 @@ class Game {
         }
 
         // Update player data
-        if (typeof addSilver === 'function' && typeof addGems === 'function') {
+        if (typeof addSilver === 'function') {
           addSilver(this.silverEarned);
-          addGems(gemsEarned);
-          updateHighScore(this.score);
-          updateHighestWave(this.wave);
-
-          // Mark this difficulty as completed
-          completeDifficulty(this.difficulty);
-
-          // Show gems earned notification
-          this.showGemsReward(gemsEarned);
         }
+
+        if (typeof addGems === 'function') {
+          addGems(gemsEarned);
+        }
+
+        if (typeof updateHighScore === 'function') {
+          updateHighScore(this.score);
+        }
+
+        if (typeof updateHighestWave === 'function') {
+          updateHighestWave(this.wave);
+        }
+
+        // Mark this difficulty as completed
+        if (typeof completeDifficulty === 'function') {
+          completeDifficulty(this.difficulty);
+        }
+
+        // Show gems earned notification
+        this.showGemsReward(gemsEarned);
 
         // Show victory screen
         document.getElementById('game-over').classList.add('active');
@@ -697,7 +717,9 @@ class Game {
         this.showSilverReward(silverReward);
 
         // Update highest wave
-        updateHighestWave(this.wave - 1);
+        if (typeof updateHighestWave === 'function') {
+          updateHighestWave(this.wave - 1);
+        }
       }
 
       // Update UI
