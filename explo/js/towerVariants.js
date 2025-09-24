@@ -234,3 +234,6 @@ const towerVariants = {
     dropRate: 3 // 3% drop rate
   }
 };
+
+// Make towerVariants available globally
+window.towerVariants = towerVariants;

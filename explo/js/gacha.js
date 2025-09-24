@@ -1056,7 +1056,7 @@ window.gachaSystem = {
 
         rollResult = {
           variant: variantResult,
-          variantTier: towerVariants[variantResult]?.tier || 'common'
+          variantTier: window.towerVariants[variantResult]?.tier || 'common'
         };
       }
 

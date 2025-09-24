@@ -1588,7 +1588,7 @@ function setupGachaEventListeners() {
         // Roll variant
         const variant = gachaSystem.rollVariant(selectedTower);
         if (variant) {
-          const tier = towerVariants[variant].tier;
+          const tier = window.towerVariants[variant].tier;
 
           // Play animation for rare and above
           if (tier !== 'common') {
@@ -1631,7 +1631,7 @@ function setupGachaEventListeners() {
           const tierOrder = ['common', 'rare', 'epic', 'legendary', 'divine'];
 
           variants.forEach(variant => {
-            const tier = towerVariants[variant].tier;
+            const tier = window.towerVariants[variant].tier;
             if (tierOrder.indexOf(tier) > tierOrder.indexOf(highestTier)) {
               highestTier = tier;
             }
@@ -1680,7 +1680,7 @@ function setupGachaEventListeners() {
           const tierOrder = ['common', 'rare', 'epic', 'legendary', 'divine'];
 
           variants.forEach(variant => {
-            const tier = towerVariants[variant].tier;
+            const tier = window.towerVariants[variant].tier;
             if (tierOrder.indexOf(tier) > tierOrder.indexOf(highestTier)) {
               highestTier = tier;
             }
@@ -1884,7 +1884,7 @@ function displayVariantResult(variant, towerType, resultElement) {
   const ctx = canvas.getContext('2d');
 
   // Get variant data
-  const variantData = towerVariants[variant];
+    const variantData = window.towerVariants[variant];
   const towerData = towerStats[towerType];
 
   // Draw tower with variant

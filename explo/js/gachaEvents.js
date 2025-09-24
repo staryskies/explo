@@ -980,7 +980,7 @@ function showVariantResult(result, towerType) {
   }
 
   // Get variant data
-  const variantData = towerVariants[variant];
+  const variantData = window.towerVariants[variant];
   if (!variantData) return;
 
   // Create animation container
@@ -1068,7 +1068,7 @@ function showVariantResults(variants, towerType) {
 
   // Process each variant
   variants.forEach(variant => {
-    const variantData = towerVariants[variant];
+    const variantData = window.towerVariants[variant];
     if (!variantData) return;
 
     // Increment tier count

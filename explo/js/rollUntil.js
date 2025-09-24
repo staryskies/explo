@@ -415,7 +415,7 @@ const rollUntilSystem = {
       const result = animationResults[index];
       const resultData = this.state.targetType === 'tower' ?
         towerStats[result] :
-        towerVariants[result];
+        window.towerVariants[result];
 
       const resultTier = resultData?.tier || 'common';
 
@@ -537,7 +537,7 @@ const rollUntilSystem = {
     this.state.results.forEach(result => {
       const resultData = this.state.targetType === 'tower' ?
         towerStats[result] :
-        towerVariants[result];
+        window.towerVariants[result];
 
       const resultTier = resultData?.tier || 'common';
       tierCounts[resultTier]++;
