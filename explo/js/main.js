@@ -16,6 +16,11 @@ window.game = null;
 document.addEventListener('DOMContentLoaded', () => {
   console.log('DOM loaded, initializing game...');
   try {
+    // Load player data first to ensure it's available when creating the game
+    if (typeof loadPlayerData === 'function') {
+      loadPlayerData();
+    }
+
     // Get the canvas element
     const canvas = document.getElementById('gameCanvas');
     if (!canvas) {
@@ -51,11 +56,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 100);
   } catch (error) {
     console.error('Error initializing game:', error);
-  }
-
-  // Load player data to get unlocked towers
-  if (typeof loadPlayerData === 'function') {
-    loadPlayerData();
   }
 
   // Make sure game is initialized before proceeding

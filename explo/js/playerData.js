@@ -487,5 +487,10 @@ function cancelMarketListing(listingId) {
   return true;
 }
 
+// Make playerData and functions available globally
+window.playerData = playerData;
+window.savePlayerData = savePlayerData;
+window.loadPlayerData = loadPlayerData;
+
 // Initialize player data
 loadPlayerData();
