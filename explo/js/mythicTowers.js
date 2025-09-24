@@ -248,27 +248,4 @@ if (typeof gachaSystem === 'undefined') {
   console.log('Added mythic and divine towers to gacha pool');
 })();
 
-// Make divine towers only available through premium currency
-(function() {
 
-  // Store the original roll function
-  const originalRollTower = gachaSystem.rollTower;
-
-  // Override the roll function to exclude divine towers from regular rolls
-  gachaSystem.rollTower = function(usePremiumCurrency = false) {
-    // If using premium currency, use the original function
-    if (usePremiumCurrency) {
-      return originalRollTower.call(this, usePremiumCurrency);
-    }
-
-    // For regular currency, roll until we get a non-divine tower
-    let result;
-    do {
-      result = originalRollTower.call(this, usePremiumCurrency);
-    } while (towerStats[result]?.tier === 'divine');
-
-    return result;
-  };
-
-  console.log('Modified gacha system to make divine towers premium-only');
-})();

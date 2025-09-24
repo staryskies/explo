@@ -6,7 +6,7 @@
 console.log('Gacha system loaded');
 
 // Advanced gacha system
-const gachaSystem = {
+window.gachaSystem = {
   // Initialize cooldowns from localStorage
   initCooldowns: function() {
     // Check for existing cooldowns in localStorage
