@@ -543,200 +543,9 @@
         </div>
       </div>
     </div>
-
-    <!-- Market Modal -->
-    <div id="market-modal" class="modal">
-      <div class="modal-content market-content">
-        <div class="modal-header">
-          <h2>Market</h2>
-          <span class="close-btn" id="close-market">&times;</span>
-        </div>
-
-        <!-- Market Tabs -->
-        <div class="market-tabs">
-          <button class="market-tab active" data-tab="listings-tab">Browse Listings</button>
-          <button class="market-tab" data-tab="my-listings-tab">My Listings</button>
-          <button class="market-tab" data-tab="create-listing-tab">Create Listing</button>
-        </div>
-
-        <!-- Listings Tab Content -->
-        <div class="market-tab-content active" id="listings-tab">
-          <div class="market-filters">
-            <div class="filter-group">
-              <label for="item-type-filter">Item Type:</label>
-              <select id="item-type-filter">
-                <option value="all">All</option>
-                <option value="tower">Towers</option>
-                <option value="variant">Variants</option>
-              </select>
-            </div>
-            <div class="filter-group">
-              <label for="price-filter">Max Price:</label>
-              <input type="number" id="price-filter" min="0" step="100" placeholder="Any">
-            </div>
-            <button id="apply-filters" class="filter-btn">Apply Filters</button>
-          </div>
-
-          <table id="listings-table" class="market-table">
-            <thead>
-              <tr>
-                <th>Seller</th>
-                <th>Item</th>
-                <th>Variant</th>
-                <th>Price</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Listings will be generated here -->
-            </tbody>
-          </table>
-        </div>
-
-        <!-- My Listings Tab Content -->
-        <div class="market-tab-content" id="my-listings-tab">
-          <table id="my-listings-table" class="market-table">
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th>Variant</th>
-                <th>Price</th>
-                <th>Listed On</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- My listings will be generated here -->
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Create Listing Tab Content -->
-        <div class="market-tab-content" id="create-listing-tab">
-          <form id="create-listing-form" class="listing-form">
-            <div class="form-group">
-              <label for="listing-item-type">Item Type:</label>
-              <select id="listing-item-type" required>
-                <option value="">Select Item Type</option>
-                <option value="tower">Tower</option>
-                <option value="variant">Variant</option>
-              </select>
-            </div>
-
-            <div class="form-group" id="tower-selection-group" style="display: none;">
-              <label for="listing-tower">Select Tower:</label>
-              <select id="listing-tower">
-                <!-- Tower options will be generated here -->
-              </select>
-            </div>
-
-            <div class="form-group" id="variant-selection-group" style="display: none;">
-              <label for="listing-variant">Select Variant:</label>
-              <select id="listing-variant">
-                <!-- Variant options will be generated here -->
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="listing-price">Price (Silver):</label>
-              <input type="number" id="listing-price" min="1" step="1" required>
-            </div>
-
-            <div class="form-group">
-              <label for="listing-description">Description (Optional):</label>
-              <textarea id="listing-description" rows="3"></textarea>
-            </div>
-
-            <button type="submit" class="primary-btn">Create Listing</button>
-          </form>
-        </div>
-
-        <div class="modal-footer">
-          <div class="currency-display">
-            <span>Silver: </span>
-            <span id="market-silver-amount">0</span>
-            <span class="currency-separator">|</span>
-            <span>Gems: </span>
-            <span id="market-gems-amount">0</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Leaderboard Modal -->
-    <div id="leaderboard-modal" class="modal">
-      <div class="modal-content leaderboard-content">
-        <div class="modal-header">
-          <h2>Leaderboard</h2>
-          <span class="close-btn" id="close-leaderboard">&times;</span>
-        </div>
-
-        <!-- Leaderboard Tabs -->
-        <div class="leaderboard-tabs">
-          <button class="leaderboard-tab active" data-tab="high-scores-tab">High Scores</button>
-          <button class="leaderboard-tab" data-tab="wave-records-tab">Wave Records</button>
-          <button class="leaderboard-tab" data-tab="tower-collections-tab">Tower Collections</button>
-        </div>
-
-        <!-- High Scores Tab Content -->
-        <div class="leaderboard-tab-content active" id="high-scores-tab">
-          <table id="high-scores-table" class="leaderboard-table">
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Player</th>
-                <th>Score</th>
-                <th>Difficulty</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- High scores will be generated here -->
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Wave Records Tab Content -->
-        <div class="leaderboard-tab-content" id="wave-records-tab">
-          <table id="wave-records-table" class="leaderboard-table">
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Player</th>
-                <th>Wave</th>
-                <th>Difficulty</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Wave records will be generated here -->
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Tower Collections Tab Content -->
-        <div class="leaderboard-tab-content" id="tower-collections-tab">
-          <table id="tower-collections-table" class="leaderboard-table">
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Player</th>
-                <th>Towers</th>
-                <th>Variants</th>
-                <th>Rare+ Towers</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Tower collections will be generated here -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- Load services -->
-  <script src="js/services/authService.js"></script>
   <script src="js/services/playerDataService.js"></script>
   <script src="js/services/marketService.js"></script>
   <script src="js/services/leaderboardService.js"></script>
@@ -746,7 +555,6 @@
   <script src="js/components/leaderboard.js"></script>
 
   <!-- Load game scripts in the correct order -->
-  <script src="js/services/mockAuthService.js"></script>
   <script src="js/notification.js"></script>
   <script src="js/playerData.js"></script>
   <script src="js/towerData.js"></script>
@@ -759,8 +567,6 @@
   <script src="js/dualPathMode.js"></script>
   <script src="js/mythicTowers.js"></script>
   <script src="js/auth.js"></script>
-  <script src="js/leaderboard.js"></script>
-  <script src="js/market.js"></script>
   <script src="js/tutorial.js"></script>
   <script src="js/menu.js"></script>
 
