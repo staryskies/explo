@@ -6,9 +6,6 @@
   <title>Tower Defense Game - Main Menu</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/menu.css">
-  <link rel="stylesheet" href="css/auth.css">
-  <link rel="stylesheet" href="css/market.css">
-  <link rel="stylesheet" href="css/leaderboard.css">
   <link rel="stylesheet" href="css/rollUntil.css">
   <link rel="stylesheet" href="css/gacha.css">
   <link rel="stylesheet" href="css/tutorial.css">
@@ -41,8 +38,6 @@
         <button id="tower-gacha-button" class="menu-btn">Tower Gacha</button>
         <button id="variant-gacha-button" class="menu-btn">Variant Gacha</button>
         <button id="loadout-button" class="menu-btn">Loadout</button>
-        <button id="market-button" class="menu-btn">Market</button>
-        <button id="leaderboard-button" class="menu-btn">Leaderboard</button>
         <button id="tutorial-button" class="menu-btn">Tutorial</button>
       </div>
 
@@ -62,16 +57,6 @@
         <div class="stat-item">
           <span class="stat-label">High Score:</span>
           <span id="high-score" class="stat-value">0</span>
-        </div>
-      </div>
-
-      <div class="auth-buttons">
-        <button id="login-button" class="auth-btn">Login</button>
-        <button id="signup-button" class="auth-btn">Sign Up</button>
-        <button id="guest-button" class="auth-btn">Play as Guest</button>
-        <div id="user-info" class="user-info" style="display: none;">
-          <span id="username-display"></span>
-          <button id="logout-button" class="auth-btn">Logout</button>
         </div>
       </div>
     </div>
@@ -488,71 +473,7 @@
       </div>
     </div>
 
-    <!-- Login Modal -->
-    <div id="login-modal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Login</h2>
-          <span class="close-btn" id="close-login">&times;</span>
-        </div>
-        <div class="modal-body">
-          <form id="login-form">
-            <div class="form-group">
-              <label for="login-username">Username</label>
-              <input type="text" id="login-username" name="username" required>
-            </div>
-            <div class="form-group">
-              <label for="login-password">Password</label>
-              <input type="password" id="login-password" name="password" required>
-            </div>
-            <div id="login-error" class="error-message"></div>
-            <button type="submit" class="primary-btn">Login</button>
-          </form>
-        </div>
-      </div>
-    </div>
 
-    <!-- Signup Modal -->
-    <div id="signup-modal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Sign Up</h2>
-          <span class="close-btn" id="close-signup">&times;</span>
-        </div>
-        <div class="modal-body">
-          <form id="signup-form">
-            <div class="form-group">
-              <label for="signup-username">Username</label>
-              <input type="text" id="signup-username" name="username" required>
-            </div>
-            <div class="form-group">
-              <label for="signup-email">Email (optional)</label>
-              <input type="email" id="signup-email" name="email">
-            </div>
-            <div class="form-group">
-              <label for="signup-password">Password</label>
-              <input type="password" id="signup-password" name="password" required>
-            </div>
-            <div class="form-group">
-              <label for="signup-confirm-password">Confirm Password</label>
-              <input type="password" id="signup-confirm-password" name="confirmPassword" required>
-            </div>
-            <div id="signup-error" class="error-message"></div>
-            <button type="submit" class="primary-btn">Sign Up</button>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Load services -->
-  <script src="js/services/playerDataService.js"></script>
-  <script src="js/services/marketService.js"></script>
-  <script src="js/services/leaderboardService.js"></script>
-
-  <!-- Load components -->
-  <script src="js/components/market.js"></script>
-  <script src="js/components/leaderboard.js"></script>
 
   <!-- Load game scripts in the correct order -->
   <script src="js/notification.js"></script>
@@ -582,15 +503,7 @@
         let initialized = true;
 
         // Try to initialize global chat
-        if (window.globalChat) {
-          try {
-            console.log('Ensuring GlobalChat is initialized');
-            window.globalChat.initialize();
-          } catch (error) {
-            console.error('Error initializing GlobalChat:', error);
-            initialized = false;
-          }
-        }
+  
 
         // Squad functionality has been removed
 

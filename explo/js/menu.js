@@ -350,61 +350,6 @@ function setupEventListeners() {
     console.error('Tutorial button not found');
   }
 
-  // Market button
-  const marketButton = document.getElementById('market-button');
-  if (marketButton) {
-    marketButton.addEventListener('click', () => {
-      const marketModal = document.getElementById('market-modal');
-      if (marketModal) {
-        // Use classList to show the modal properly
-        marketModal.classList.add('active');
-
-        // Update silver display when opening the modal
-        const marketSilverAmount = document.getElementById('market-silver-amount');
-        if (marketSilverAmount) {
-          marketSilverAmount.textContent = playerData.silver;
-        }
-
-        // Update gems display when opening the modal
-        const marketGemsAmount = document.getElementById('market-gems-amount');
-        if (marketGemsAmount) {
-          marketGemsAmount.textContent = playerData.gems;
-        }
-      } else {
-        console.error('Market modal not found');
-      }
-    });
-  } else {
-    console.error('Market button not found');
-  }
-
-  // Leaderboard button
-  const leaderboardButton = document.getElementById('leaderboard-button');
-  if (leaderboardButton) {
-    leaderboardButton.addEventListener('click', () => {
-      const leaderboardModal = document.getElementById('leaderboard-modal');
-      if (leaderboardModal) {
-        // Use classList to show the modal properly
-        leaderboardModal.classList.add('active');
-      } else {
-        console.error('Leaderboard modal not found');
-      }
-    });
-  } else {
-    console.error('Leaderboard button not found');
-  }
-
-  // Close buttons
-  document.querySelectorAll('.close-btn').forEach(button => {
-    button.addEventListener('click', (e) => {
-      // Find the parent modal
-      const modal = e.target.closest('.modal');
-      if (modal) {
-        modal.classList.remove('active');
-      }
-    });
-  });
-
   // Tutorial navigation buttons
   const tutorialNext = document.getElementById('tutorial-next');
   const tutorialPrev = document.getElementById('tutorial-prev');
