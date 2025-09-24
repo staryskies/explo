@@ -7,8 +7,8 @@ console.log('Player data loaded');
 // Player data structure
 const playerData = {
   // Currency
-  silver: 1000, // Start with some silver for testing
-  gems: 50, // Premium currency
+  silver: 100000000, // Start with some silver for testing
+  gems: 5000000, // Premium currency
 
   // Game stats
   highScore: 0,
