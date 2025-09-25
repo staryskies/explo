@@ -2637,3 +2637,6 @@ class Enemy {
     return false;
   }
 }
+
+// Make Enemy class available globally
+window.Enemy = Enemy;

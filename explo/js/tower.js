@@ -1539,6 +1539,9 @@ class Tower {
 
     // Define a global scaleFactor for use throughout the method
     const scaleFactor = this.scaleFactor;
+    
+    // Calculate time in seconds for animations
+    const timeInSec = currentTime / 1000;
 
     // Draw variant indicator above tower if it has a variant
     if (this.variant && this.variant !== 'normal') {
@@ -2790,6 +2793,9 @@ class Tower {
       case 'demonLord':
         // Demon Lord tower with horns and hellfire
         // Use the existing scaleFactor from the class
+        
+        // Calculate time in seconds for animations
+        const timeInSec = currentTime / 1000;
 
         // Base tower body with enhanced design
         const demonLordGradient = ctx.createLinearGradient(
@@ -2988,6 +2994,9 @@ class Tower {
 
         // Path B: Blessing Aura - More supportive appearance
         if (hasPathBUpgrades) {
+          // Calculate time in seconds for animations
+          const timeInSec = currentTime / 1000;
+          
           // Calculate scaled buff radius
           const scaledBuffRadius = (20 + this.pathBLevel * 5) * scaleFactor;
 
@@ -3476,3 +3485,6 @@ class Tower {
     // Tower is now buffed
   }
 }
+
+// Make Tower class available globally
+window.Tower = Tower;

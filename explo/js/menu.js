@@ -295,12 +295,35 @@ function setupEventListeners() {
         if (loadoutGemsAmount) {
           loadoutGemsAmount.textContent = playerData.gems;
         }
+        
+        // Update start game button state
+        updateStartGameButtonState();
       } else {
         notificationSystem.error('Loadout modal not found');
       }
     });
   } else {
     console.error('Loadout button not found');
+  }
+
+  // Start Game button in loadout modal
+  const startGameButton = document.getElementById('start-game-btn');
+  if (startGameButton) {
+    startGameButton.addEventListener('click', () => {
+      // Check if at least one tower is selected
+      if (playerData.selectedTowersForLoadout && playerData.selectedTowersForLoadout.length > 0) {
+        // Close the loadout modal
+        const loadoutModal = document.getElementById('loadout-modal');
+        if (loadoutModal) {
+          loadoutModal.classList.remove('active');
+        }
+        
+        // Navigate to game
+        window.location.href = 'game.html';
+      } else {
+        alert('Please select at least one tower for your loadout');
+      }
+    });
   }
 
   // Tutorial button
@@ -411,8 +434,31 @@ function setupEventListeners() {
       const difficulty = selectedDifficulty.dataset.difficulty;
       // Store selected difficulty in session storage
       sessionStorage.setItem('selectedDifficulty', difficulty);
-      // Navigate to loadout.html
-      window.location.href = 'loadout.html';
+      
+      // Show loadout modal instead of navigating to separate page
+      const loadoutModal = document.getElementById('loadout-modal');
+      if (loadoutModal) {
+        // Generate loadout content before showing the modal
+        generateLoadoutContent();
+        loadoutModal.classList.add('active');
+        
+        // Update silver display when opening the modal
+        const loadoutSilverAmount = document.getElementById('loadout-silver-amount');
+        if (loadoutSilverAmount) {
+          loadoutSilverAmount.textContent = playerData.silver;
+        }
+        
+        // Update gems display when opening the modal
+        const loadoutGemsAmount = document.getElementById('loadout-gems-amount');
+        if (loadoutGemsAmount) {
+          loadoutGemsAmount.textContent = playerData.gems;
+        }
+        
+        // Hide difficulty selection modal
+        document.getElementById('difficulty-selection-modal').classList.remove('active');
+      } else {
+        console.error('Loadout modal not found');
+      }
     } else {
       alert('Please select a difficulty level first');
     }
@@ -1081,7 +1127,7 @@ function updateSelectedLoadout() {
 
     const [towerType, variant] = towerVariant.split('_');
     const towerData = towerStats[towerType] || { name: towerType, color: '#888' };
-    const variantData = towerVariants[variant] || { name: variant, tier: 'common' };
+    const variantData = window.towerVariants[variant] || { name: variant, tier: 'common' };
 
     const slot = slots[index];
     slot.className = `loadout-slot ${variantData.tier}`;
@@ -1108,6 +1154,9 @@ function updateSelectedLoadout() {
     });
     slot.appendChild(removeButton);
   });
+  
+  // Update start game button state
+  updateStartGameButtonState();
 }
 
 // Add tower to loadout
@@ -1135,6 +1184,9 @@ function addToLoadout(towerType, variant) {
 
   // Update display
   updateSelectedLoadout();
+  
+  // Update start game button state
+  updateStartGameButtonState();
 
   notificationSystem.success(`Added ${towerStats[towerType]?.name || towerType} to loadout!`);
   return true;
@@ -1150,6 +1202,9 @@ function removeFromLoadout(index) {
 
     // Update display
     updateSelectedLoadout();
+    
+    // Update start game button state
+    updateStartGameButtonState();
 
     const [towerType] = removed.split('_');
     notificationSystem.info(`Removed ${towerStats[towerType]?.name || towerType} from loadout.`);
@@ -1157,6 +1212,15 @@ function removeFromLoadout(index) {
   }
 
   return false;
+}
+
+// Update start game button state based on loadout
+function updateStartGameButtonState() {
+  const startGameButton = document.getElementById('start-game-btn');
+  if (startGameButton) {
+    const hasTowers = playerData.selectedTowersForLoadout && playerData.selectedTowersForLoadout.length > 0;
+    startGameButton.disabled = !hasTowers;
+  }
 }
 
 // Generate combined tower+variant inventory

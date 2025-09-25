@@ -14,6 +14,9 @@ class Game {
     this.maxSpeedMultiplier = 2.3; // Changed from 5 to 2.3 as requested
 
     // Get the selected towers from player data
+    console.log('Game constructor - window.playerData:', window.playerData);
+    console.log('Game constructor - selectedTowersForLoadout:', window.playerData?.selectedTowersForLoadout);
+    
     if (window.playerData && window.playerData.selectedTowersForLoadout) {
       // Convert combined keys to tower types
       this.availableTowers = window.playerData.selectedTowersForLoadout.map(item => {
@@ -24,6 +27,7 @@ class Game {
     } else {
       // Default towers if none selected
       this.availableTowers = ['basic', 'cannon', 'archer', 'freeze'];
+      console.log('Using default towers:', this.availableTowers);
     }
 
     // Add divine towers if playing on Heaven and Hell difficulty
