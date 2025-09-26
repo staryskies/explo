@@ -158,7 +158,8 @@ class Game {
             // Create the tower with grid coordinates and variant
             try {
               // Use the Tower constructor from the global scope
-              const tower = new window.Tower(pixelPos.x, pixelPos.y, this.selectedTowerType, gridPos.x, gridPos.y, variant);
+             
+              const tower = new Tower(pixelPos.x, pixelPos.y, this.selectedTowerType, gridPos.x, gridPos.y, variant);
               this.towers.push(tower);
 
               // Mark the tile as occupied

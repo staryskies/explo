@@ -2795,7 +2795,6 @@ class Tower {
         // Use the existing scaleFactor from the class
         
         // Calculate time in seconds for animations
-        const timeInSec = currentTime / 1000;
 
         // Base tower body with enhanced design
         const demonLordGradient = ctx.createLinearGradient(

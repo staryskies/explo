@@ -132,6 +132,8 @@ const TowerHelper = {
   getVariantsOfTier: function(tier) {
     return Object.keys(towerVariants).filter(variant => towerVariants[variant].tier === tier);
   }
+
+
 };
 
 // Export the TowerHelper object
